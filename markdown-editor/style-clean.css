@@ -1,0 +1,627 @@
+/* ========== POST SAYFASI İLE BİREBİR AYNI TASARIM ========== */
+
+/* Temel reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    min-height: 100vh;
+    color: var(--ink);
+    line-height: 1.6;
+}
+
+/* Post sayfası utility sınıfları */
+.wrap {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.max-w-3xl {
+    max-width: 48rem;
+}
+
+.mx-auto {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.mb-8 {
+    margin-bottom: 1.5rem;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.flex {
+    display: flex;
+}
+
+.justify-center {
+    justify-content: center;
+}
+
+.items-center {
+    align-items: center;
+}
+
+.space-x-4 > * + * {
+    margin-left: 1rem;
+}
+
+/* Ana Başlık - Post sayfası ile birebir aynı */
+#documentTitle {
+    font-size: 2.5rem;
+    font-weight: 800;
+    line-height: 1.2;
+    margin: 0 0 0.75rem;
+    color: var(--ink);
+    font-family: 'Montserrat', sans-serif;
+    cursor: pointer;
+    padding: 8px 16px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+}
+
+#documentTitle:hover {
+    background: rgba(59, 130, 246, 0.05);
+    border-color: rgba(59, 130, 246, 0.2);
+}
+
+#documentTitle:focus {
+    outline: none;
+    background: rgba(59, 130, 246, 0.08);
+    border-color: rgba(59, 130, 246, 0.3);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Basit Editör Toolbar */
+.editor-toolbar-simple {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--line);
+}
+
+.toolbar-left {
+    display: flex;
+    align-items: center;
+}
+
+.format-buttons {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.format-btn {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    min-width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.format-btn:hover {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+    transform: translateY(-1px);
+}
+
+.toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.view-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 4px;
+}
+
+.view-btn {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.2s ease;
+}
+
+.view-btn:hover {
+    background: var(--bg);
+    color: var(--ink);
+}
+
+.view-btn.active {
+    background: var(--accent);
+    color: white;
+}
+
+.save-btn-main,
+.preview-btn-main {
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.save-btn-main {
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
+.save-btn-main:hover {
+    background: #2563eb;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.preview-btn-main {
+    background: var(--panel);
+    color: var(--ink);
+    border: 1px solid var(--line);
+}
+
+.preview-btn-main:hover {
+    background: var(--line);
+    transform: translateY(-1px);
+}
+
+/* Editör İçerik - Post sayfası blog-content ile birebir aynı */
+.editor-content {
+    min-height: 60vh;
+    padding: 0;
+    border: none;
+    outline: none;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 1.125rem; /* 18px - Post sayfası ile aynı */
+    line-height: 1.7;
+    color: var(--ink);
+    background: transparent;
+    overflow-y: auto;
+    resize: none;
+}
+
+.editor-content:empty:before {
+    content: attr(placeholder);
+    color: var(--muted);
+    font-style: italic;
+    pointer-events: none;
+}
+
+/* Editor Sections */
+.editor-section {
+    width: 100%;
+}
+
+.editor-section.preview-mode {
+    display: none;
+}
+
+.editor-section.preview-mode.active {
+    display: block;
+}
+
+.editor-section.edit-mode.hidden {
+    display: none;
+}
+
+/* Admin panel butonu */
+.admin-fixed-button {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(59, 130, 246, 0.9);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 13px;
+    z-index: 9999;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    font-family: 'Inter', sans-serif;
+}
+
+.admin-fixed-button:hover {
+    background: rgba(37, 99, 235, 0.95);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    color: white;
+    text-decoration: none;
+}
+
+/* ========== MODAL STİLLERİ ========== */
+
+/* Post Form Modal */
+.post-form-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+}
+
+.post-form-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 24px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    border: 1px solid var(--line);
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.2);
+}
+
+.post-form-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.post-form-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.post-form-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--muted);
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    color: var(--ink);
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 24px;
+}
+
+.form-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.form-btn.secondary {
+    background: var(--panel);
+    color: var(--ink);
+    border: 1px solid var(--line);
+}
+
+.form-btn.primary {
+    background: var(--accent);
+    color: white;
+}
+
+.form-btn:hover {
+    transform: translateY(-1px);
+}
+
+/* Preview Modal */
+.preview-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+}
+
+.modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 24px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 80vh;
+    border: 1px solid var(--line);
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--line);
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--muted);
+}
+
+.modal-body {
+    flex: 1;
+    overflow: hidden;
+}
+
+.markdown-preview-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.markdown-textarea {
+    flex: 1;
+    width: 100%;
+    min-height: 400px;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.7;
+    background: var(--panel);
+    color: var(--ink);
+    resize: vertical;
+    outline: none;
+}
+
+.modal-footer {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.modal-buttons button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.copy-btn {
+    background: var(--accent);
+    color: white;
+}
+
+.copy-btn:hover {
+    background: #2563eb;
+    transform: translateY(-1px);
+}
+
+/* Save Indicator */
+.save-indicator {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #10b981;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.save-indicator.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Tema toggle butonu */
+#themeToggle::before {
+    content: "🌙";
+}
+
+[data-theme="dark"] #themeToggle::before {
+    content: "☀️";
+}
+
+/* Responsive Tasarım */
+@media (max-width: 768px) {
+    #documentTitle {
+        font-size: 2rem;
+    }
+    
+    .editor-content {
+        font-size: 1rem;
+    }
+    
+    .editor-toolbar-simple {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+    
+    .format-buttons {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .toolbar-right {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Koyu tema için özel stiller */
+[data-theme="dark"] .post-form-content {
+    background: var(--bg-primary, #1a1a1a);
+    border: 1px solid var(--border-primary, #333);
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .post-form-header h3 {
+    color: var(--text-primary, #ffffff);
+}
+
+[data-theme="dark"] .post-form-close {
+    color: var(--text-muted, #888);
+}
+
+[data-theme="dark"] .form-group label {
+    color: var(--text-primary, #ffffff);
+}
+
+[data-theme="dark"] .form-group input,
+[data-theme="dark"] .form-group textarea {
+    background: var(--bg-secondary, #2a2a2a);
+    border-color: var(--border-primary, #333);
+    color: var(--text-primary, #ffffff);
+}
+
+[data-theme="dark"] .form-btn.secondary {
+    background: var(--bg-tertiary, #333);
+    color: var(--text-secondary, #ccc);
+    border: 1px solid var(--border-primary, #444);
+}
+
+[data-theme="dark"] .form-btn.primary {
+    background: var(--accent-primary, #3b82f6);
+    color: white;
+}
+
+[data-theme="dark"] .modal-content {
+    background: var(--bg-primary, #1a1a1a);
+    border-color: var(--border-primary, #333);
+}
+
+[data-theme="dark"] .modal-header h3 {
+    color: var(--text-primary, #ffffff);
+}
+
+[data-theme="dark"] .close-btn {
+    color: var(--text-muted, #888);
+}
+
+[data-theme="dark"] .markdown-textarea {
+    background: var(--bg-secondary, #2a2a2a);
+    border-color: var(--border-primary, #333);
+    color: var(--text-primary, #ffffff);
+}

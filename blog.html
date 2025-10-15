@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tüm Yazılar - Cihan Enes Durgun</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="images/system/cedlogo (2).png" />
+
+  <!-- Global temel stiller -->
+  <link href="styles.css" rel="stylesheet" />
+  <!-- Bloga özel minik ekler -->
+  <link href="blogstyle.css" rel="stylesheet" />
+  
+  <!-- RSS Feed -->
+  <link rel="alternate" type="application/rss+xml" title="RSS Feed" href="rss.xml" />
+</head>
+<body>
+  <!-- Skip to content link for screen readers -->
+
+  
+  <!-- Üst kapsül (mevcut topbar tasarımın aynısı) -->
+  <header class="topbar">
+    <div class="wrap topbar-row">
+      <nav class="pill-nav" aria-label="Ana menü">
+        <!-- PRODUCTION MODE -->
+        <!-- <a href="https://cihanenesdurgun.com">Ana Sayfa</a> -->
+        <!-- <a href="https://cihanenesdurgun.com/blog.html" class="active">Blog</a> -->
+        <!-- <a href="https://cihanenesdurgun.com#contact">İletişim</a> -->
+        <!-- DEVELOPMENT MODE -->
+        <a href="index.html">Ana Sayfa</a>
+        <a href="blog.html" class="active">Blog</a>
+        <a href="index.html#contact">İletişim</a>
+      </nav>
+      <button id="themeToggle" class="theme-chip" aria-label="Tema değiştir" title="Tema değiştir"></button>
+    </div>
+  </header>
+
+  <main id="main-content" class="wrap section">
+    <header class="section-head">
+      <div>
+        <h2>Tüm Yazılar</h2>
+        <p class="muted">Ara, filtrele ve oku • En yeni yazılar üstte</p>
+      </div>
+    </header>
+
+    <!-- Filtre barı -->
+    <div class="filterbar">
+      <input id="blogSearch" type="search"
+             placeholder="Yazı, özet, etiket veya içerik ara..." autocomplete="off" />
+      <div id="tagChips" class="tags" aria-label="Etiketler"></div>
+    </div>
+
+    <!-- Sonuçlar -->
+    <div id="blogResults" class="grid"></div>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <div class="footer-content">
+        <div class="footer-left">
+          © <span id="year"></span> Cihan Enes Durgun. Tüm hakları saklıdır.
+        </div>
+        <div class="footer-right">
+          <span class="version-info">v2.0.4</span>
+          <a href="rss.xml" class="footer-link" aria-label="RSS Feed">RSS</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Theme Manager Module (must load first) -->
+  <script src="theme-manager.js"></script>
+  <!-- Sadece bloga özel JS; ana sayfadaki scripts.js'i BU sayfada yüklemeyin -->
+  <script src="blog.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,1056 @@
+{
+  "activeSessions": [
+    {
+      "id": "sess_5e53f615d3f928dde4fd86cd68ed2777",
+      "username": "admin",
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwic2Vzc2lvbklkIjoic2Vzc181ZTUzZjYxNWQzZjkyOGRkZTRmZDg2Y2Q2OGVkMjc3NyIsImlhdCI6MTc1Nzg3MjI1NywiZXhwIjoxNzU3OTU4NjU3fQ.yWxqTThvAZJcs8nR9IgBbTAwfi_YVP728aMfBZ9a2XY",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36",
+      "loginTime": "2025-09-14T17:50:57.446Z",
+      "lastActivity": "2025-09-14T18:00:01.454Z",
+      "expiresAt": "2025-09-14T18:50:57.446Z",
+      "isActive": true,
+      "sessionData": {
+        "loginCount": 1,
+        "lastLogin": "2025-09-14T17:50:57.446Z",
+        "deviceInfo": {
+          "browser": "Chrome",
+          "os": "Linux",
+          "device": "Mobile"
+        }
+      }
+    }
+  ],
+  "loginHistory": [
+    {
+      "id": "1757085546859",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36",
+      "timestamp": "2025-09-05T15:19:06.859Z",
+      "success": true
+    },
+    {
+      "id": "1757085520727",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36",
+      "timestamp": "2025-09-05T15:18:40.727Z",
+      "success": true
+    },
+    {
+      "id": "1757085348647",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36",
+      "timestamp": "2025-09-05T15:15:48.647Z",
+      "success": true
+    },
+    {
+      "id": "1757083085551",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36",
+      "timestamp": "2025-09-05T14:38:05.551Z",
+      "success": true
+    },
+    {
+      "id": "1757064086521",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36",
+      "timestamp": "2025-09-05T09:21:26.521Z",
+      "success": true
+    },
+    {
+      "id": "1757064059051",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36",
+      "timestamp": "2025-09-05T09:20:59.051Z",
+      "success": true
+    },
+    {
+      "id": "1757064025469",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36",
+      "timestamp": "2025-09-05T09:20:25.469Z",
+      "success": true
+    },
+    {
+      "id": "1757064013079",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36",
+      "timestamp": "2025-09-05T09:20:13.079Z",
+      "success": true
+    },
+    {
+      "id": "1757063999448",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36",
+      "timestamp": "2025-09-05T09:19:59.449Z",
+      "success": true
+    },
+    {
+      "id": "1757063990045",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36",
+      "timestamp": "2025-09-05T09:19:50.046Z",
+      "success": true
+    },
+    {
+      "id": "1757060878213",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36",
+      "timestamp": "2025-09-05T08:27:58.213Z",
+      "success": true
+    },
+    {
+      "id": "1757060838176",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT; Windows NT 10.0; tr-TR) WindowsPowerShell/5.1.26100.5074",
+      "timestamp": "2025-09-05T08:27:18.176Z",
+      "success": true
+    },
+    {
+      "id": "1757060705241",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-09-05T08:25:05.241Z",
+      "success": true
+    },
+    {
+      "id": "1757056069783",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-09-05T07:07:49.784Z",
+      "success": true
+    },
+    {
+      "id": "1756997443177",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-09-04T14:50:43.177Z",
+      "success": true
+    },
+    {
+      "id": "1756995573009",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-09-04T14:19:33.009Z",
+      "success": true
+    },
+    {
+      "id": "1756982005074",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36",
+      "timestamp": "2025-09-04T10:33:25.074Z",
+      "success": true
+    },
+    {
+      "id": "1756981846681",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36",
+      "timestamp": "2025-09-04T10:30:46.681Z",
+      "success": true
+    },
+    {
+      "id": "1756981584448",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-09-04T10:26:24.448Z",
+      "success": true
+    },
+    {
+      "id": "1756978999361",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-09-04T09:43:19.361Z",
+      "success": true
+    },
+    {
+      "id": "1756978402934",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-09-04T09:33:22.935Z",
+      "success": true
+    },
+    {
+      "id": "1756978238020",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-09-04T09:30:38.020Z",
+      "success": true
+    },
+    {
+      "id": "1756882392833",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-09-03T06:53:12.833Z",
+      "success": true
+    },
+    {
+      "id": "1756837935368",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36",
+      "timestamp": "2025-09-02T18:32:15.368Z",
+      "success": true
+    },
+    {
+      "id": "1756836878286",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36",
+      "timestamp": "2025-09-02T18:14:38.286Z",
+      "success": true
+    },
+    {
+      "id": "1756827200390",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-09-02T15:33:20.390Z",
+      "success": true
+    },
+    {
+      "id": "1756827178377",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-09-02T15:32:58.378Z",
+      "success": true
+    },
+    {
+      "id": "1756824875007",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36",
+      "timestamp": "2025-09-02T14:54:35.007Z",
+      "success": true
+    },
+    {
+      "id": "1756823446826",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-09-02T14:30:46.826Z",
+      "success": true
+    },
+    {
+      "id": "1756823329254",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-09-02T14:28:49.254Z",
+      "success": true
+    },
+    {
+      "id": "1756822437697",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-09-02T14:13:57.697Z",
+      "success": true
+    },
+    {
+      "id": "1756820975624",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-09-02T13:49:35.624Z",
+      "success": true
+    },
+    {
+      "id": "1756820885514",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-09-02T13:48:05.514Z",
+      "success": true
+    },
+    {
+      "id": "1756820842447",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36",
+      "timestamp": "2025-09-02T13:47:22.447Z",
+      "success": true
+    },
+    {
+      "id": "1756809799500",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-09-02T10:43:19.500Z",
+      "success": true
+    },
+    {
+      "id": "1756808314312",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-09-02T10:18:34.312Z",
+      "success": true
+    },
+    {
+      "id": "1756807978043",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-09-02T10:12:58.043Z",
+      "success": true
+    },
+    {
+      "id": "1756807725858",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36",
+      "timestamp": "2025-09-02T10:08:45.858Z",
+      "success": true
+    },
+    {
+      "id": "1756673186499",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-08-31T20:46:26.499Z",
+      "success": true
+    },
+    {
+      "id": "1756672822705",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-08-31T20:40:22.705Z",
+      "success": true
+    },
+    {
+      "id": "1756672412988",
+      "username": "admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Cursor/1.5.9 Chrome/132.0.6834.210 Electron/34.5.8 Safari/537.36",
+      "timestamp": "2025-08-31T20:33:32.988Z",
+      "success": true
+    },
+    {
+      "id": "1756671766853",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36",
+      "timestamp": "2025-08-31T20:22:46.853Z",
+      "success": true
+    },
+    {
+      "id": "1756669174261",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-08-31T19:39:34.261Z",
+      "success": true
+    },
+    {
+      "id": "1756668345163",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36",
+      "timestamp": "2025-08-31T19:25:45.163Z",
+      "success": true
+    },
+    {
+      "id": "1756666401874",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36",
+      "timestamp": "2025-08-31T18:53:21.874Z",
+      "success": true
+    },
+    {
+      "id": "1756664091643",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36",
+      "timestamp": "2025-08-31T18:14:51.643Z",
+      "success": true
+    },
+    {
+      "id": "1756662750332",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-08-31T17:52:30.332Z",
+      "success": true
+    },
+    {
+      "id": "1756641121119",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-08-31T11:52:01.119Z",
+      "success": true
+    },
+    {
+      "id": "1756633860631",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-08-31T09:51:00.631Z",
+      "success": true
+    },
+    {
+      "id": "1756633291493",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-08-31T09:41:31.493Z",
+      "success": true
+    },
+    {
+      "id": "1756629704932",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Mobile Safari/537.36",
+      "timestamp": "2025-08-31T08:41:44.932Z",
+      "success": true
+    },
+    {
+      "id": "1756391385982",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1",
+      "timestamp": "2025-08-28T14:29:45.982Z",
+      "success": true
+    },
+    {
+      "id": "1756390675322",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1",
+      "timestamp": "2025-08-28T14:17:55.322Z",
+      "success": true
+    },
+    {
+      "id": "1756389252177",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+      "timestamp": "2025-08-28T13:54:12.177Z",
+      "success": true
+    },
+    {
+      "id": "1756376738317",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-08-28T10:25:38.317Z",
+      "success": true
+    },
+    {
+      "id": "1756301405707",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+      "timestamp": "2025-08-27T13:30:05.707Z",
+      "success": true
+    },
+    {
+      "id": "1756197600437",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-08-26T08:40:00.437Z",
+      "success": true
+    },
+    {
+      "id": "1756192776168",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-08-26T07:19:36.168Z",
+      "success": true
+    },
+    {
+      "id": "1756192581067",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-08-26T07:16:21.067Z",
+      "success": true
+    },
+    {
+      "id": "1756106228238",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-08-25T07:17:08.238Z",
+      "success": true
+    },
+    {
+      "id": "1756063660038",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+      "timestamp": "2025-08-24T19:27:40.038Z",
+      "success": true
+    },
+    {
+      "id": "1756062802716",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+      "timestamp": "2025-08-24T19:13:22.716Z",
+      "success": true
+    },
+    {
+      "id": "1756047364350",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+      "timestamp": "2025-08-24T14:56:04.350Z",
+      "success": true
+    },
+    {
+      "id": "1756045327169",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+      "timestamp": "2025-08-24T14:22:07.169Z",
+      "success": true
+    },
+    {
+      "id": "1756031703289",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-08-24T10:35:03.289Z",
+      "success": true
+    },
+    {
+      "id": "1756024568371",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+      "timestamp": "2025-08-24T08:36:08.371Z",
+      "success": true
+    },
+    {
+      "id": "1757086025892",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT; Windows NT 10.0; tr-TR) WindowsPowerShell/5.1.26100.5074",
+      "timestamp": "2025-09-05T15:27:05.892Z",
+      "success": false,
+      "reason": "Invalid credentials"
+    },
+    {
+      "id": "1757086229134",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36",
+      "timestamp": "2025-09-05T15:30:29.134Z",
+      "success": true,
+      "reason": "Success"
+    },
+    {
+      "id": "1757087156899",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36",
+      "timestamp": "2025-09-05T15:45:56.899Z",
+      "success": true,
+      "reason": "Success"
+    },
+    {
+      "id": "1757087726634",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36",
+      "timestamp": "2025-09-05T15:55:26.634Z",
+      "success": true,
+      "reason": "Success"
+    },
+    {
+      "id": "1757140265045",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-09-06T06:31:05.045Z",
+      "success": true,
+      "reason": "Success"
+    },
+    {
+      "id": "1757141012134",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36",
+      "timestamp": "2025-09-06T06:43:32.134Z",
+      "success": true,
+      "reason": "Success"
+    },
+    {
+      "id": "1757141112998",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36",
+      "timestamp": "2025-09-06T06:45:12.998Z",
+      "success": true,
+      "reason": "Success"
+    },
+    {
+      "id": "1757143946357",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-09-06T07:32:26.357Z",
+      "success": true,
+      "reason": "Success"
+    },
+    {
+      "id": "1757145106953",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-09-06T07:51:46.953Z",
+      "success": true,
+      "reason": "Success"
+    },
+    {
+      "id": "1757145274183",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-09-06T07:54:34.183Z",
+      "success": true,
+      "reason": "Success"
+    },
+    {
+      "id": "1757869448449",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36",
+      "timestamp": "2025-09-14T17:04:08.449Z",
+      "success": true,
+      "reason": "Success"
+    },
+    {
+      "id": "1757870055506",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36",
+      "timestamp": "2025-09-14T17:14:15.506Z",
+      "success": true,
+      "reason": "Success"
+    },
+    {
+      "id": "1757870810927",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT; Windows NT 10.0; tr-TR) WindowsPowerShell/5.1.26100.6584",
+      "timestamp": "2025-09-14T17:26:50.928Z",
+      "success": false,
+      "reason": "Invalid credentials"
+    },
+    {
+      "id": "1757870862098",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT; Windows NT 10.0; tr-TR) WindowsPowerShell/5.1.26100.6584",
+      "timestamp": "2025-09-14T17:27:42.098Z",
+      "success": false,
+      "reason": "Invalid credentials"
+    },
+    {
+      "id": "1757870913066",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT; Windows NT 10.0; tr-TR) WindowsPowerShell/5.1.26100.6584",
+      "timestamp": "2025-09-14T17:28:33.066Z",
+      "success": false,
+      "reason": "Invalid credentials"
+    },
+    {
+      "id": "1757870963913",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT; Windows NT 10.0; tr-TR) WindowsPowerShell/5.1.26100.6584",
+      "timestamp": "2025-09-14T17:29:23.913Z",
+      "success": true,
+      "reason": "Success"
+    },
+    {
+      "id": "1757872225719",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36",
+      "timestamp": "2025-09-14T17:50:25.719Z",
+      "success": false,
+      "reason": "Invalid credentials"
+    },
+    {
+      "id": "1757872257455",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36",
+      "timestamp": "2025-09-14T17:50:57.455Z",
+      "success": true,
+      "reason": "Success"
+    }
+  ],
+  "failedLogins": [
+    {
+      "id": "1756822431862",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-09-02T14:13:51.862Z",
+      "reason": "Invalid credentials",
+      "success": false
+    },
+    {
+      "id": "1756820687991",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-09-02T13:44:47.991Z",
+      "reason": "Invalid credentials",
+      "success": false
+    },
+    {
+      "id": "1756820624099",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-09-02T13:43:44.099Z",
+      "reason": "Invalid credentials",
+      "success": false
+    },
+    {
+      "id": "1756820620872",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-09-02T13:43:40.872Z",
+      "reason": "Invalid credentials",
+      "success": false
+    },
+    {
+      "id": "1756820610874",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-09-02T13:43:30.875Z",
+      "reason": "Invalid credentials",
+      "success": false
+    },
+    {
+      "id": "1756820419059",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-09-02T13:40:19.059Z",
+      "reason": "Invalid credentials",
+      "success": false
+    },
+    {
+      "id": "1756820385449",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-09-02T13:39:45.449Z",
+      "reason": "Invalid credentials",
+      "success": false
+    },
+    {
+      "id": "1756024553342",
+      "username": "admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "timestamp": "2025-08-24T08:35:53.342Z",
+      "reason": "Invalid credentials",
+      "success": false
+    }
+  ],
+  "lastUpdated": "2025-09-14T18:00:01.455Z",
+  "inactiveSessions": [
+    {
+      "id": "sess_467a40340c0b28107bf23a8075e9fa41",
+      "username": "admin",
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwic2Vzc2lvbklkIjoic2Vzc180NjdhNDAzNDBjMGIyODEwN2JmMjNhODA3NWU5ZmE0MSIsImlhdCI6MTc1NzA4NjIyOSwiZXhwIjoxNzU3MTcyNjI5fQ.V0W8L6slGZ77PBDx7rWjcBcnkQwY5vGG-sq7WUt_LU0",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36",
+      "loginTime": "2025-09-05T15:30:29.127Z",
+      "lastActivity": "2025-09-05T15:31:46.539Z",
+      "expiresAt": "2025-09-05T16:30:29.127Z",
+      "isActive": false,
+      "sessionData": {
+        "loginCount": 1,
+        "lastLogin": "2025-09-05T15:30:29.127Z",
+        "deviceInfo": {
+          "browser": "Chrome",
+          "os": "Linux",
+          "device": "Mobile"
+        }
+      },
+      "logoutTime": "2025-09-05T15:35:29.710Z"
+    },
+    {
+      "id": "1757085546862",
+      "username": "admin",
+      "token": "eyJhbGciOiJIUzI1NiIs...",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36",
+      "loginTime": "2025-09-05T15:19:06.862Z",
+      "lastActivity": "2025-09-05T15:19:06.862Z",
+      "isActive": false,
+      "logoutTime": "2025-09-05T15:36:01.400Z"
+    },
+    {
+      "id": "sess_6f2302b92e3ef46af0292c9eaeb16092",
+      "username": "admin",
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwic2Vzc2lvbklkIjoic2Vzc182ZjIzMDJiOTJlM2VmNDZhZjAyOTJjOWVhZWIxNjA5MiIsImlhdCI6MTc1NzA4NzE1NiwiZXhwIjoxNzU3MTczNTU2fQ.x_trRkJV7fxFMNO3BCHL8qL7vBpzYU2YKsE-3PQOP6U",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36",
+      "loginTime": "2025-09-05T15:45:56.885Z",
+      "lastActivity": "2025-09-05T15:55:19.883Z",
+      "expiresAt": "2025-09-05T16:45:56.885Z",
+      "isActive": false,
+      "sessionData": {
+        "loginCount": 1,
+        "lastLogin": "2025-09-05T15:45:56.885Z",
+        "deviceInfo": {
+          "browser": "Chrome",
+          "os": "Linux",
+          "device": "Mobile"
+        }
+      },
+      "logoutTime": "2025-09-05T15:55:19.885Z"
+    },
+    {
+      "id": "sess_2b853ffb77e944e8fb7d020e5c793420",
+      "username": "admin",
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwic2Vzc2lvbklkIjoic2Vzc18yYjg1M2ZmYjc3ZTk0NGU4ZmI3ZDAyMGU1Yzc5MzQyMCIsImlhdCI6MTc1NzA4NzcyNiwiZXhwIjoxNzU3MTc0MTI2fQ.iVT_2Rh_uXIr9bUv4t8IQ9JQA8_VfgG5VwVcf_Iakd4",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36",
+      "loginTime": "2025-09-05T15:55:26.623Z",
+      "lastActivity": "2025-09-05T15:58:34.410Z",
+      "expiresAt": "2025-09-05T16:55:26.623Z",
+      "isActive": false,
+      "sessionData": {
+        "loginCount": 1,
+        "lastLogin": "2025-09-05T15:55:26.623Z",
+        "deviceInfo": {
+          "browser": "Chrome",
+          "os": "Linux",
+          "device": "Mobile"
+        }
+      },
+      "logoutTime": "2025-09-06T06:35:28.076Z"
+    },
+    {
+      "id": "sess_0e62a535cecc07218fc59de845cde03c",
+      "username": "admin",
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwic2Vzc2lvbklkIjoic2Vzc18wZTYyYTUzNWNlY2MwNzIxOGZjNTlkZTg0NWNkZTAzYyIsImlhdCI6MTc1NzE0MDI2NSwiZXhwIjoxNzU3MjI2NjY1fQ.SoLOHjuWyzH-kVMXm61UwFOMjex3fj7AO8br6E-uY6w",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "loginTime": "2025-09-06T06:31:05.032Z",
+      "lastActivity": "2025-09-06T06:33:30.958Z",
+      "expiresAt": "2025-09-06T07:31:05.032Z",
+      "isActive": false,
+      "sessionData": {
+        "loginCount": 1,
+        "lastLogin": "2025-09-06T06:31:05.032Z",
+        "deviceInfo": {
+          "browser": "Chrome",
+          "os": "Windows",
+          "device": "Desktop"
+        }
+      },
+      "logoutTime": "2025-09-06T06:36:05.889Z"
+    },
+    {
+      "id": "sess_210067b064e9d913354145f23a8d10c4",
+      "username": "admin",
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwic2Vzc2lvbklkIjoic2Vzc18yMTAwNjdiMDY0ZTlkOTEzMzU0MTQ1ZjIzYThkMTBjNCIsImlhdCI6MTc1NzE0MTAxMiwiZXhwIjoxNzU3MjI3NDEyfQ.wg_-ygvcVTwE1l6IB5p0lRy6xbMyD4jzjPiHWWZG0t4",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36",
+      "loginTime": "2025-09-06T06:43:32.130Z",
+      "lastActivity": "2025-09-06T06:45:07.979Z",
+      "expiresAt": "2025-09-06T07:43:32.130Z",
+      "isActive": false,
+      "sessionData": {
+        "loginCount": 1,
+        "lastLogin": "2025-09-06T06:43:32.130Z",
+        "deviceInfo": {
+          "browser": "Chrome",
+          "os": "Linux",
+          "device": "Mobile"
+        }
+      },
+      "logoutTime": "2025-09-06T06:45:07.984Z"
+    },
+    {
+      "id": "sess_899feacb6a1c2e8219ee472cb2068bd8",
+      "username": "admin",
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwic2Vzc2lvbklkIjoic2Vzc184OTlmZWFjYjZhMWMyZTgyMTllZTQ3MmNiMjA2OGJkOCIsImlhdCI6MTc1NzE0MTExMiwiZXhwIjoxNzU3MjI3NTEyfQ.ce8K6_35GKshavOzx0mnSAJcIzIPGMPXAPmeO949rCw",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36",
+      "loginTime": "2025-09-06T06:45:12.988Z",
+      "lastActivity": "2025-09-06T07:05:51.786Z",
+      "expiresAt": "2025-09-06T07:45:12.988Z",
+      "isActive": false,
+      "sessionData": {
+        "loginCount": 1,
+        "lastLogin": "2025-09-06T06:45:12.988Z",
+        "deviceInfo": {
+          "browser": "Chrome",
+          "os": "Linux",
+          "device": "Mobile"
+        }
+      },
+      "logoutTime": "2025-09-06T07:25:00.030Z"
+    },
+    {
+      "id": "sess_51bf858aa9bb86702a33d5173c8832e8",
+      "username": "admin",
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwic2Vzc2lvbklkIjoic2Vzc181MWJmODU4YWE5YmI4NjcwMmEzM2Q1MTczYzg4MzJlOCIsImlhdCI6MTc1NzE0Mzk0NiwiZXhwIjoxNzU3MjMwMzQ2fQ.DWa6awqPRlAMlYnD_cQOF5rproZlo2UrTtIufjzZp9s",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "loginTime": "2025-09-06T07:32:26.352Z",
+      "lastActivity": "2025-09-06T07:36:53.815Z",
+      "expiresAt": "2025-09-06T08:32:26.352Z",
+      "isActive": false,
+      "sessionData": {
+        "loginCount": 1,
+        "lastLogin": "2025-09-06T07:32:26.352Z",
+        "deviceInfo": {
+          "browser": "Chrome",
+          "os": "Windows",
+          "device": "Desktop"
+        }
+      },
+      "logoutTime": "2025-09-06T07:52:06.167Z"
+    },
+    {
+      "id": "sess_e948d2a9838f1979ca3a4d58053ec16d",
+      "username": "admin",
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwic2Vzc2lvbklkIjoic2Vzc19lOTQ4ZDJhOTgzOGYxOTc5Y2EzYTRkNTgwNTNlYzE2ZCIsImlhdCI6MTc1NzE0NTEwNiwiZXhwIjoxNzU3MjMxNTA2fQ.Lo4e2t7f0edMmJG2Z4eBtucp8spzEsCaiHqlGNfQV9A",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "loginTime": "2025-09-06T07:51:46.947Z",
+      "lastActivity": "2025-09-06T07:53:49.336Z",
+      "expiresAt": "2025-09-06T08:51:46.947Z",
+      "isActive": false,
+      "sessionData": {
+        "loginCount": 1,
+        "lastLogin": "2025-09-06T07:51:46.947Z",
+        "deviceInfo": {
+          "browser": "Chrome",
+          "os": "Windows",
+          "device": "Desktop"
+        }
+      },
+      "logoutTime": "2025-09-06T08:12:06.195Z"
+    },
+    {
+      "id": "sess_829bf9bca6f550f0c17a7635f66679b2",
+      "username": "admin",
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwic2Vzc2lvbklkIjoic2Vzc184MjliZjliY2E2ZjU1MGYwYzE3YTc2MzVmNjY2NzliMiIsImlhdCI6MTc1NzE0NTI3NCwiZXhwIjoxNzU3MjMxNjc0fQ.MXB_xbLw-NPRMxbYz9PUPXp1Lrmm1-CYLY6dIBScTS0",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0",
+      "loginTime": "2025-09-06T07:54:34.175Z",
+      "lastActivity": "2025-09-06T07:54:34.310Z",
+      "expiresAt": "2025-09-06T08:54:34.175Z",
+      "isActive": false,
+      "sessionData": {
+        "loginCount": 1,
+        "lastLogin": "2025-09-06T07:54:34.175Z",
+        "deviceInfo": {
+          "browser": "Chrome",
+          "os": "Windows",
+          "device": "Desktop"
+        }
+      },
+      "logoutTime": "2025-09-06T08:12:06.195Z"
+    },
+    {
+      "id": "sess_f7563b71418e13568810fa54d1883955",
+      "username": "admin",
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwic2Vzc2lvbklkIjoic2Vzc19mNzU2M2I3MTQxOGUxMzU2ODgxMGZhNTRkMTg4Mzk1NSIsImlhdCI6MTc1Nzg2OTQ0OCwiZXhwIjoxNzU3OTU1ODQ4fQ.Kq5gnZD8gmJbVkZX3BOB5doNkFnZbkbvcX7IBR3okCk",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36",
+      "loginTime": "2025-09-14T17:04:08.419Z",
+      "lastActivity": "2025-09-14T17:12:16.808Z",
+      "expiresAt": "2025-09-14T18:04:08.419Z",
+      "isActive": false,
+      "sessionData": {
+        "loginCount": 1,
+        "lastLogin": "2025-09-14T17:04:08.419Z",
+        "deviceInfo": {
+          "browser": "Chrome",
+          "os": "Linux",
+          "device": "Mobile"
+        }
+      },
+      "logoutTime": "2025-09-14T17:50:57.449Z"
+    },
+    {
+      "id": "sess_09d2d742c2b5a667381b965e60d60531",
+      "username": "admin",
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwic2Vzc2lvbklkIjoic2Vzc18wOWQyZDc0MmMyYjVhNjY3MzgxYjk2NWU2MGQ2MDUzMSIsImlhdCI6MTc1Nzg3MDA1NSwiZXhwIjoxNzU3OTU2NDU1fQ.9UozHGDen1_EGWWI6mauokGZJSBE_aVSRXCMzvozNFE",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36",
+      "loginTime": "2025-09-14T17:14:15.499Z",
+      "lastActivity": "2025-09-14T17:21:27.134Z",
+      "expiresAt": "2025-09-14T18:14:15.499Z",
+      "isActive": false,
+      "sessionData": {
+        "loginCount": 1,
+        "lastLogin": "2025-09-14T17:14:15.499Z",
+        "deviceInfo": {
+          "browser": "Chrome",
+          "os": "Linux",
+          "device": "Mobile"
+        }
+      },
+      "logoutTime": "2025-09-14T17:53:51.533Z"
+    },
+    {
+      "id": "sess_e95bad8956b6359feeaa052bdc224c70",
+      "username": "admin",
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwic2Vzc2lvbklkIjoic2Vzc19lOTViYWQ4OTU2YjYzNTlmZWVhYTA1MmJkYzIyNGM3MCIsImlhdCI6MTc1Nzg3MDk2MywiZXhwIjoxNzU3OTU3MzYzfQ.xT9dFjh-ig22BCGfnP06QpPszfdTDSkJXaYAU3ySyYo",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT; Windows NT 10.0; tr-TR) WindowsPowerShell/5.1.26100.6584",
+      "loginTime": "2025-09-14T17:29:23.897Z",
+      "lastActivity": "2025-09-14T17:29:23.897Z",
+      "expiresAt": "2025-09-14T18:29:23.897Z",
+      "isActive": false,
+      "sessionData": {
+        "loginCount": 1,
+        "lastLogin": "2025-09-14T17:29:23.897Z",
+        "deviceInfo": {
+          "browser": "Unknown",
+          "os": "Windows",
+          "device": "Desktop"
+        }
+      },
+      "logoutTime": "2025-09-14T17:53:51.533Z"
+    }
+  ]
+}

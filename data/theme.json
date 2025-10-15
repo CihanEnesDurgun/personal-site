@@ -1,0 +1,21 @@
+{
+  "light": {
+    "bg": "#f3f3ec",
+    "panel": "#fafaf8",
+    "ink": "#0b0b0b",
+    "muted": "#6b7280",
+    "line": "#e5e7eb",
+    "accent": "#152bcb"
+  },
+  "dark": {
+    "bg": "#0b0d0f",
+    "panel": "#14171a",
+    "ink": "#e8edf2",
+    "muted": "#9aa4b2",
+    "line": "#2a2f35",
+    "accent": "#152bcb"
+  },
+  "borderRadius": 16,
+  "shadowIntensity": 60,
+  "fontFamily": "Inter"
+}

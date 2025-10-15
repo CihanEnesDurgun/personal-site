@@ -1,0 +1,465 @@
+/* ===== Blog sayfası: filtre barı ve etiket çipleri ===== */
+
+/* ========== SPIN ANIMATION ========== */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Blog sayfası için özel padding */
+#main-content {
+  padding-top: 112px;
+}
+
+.filterbar{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  margin:14px 0 6px;
+}
+
+#blogSearch{
+  width:100%;
+  max-width:980px;
+  padding:12px 14px;
+  border-radius:12px;
+  border:1px solid var(--line);
+  background:var(--panel);
+  color:var(--ink);
+  box-shadow:var(--shadow);
+  outline:none;
+  font-size: 16px; /* iOS zoom'u önlemek için */
+}
+#blogSearch:focus{
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+}
+
+.tags{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.chip{
+  padding:8px 12px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:color-mix(in srgb, var(--bg) 75%, #fff);
+  cursor:pointer;
+  user-select:none;
+  font-weight:500;
+  font-size:0.875rem;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  letter-spacing: -0.01em;
+  transition:transform .12s, border-color .2s, background .2s;
+  min-height: 44px; /* Touch target için */
+  display: flex;
+  align-items: center;
+  color: var(--ink) !important;
+  text-decoration: none !important;
+}
+.chip:hover{ transform:translateY(-1px) }
+.chip.active{
+  background:color-mix(in srgb, var(--accent) 20%, var(--panel));
+  border-color:color-mix(in srgb, var(--accent) 60%, var(--line));
+  color: var(--ink) !important;
+}
+
+/* ===== BLOG KARTLARI İÇİN ÖZEL STİLLER ===== */
+
+/* Blog sayfasındaki grid için özel kurallar */
+#blogResults.grid {
+  display: grid;
+  gap: var(--grid-gap);
+  margin-top: 22px;
+  grid-template-columns: 1fr;
+  align-items: stretch;
+}
+
+/* Blog kartları için özel stiller */
+#blogResults .card {
+  position: relative;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  transition: transform .18s, box-shadow .18s, border-color .2s;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: var(--grid-card-h);
+}
+
+#blogResults .card:hover {
+  transform: translateY(-6px);
+}
+
+/* Blog kartları için link stilleri */
+#blogResults .card-link {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  color: inherit;
+  text-decoration: none;
+  min-height: 44px;
+}
+
+#blogResults .card-link:focus {
+  outline: none;
+}
+
+#blogResults .card-link:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, #000);
+  outline-offset: -4px;
+}
+
+/* Blog kartları için thumbnail */
+#blogResults .card-link .thumb {
+  width: 100%;
+  height: var(--grid-thumb-h);
+  object-fit: cover;
+  flex: 0 0 auto;
+  display: block;
+}
+
+/* Blog kartları için body */
+#blogResults .card-link .card-body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+}
+
+/* Blog kartları için başlık */
+#blogResults .card-link h3 {
+  margin: 4px 0 6px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Blog kartları için meta bilgiler */
+#blogResults .card-link .meta {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0 0 6px;
+}
+
+/* Blog kartları için özet */
+#blogResults .card-link p {
+  margin-top: 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ===== MOBİL OPTİMİZASYONLAR ===== */
+
+/* Küçük ekranlar için grid düzenlemeleri */
+@media (max-width: 679.98px) {
+  #main-content {
+    padding-top: 80px; /* Mobilde daha da az padding */
+  }
+  
+  .filterbar {
+    gap: 6px;
+    margin: 8px 0 2px;
+  }
+  
+  #blogSearch {
+    padding: 12px 14px;
+    font-size: 16px;
+    min-height: 48px; /* Touch target için */
+  }
+  
+  .chip {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    letter-spacing: -0.01em;
+    min-height: 44px; /* Touch target için */
+    color: var(--ink) !important;
+    text-decoration: none !important;
+  }
+  
+  .tags {
+    gap: 4px;
+  }
+  
+  /* Mobilde blog grid'i tek kolon yap */
+  #blogResults.grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px; /* Mobilde daha az gap */
+    margin-top: 16px;
+  }
+  
+  /* ===== MOBİL İÇİN ÖZEL KART TASARIMI ===== */
+  /* Mobilde kartları yatay düzende, kompakt yap */
+  #blogResults .card {
+    height: auto !important;
+    border-radius: 12px; /* Mobilde daha küçük radius */
+    display: flex !important;
+    flex-direction: row !important;
+    min-height: 120px; /* Mobilde sabit yükseklik */
+    max-height: 140px;
+  }
+  
+  #blogResults .card-link {
+    position: relative !important; /* Absolute yerine relative */
+    inset: auto !important;
+    display: flex !important;
+    flex-direction: row !important;
+    height: 100% !important;
+    padding: 0 !important;
+  }
+  
+  /* Mobilde thumbnail'ı sol tarafa al, küçült */
+  #blogResults .card-link .thumb {
+    width: 120px !important; /* Sabit genişlik */
+    height: 100% !important; /* Tam yükseklik */
+    flex: 0 0 120px !important;
+    object-fit: cover;
+    border-radius: 12px 0 0 12px !important;
+  }
+  
+  /* Mobilde body'yi sağ tarafa al */
+  #blogResults .card-link .card-body {
+    flex: 1 1 auto !important;
+    padding: 12px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+  }
+  
+  /* Mobilde başlığı küçült */
+  #blogResults .card-link h3 {
+    font-size: 0.95rem !important;
+    margin: 0 0 4px !important;
+    line-height: 1.3 !important;
+    -webkit-line-clamp: 2 !important;
+    line-clamp: 2 !important;
+    display: -webkit-box !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+  }
+  
+  /* Mobilde meta bilgileri küçült */
+  #blogResults .card-link .meta {
+    font-size: 9px !important;
+    margin: 0 0 4px !important;
+    color: var(--muted);
+  }
+  
+  /* Mobilde özet metni küçült */
+  #blogResults .card-link p {
+    font-size: 0.8rem !important;
+    margin: 0 !important;
+    line-height: 1.4 !important;
+    -webkit-line-clamp: 2 !important;
+    line-clamp: 2 !important;
+    display: -webkit-box !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+  }
+  
+  /* Mobilde section başlığını optimize et */
+  .section-head h2 {
+    font-size: 1.5rem;
+    margin-bottom: 12px;
+  }
+  
+  .section-head p {
+    font-size: 0.9rem;
+    margin: 0;
+  }
+  
+  /* Mobilde wrap padding'ini azalt */
+  .wrap {
+    padding: 0 12px;
+  }
+  
+  /* ===== BLOG BAŞLIĞI MOBİL OPTİMİZASYONU ===== */
+  /* Blog sayfasındaki section-head'ı mobilde düzenle */
+  .section-head {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+    text-align: left !important;
+  }
+  
+  .section-head h2 {
+    margin-bottom: 8px !important;
+  }
+  
+  .section-head h2::after {
+    left: 0 !important;
+    bottom: -4px !important;
+    width: 48px !important;
+    height: 2px !important;
+  }
+}
+
+/* Çok küçük ekranlar için ek optimizasyonlar */
+@media (max-width: 479.98px) {
+  #main-content {
+    padding-top: 70px;
+  }
+  
+  .wrap {
+    padding: 0 8px;
+  }
+  
+  .section-head h2 {
+    font-size: 1.25rem;
+    margin-bottom: 6px;
+  }
+  
+  .section-head p {
+    font-size: 0.85rem;
+  }
+  
+  #blogSearch {
+    padding: 10px 12px;
+    font-size: 16px;
+  }
+  
+  .chip {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    letter-spacing: -0.01em;
+    min-height: 40px;
+    color: var(--ink) !important;
+    text-decoration: none !important;
+  }
+  
+  /* Çok küçük ekranlarda daha kompakt */
+  #blogResults.grid {
+    gap: 8px;
+    margin-top: 12px;
+  }
+  
+  /* Çok küçük ekranlarda kartları daha da küçült */
+  #blogResults .card {
+    min-height: 100px !important;
+    max-height: 120px !important;
+  }
+  
+  #blogResults .card-link .thumb {
+    width: 100px !important;
+    flex: 0 0 100px !important;
+  }
+  
+  #blogResults .card-link .card-body {
+    padding: 8px !important;
+  }
+  
+  #blogResults .card-link h3 {
+    font-size: 0.9rem !important;
+    margin: 0 0 3px !important;
+  }
+  
+  #blogResults .card-link p {
+    font-size: 0.75rem !important;
+  }
+  
+  #blogResults .card-link .meta {
+    font-size: 8px !important;
+    margin: 0 0 3px !important;
+  }
+  
+  /* Çok küçük ekranlarda daha az margin */
+  .filterbar {
+    margin: 6px 0 1px;
+    gap: 4px;
+  }
+  
+  .tags {
+    gap: 3px;
+  }
+}
+
+/* Tablet optimizasyonları */
+@media (min-width: 680px) and (max-width: 1023.98px) {
+  #main-content {
+    padding-top: 90px;
+  }
+  
+  .filterbar {
+    gap: 8px;
+  }
+  
+  #blogSearch {
+    padding: 12px 14px;
+  }
+  
+  /* Tablet'te 2 kolon */
+  #blogResults.grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+}
+
+/* Desktop'ta 3 kolon */
+@media (min-width: 1040px) {
+  #blogResults.grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+}
+
+/* Touch cihazlar için hover efektlerini optimize et */
+@media (hover: none) and (pointer: coarse) {
+  .chip:hover {
+    transform: none;
+  }
+  
+  #blogResults .card:hover {
+    transform: none;
+  }
+  
+  /* Touch cihazlarda active state ekle */
+  .chip:active {
+    transform: scale(0.95);
+    background: color-mix(in srgb, var(--accent) 10%, var(--panel));
+  }
+  
+  #blogResults .card:active {
+    transform: scale(0.98);
+  }
+}
+
+/* iOS Safari için özel optimizasyonlar */
+@supports (-webkit-touch-callout: none) {
+  /* iOS'ta input zoom'u önle */
+  input, textarea, select {
+    font-size: 16px;
+  }
+  
+  /* iOS'ta smooth scroll'u optimize et */
+  html {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* iOS'ta card'ları optimize et */
+  #blogResults .card {
+    transform: translateZ(0);
+  }
+}
+
+/* Android Chrome için özel optimizasyonlar */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+  /* Android'de touch target'ları optimize et */
+  .btn, .chip, .card-link {
+    -webkit-tap-highlight-color: transparent;
+  }
+}

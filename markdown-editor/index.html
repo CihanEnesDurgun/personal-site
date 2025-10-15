@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown Editörü - Güncellendi</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="../images/system/cedlogo (2).png" />
+
+    <!-- Google Fonts: Montserrat & Nunito Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;700;800;900&family=Nunito+Sans:opsz,wght@6..12,400;6..12,500;6..12,600;6..12,700&display=swap" rel="stylesheet">
+
+    <!-- Markdown dönüştürücü (CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <!-- Editör özel stiller (önce yükle) -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Global temel stiller (sonra yükle) -->
+    <link href="../styles.css" rel="stylesheet" />
+  </head>
+<body class="antialiased">
+      <!-- Sol Üst Admin Butonu -->
+      <div class="top-left-buttons">
+    <a href="../admin/index.html" class="admin-fixed-button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5"></path>
+            <path d="M12 19l-7-7 7-7"></path>
+        </svg>
+        Admin Paneli
+    </a>
+                </div>
+                
+      <!-- Sağ Üst Butonlar -->
+      <div class="top-right-buttons">
+        <!-- Kaydetme Butonları -->
+        <button onclick="showBlogSaveForm()" class="top-save-btn" title="Blog Kaydet">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+            <polyline points="17,21 17,13 7,13 7,21"></polyline>
+            <polyline points="7,3 7,8 15,8"></polyline>
+                            </svg>
+          Blog Kaydet
+                            </button>
+        
+        <button onclick="showRawMarkdownPreview()" class="top-save-btn secondary" title="MD Önizle">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14,2 14,8 20,8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10,9 9,9 8,9"></polyline>
+                                </svg>
+          MD Önizle
+                            </button>
+        
+        <!-- Tema Butonu - Site tasarımı ile aynı -->
+        <button id="themeToggle" class="theme-chip" aria-label="Tema değiştir" title="Tema değiştir">
+          <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
+            <path class="sun-icon" d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM18.894 6.166a.75.75 0 00-1.06-1.06l-1.591 1.59a.75.75 0 101.06 1.061l1.591-1.59zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM17.834 18.894a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 10-1.061 1.06l1.59 1.591zM12 18a.75.75 0 01.75.75V21a.75.75 0 01-1.5 0v-2.25A.75.75 0 0112 18zM7.758 17.303a.75.75 0 00-1.061-1.06l-1.591 1.59a.75.75 0 001.06 1.061l1.591-1.59zM6 12a.75.75 0 01-.75.75H3a.75.75 0 010-1.5h2.25A.75.75 0 016 12zM6.697 7.757a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 00-1.061 1.06l1.59 1.591z"/>
+            <path class="moon-icon" style="display: none;" d="M9.528 1.718a.75.75 0 01.162.819A8.97 8.97 0 009 6a9 9 0 009 9 8.97 8.97 0 003.463-.69.75.75 0 01.981.98 10.503 10.503 0 01-9.694 6.46c-5.799 0-10.5-4.701-10.5-10.5 0-4.368 2.667-8.112 6.46-9.694a.75.75 0 01.818.162z"/>
+                                </svg>
+                            </button>
+                </div>
+                
+    <!-- Ana Konteyner -->
+    <div class="editor-layout">
+      <!-- Sol Toolbar -->
+      <div class="sidebar-toolbar">
+        <div class="toolbar-group">
+          <div class="group-label">FORMAT</div>
+          <button onclick="formatText('bold')" class="sidebar-btn" title="Kalın (Ctrl+B)">
+            <strong>B</strong>
+          </button>
+          <button onclick="formatText('italic')" class="sidebar-btn" title="İtalik (Ctrl+I)">
+            <em>I</em>
+          </button>
+          <button onclick="formatText('underline')" class="sidebar-btn" title="Altı Çizili (Ctrl+U)">
+            <u>U</u>
+          </button>
+          <button onclick="formatText('strikethrough')" class="sidebar-btn" title="Üstü Çizili">
+            <s>~~</s>
+          </button>
+        </div>
+                    
+        <div class="toolbar-group">
+          <div class="group-label">BAŞLIK</div>
+          <button onclick="formatText('h1')" class="sidebar-btn" title="Başlık 1">H1</button>
+          <button onclick="formatText('h2')" class="sidebar-btn" title="Başlık 2">H2</button>
+          <button onclick="formatText('h3')" class="sidebar-btn" title="Başlık 3">H3</button>
+        </div>
+                    
+        <div class="toolbar-group">
+          <div class="group-label">EKLE</div>
+          <button onclick="formatText('link')" class="sidebar-btn" title="Link">🔗</button>
+          <button onclick="openImageModal()" class="sidebar-btn" title="Görsel Ekle">🖼️</button>
+          <button onclick="formatText('list')" class="sidebar-btn" title="Liste">•</button>
+          <button onclick="formatText('orderedList')" class="sidebar-btn" title="Numaralı Liste">1.</button>
+          <button onclick="formatText('code')" class="sidebar-btn" title="Kod">{ }</button>
+          <button onclick="formatText('blockquote')" class="sidebar-btn" title="Alıntı">"</button>
+          <button onclick="formatText('hr')" class="sidebar-btn" title="Yatay Çizgi">—</button>
+        </div>
+                    
+        <div class="toolbar-group">
+          <div class="group-label">GÖRÜNÜM</div>
+          <button onclick="setViewMode('edit')" class="sidebar-btn view-btn active" data-mode="edit" title="Düzenleme">✏️</button>
+          <button onclick="setViewMode('preview')" class="sidebar-btn view-btn" data-mode="preview" title="Önizleme">👁️</button>
+        </div>
+      </div>
+                    
+      <!-- Ana İçerik Alanı -->
+      <div class="main-content">
+        <div class="wrap" style="padding-top: -15px; padding-bottom: 48px;">
+          <main class="max-w-3xl mx-auto">
+            <article>
+              <!-- Yazı Başlığı ve Meta Bilgileri (Post sayfası sırası: önce başlık) -->
+              <div class="mb-8 text-center" style="margin: 0 !important; padding: 0 !important; margin-bottom: 8px !important;">
+                <h1 id="postTitle" contenteditable="true" onclick="this.focus()" style="margin: 0 !important; padding: 8px 16px !important;">Yeni Blog Yazısı</h1>
+                <div class="flex justify-center items-center space-x-4" style="margin: 0 !important;">
+                  <span>Yazar: Cihan Enes Durgun</span>
+                  <span>•</span>
+                  <span id="currentDate">14 Aralık 2024</span>
+                  <span>•</span>
+                  <span id="readingTime">2 dakika</span>
+                </div>
+              </div>
+                    
+              <!-- Ana Görsel (Post sayfası sırası: başlıktan sonra hero image) -->
+              <figure id="postHero" style="margin: 8px 0 2rem 0 !important; padding: 0 !important; text-align: center !important;">
+                <div id="coverPhotoContainer" class="cover-photo-container">
+                  <img id="heroImg" 
+                       src="https://placehold.co/1200x600/84CC16/FFFFFF?text=Kapak+Fotoğrafı+Ekle" 
+                       alt="Kapak fotoğrafı ekle" 
+                       onerror="this.onerror=null;this.src='https://placehold.co/1200x600/cccccc/ffffff?text=Görsel+Yüklenemedi';">
+                  
+                  <!-- Kapak Fotoğrafı Yükleme Butonları -->
+                  <div class="cover-photo-actions" id="coverPhotoActions">
+                    <button type="button" class="cover-action-btn" onclick="openCoverGallery()">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 16V4c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2zm-11-4l2.03 2.71L16 11l4 5H8l3-4zM2 6v14c0 1.1.9 2 2 2h14v-2H4V6H2z"/>
+                      </svg>
+                      Galeriden Seç
+                    </button>
+                    <button type="button" class="cover-action-btn" onclick="openCoverUpload()">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                      </svg>
+                      Dosya Yükle
+                    </button>
+                    <input type="file" id="coverFileInput" accept="image/*" style="display: none;" onchange="handleCoverUpload(this.files)">
+                  </div>
+                </div>
+                <figcaption id="heroCaption" contenteditable="true" onclick="this.focus()" placeholder="Kapak fotoğrafı açıklaması...">Görsel açıklaması</figcaption>
+              </figure>
+                    
+              <!-- Yazı İçeriği - Tam genişlik için max-width container dışında -->
+              <div id="postContent" class="blog-content">
+                <!-- Edit Mode -->
+                <div class="editor-section edit-mode" id="editMode">
+                  <div class="editor-content blog-content" id="editorContent" contenteditable="true" placeholder="Buraya yazmaya başlayın...">
+                    <!-- Welcome content buraya yüklenecek -->
+                  </div>
+                </div>
+                
+                <!-- Preview Mode -->
+                <div class="editor-section preview-mode" id="previewMode" style="display: none;">
+                  <div class="preview-content blog-content" id="livePreviewContent"></div>
+                </div>
+              </div>
+            </article>
+          </main>
+        </div>
+        
+        <!-- Alt Bilgi Çubuğu -->
+        <div class="editor-stats">
+          <div class="stats-container">
+            <div class="stats-left">
+              <span class="stat-item" id="wordCount">0 sözcük</span>
+              <span class="stat-item" id="charCount">0 karakter</span>
+              <span class="stat-item" id="charCountNoSpaces">0 karakter (boşluksuz)</span>
+              <span class="stat-item" id="paragraphCount">0 paragraf</span>
+                </div>
+            <div class="stats-right">
+              <span class="stat-item" id="readingTimeStats">~0 dk okuma</span>
+              <span class="stat-item" id="fontInfo">Font: Inter, 18px</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Post Form Modal -->
+    <div id="postFormModal" class="post-form-modal">
+        <div class="post-form-content">
+            <div class="post-form-header">
+                <h3>📝 Blog Yazısı Bilgileri</h3>
+                <button class="post-form-close" onclick="closePostForm()">&times;</button>
+            </div>
+            
+            <form id="postForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="modalPostTitle">Başlık <span style="color: var(--muted); font-size: 0.9em;">(Min: 3 karakter)</span></label>
+                        <input type="text" id="modalPostTitle" placeholder="Blog yazısının başlığı" required>
+                        <div id="titleCounter" style="font-size: 0.85em; color: var(--muted); margin-top: 4px;"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="postSlug">URL Slug</label>
+                        <input type="text" id="postSlug" placeholder="url-slug-formatinda" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="postExcerpt">Özet <span style="color: var(--muted); font-size: 0.9em;">(Min: 10 karakter)</span></label>
+                    <textarea id="postExcerpt" rows="3" placeholder="Blog yazısının kısa özeti" required></textarea>
+                    <div id="excerptCounter" style="font-size: 0.85em; color: var(--muted); margin-top: 4px;"></div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="postDate">Tarih</label>
+                        <input type="date" id="postDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="postTags">Etiketler (virgülle ayırın)</label>
+                        <input type="text" id="postTags" placeholder="ESP32, RC, Wireless">
+                    </div>
+                </div>
+                
+                
+                <div class="form-actions">
+                    <button type="button" class="form-btn secondary" onclick="closePostForm()">İptal</button>
+                    <button type="button" class="form-btn primary" onclick="submitPost()">Taslak Olarak Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Markdown Preview Modal -->
+    <div class="preview-modal" id="previewModal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>📄 Markdown Önizleme</h3>
+                <button onclick="closePreviewModal()" class="close-btn">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="markdown-preview-container">
+                    <textarea id="markdownOutput" readonly class="markdown-textarea" placeholder="Markdown içeriği burada görünecek..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="modal-buttons">
+                    <button onclick="copyMarkdown()" class="copy-btn">📋 Kopyala</button>
+                    <button onclick="closePreviewModal()">Kapat</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Save Indicator -->
+    <div id="saveIndicator" class="save-indicator">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 6L9 17l-5-5"></path>
+        </svg>
+        Kaydedildi!
+    </div>
+
+    <!-- Cover Photo Gallery Modal -->
+    <div id="coverGalleryModal" class="cover-gallery-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🖼️ Kapak Fotoğrafı Seç</h3>
+                <button class="modal-close" onclick="closeCoverGallery()">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="gallery-folder-selector">
+                    <select id="coverGalleryFolderSelect" class="form-select">
+                        <option value="blog-covers">Blog Kapak Resimleri</option>
+                        <option value="blog-content">Blog İçerik Resimleri</option>
+                        <option value="profile">Profil Fotoğrafları</option>
+                        <option value="system">Sistem İkonları</option>
+                    </select>
+                </div>
+                <div class="gallery-grid" id="coverGalleryGrid">
+                    <!-- Gallery images will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Insert Modal - Simplified -->
+    <div id="imageInsertModal" class="simple-image-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🖼️ Görsel Ekle</h3>
+                <button class="modal-close" onclick="closeImageModal()">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <!-- Mode Selection -->
+                <div class="mode-selection">
+                    <button id="galleryModeBtn" class="mode-btn active" onclick="setImageMode('gallery')">
+                        <svg viewBox="0 0 24 24" width="20" height="20">
+                            <path d="M22 16V4c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2zm-11-4l2.03 2.71L16 11l4 5H8l3-4zM2 6v14c0 1.1.9 2 2 2h14v-2H4V6H2z"/>
+                        </svg>
+                        Galeriden Seç
+                    </button>
+                    <button id="uploadModeBtn" class="mode-btn" onclick="setImageMode('upload')">
+                        <svg viewBox="0 0 24 24" width="20" height="20">
+                            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                        </svg>
+                        Bilgisayardan Yükle
+                    </button>
+                </div>
+
+                <!-- Gallery Mode -->
+                <div id="galleryMode" class="image-mode active">
+                    <div class="gallery-folder-selector">
+                        <select id="galleryFolderSelect" class="form-select">
+                            <option value="all">Tüm Klasörler</option>
+                            <option value="blog-content">Blog İçerik Resimleri</option>
+                            <option value="blog-covers">Blog Kapak Resimleri</option>
+                            <option value="profile">Profil Fotoğrafları</option>
+                            <option value="system">Sistem İkonları</option>
+                        </select>
+                    </div>
+                    <div class="gallery-grid" id="galleryGrid">
+                        <!-- Gallery images will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Upload Mode -->
+                <div id="uploadMode" class="image-mode">
+                    <div class="upload-area" id="imageUploadArea">
+                        <div class="upload-content">
+                            <div class="upload-icon">📁</div>
+                            <h4>Resim Yükle</h4>
+                            <p>Resimleri buraya sürükleyip bırakın veya seçmek için tıklayın</p>
+                            <input type="file" id="imageFileInput" accept="image/*" style="display: none;">
+                            <button type="button" class="btn btn-primary" onclick="document.getElementById('imageFileInput').click()">
+                                Resim Seç
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Image Preview & Description -->
+                <div class="image-preview-section" id="imagePreviewSection" style="display: none;">
+                    <div class="preview-header">
+                        <h4>Seçilen Görsel</h4>
+                    </div>
+                    <div class="preview-content">
+                        <img id="previewImage" src="" alt="Önizleme" class="preview-img">
+                        <div class="image-description">
+                            <label for="imageDescription">Açıklama (Alt Metin):</label>
+                            <input type="text" id="imageDescription" placeholder="Görselin açıklamasını yazın..." class="description-input">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeImageModal()">İptal</button>
+                <button type="button" class="btn btn-primary" id="insertImageBtn" onclick="insertSelectedImage()" disabled>
+                    Görseli Ekle
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="wrap">
+            <div class="footer-content">
+                <div class="footer-left">
+                    © <span id="year"></span> <span id="owner">Cihan Enes Durgun</span>. Tüm hakları saklıdır.
+                </div>
+                <div class="footer-right">
+                    <span class="version-info">v2.0.4</span>
+                    <a href="../rss.xml" class="footer-link" aria-label="RSS Feed">RSS</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

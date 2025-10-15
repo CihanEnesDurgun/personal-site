@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Session Monitor - Admin Panel</title>
+    <link rel="stylesheet" href="admin.css">
+    <style>
+        .session-monitor {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            color: var(--muted);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .sessions-table {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .table-header {
+            background: var(--bg);
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--line);
+        }
+        
+        .table-header h3 {
+            margin: 0;
+            color: var(--ink);
+        }
+        
+        .table-content {
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 1rem 1.5rem;
+            text-align: left;
+            border-bottom: 1px solid var(--line);
+        }
+        
+        th {
+            background: var(--bg);
+            color: var(--muted);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        td {
+            color: var(--ink);
+        }
+        
+        .session-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .status-active {
+            background: rgba(34, 197, 94, 0.1);
+            color: #16a34a;
+        }
+        
+        .status-inactive {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+        }
+        
+        .device-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        
+        .device-browser {
+            font-weight: 500;
+            color: var(--ink);
+        }
+        
+        .device-os {
+            font-size: 0.8rem;
+            color: var(--muted);
+        }
+        
+        .refresh-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .refresh-btn:hover {
+            background: var(--accent);
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            color: var(--muted);
+        }
+        
+        .no-sessions {
+            text-align: center;
+            padding: 3rem;
+            color: var(--muted);
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-layout">
+        <header class="admin-header">
+            <div class="header-left">
+                <h1>Session Monitor</h1>
+            </div>
+            <div class="header-right">
+                <button class="refresh-btn" onclick="refreshData()">
+                    🔄 Yenile
+                </button>
+            </div>
+        </header>
+
+        <main class="session-monitor">
+            <!-- Statistics Cards -->
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalActive">-</div>
+                    <div class="stat-label">Aktif Session</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="usersOnline">-</div>
+                    <div class="stat-label">Online Kullanıcı</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalInactive">-</div>
+                    <div class="stat-label">Pasif Session</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="recentLogins">-</div>
+                    <div class="stat-label">Son Girişler</div>
+                </div>
+            </div>
+
+            <!-- Active Sessions Table -->
+            <div class="sessions-table">
+                <div class="table-header">
+                    <h3>Aktif Session'lar</h3>
+                </div>
+                <div class="table-content">
+                    <div id="sessionsTable">
+                        <div class="loading">Yükleniyor...</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="auth.js"></script>
+    <script>
+        // Initialize session monitor
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadSessionData();
+            
+            // Auto-refresh every 30 seconds
+            setInterval(loadSessionData, 30000);
+        });
+
+        async function loadSessionData() {
+            try {
+                const response = await fetch('/api/sessions/stats', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to load session data');
+                }
+
+                const data = await response.json();
+                updateStats(data.stats);
+                updateSessionsTable(data.stats);
+                
+            } catch (error) {
+                console.error('Error loading session data:', error);
+                document.getElementById('sessionsTable').innerHTML = 
+                    '<div class="no-sessions">Session verileri yüklenemedi</div>';
+            }
+        }
+
+        function updateStats(stats) {
+            document.getElementById('totalActive').textContent = stats.totalActive || 0;
+            document.getElementById('usersOnline').textContent = stats.usersOnline || 0;
+            document.getElementById('totalInactive').textContent = stats.totalInactive || 0;
+            document.getElementById('recentLogins').textContent = stats.recentLogins ? stats.recentLogins.length : 0;
+        }
+
+        function updateSessionsTable(stats) {
+            const tableContainer = document.getElementById('sessionsTable');
+            
+            if (!stats.sessionsByUser || Object.keys(stats.sessionsByUser).length === 0) {
+                tableContainer.innerHTML = '<div class="no-sessions">Aktif session bulunamadı</div>';
+                return;
+            }
+
+            const tableHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Kullanıcı</th>
+                            <th>Session Sayısı</th>
+                            <th>Son Aktivite</th>
+                            <th>Durum</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${Object.entries(stats.sessionsByUser).map(([username, count]) => `
+                            <tr>
+                                <td>
+                                    <div class="device-info">
+                                        <div class="device-browser">${username}</div>
+                                    </div>
+                                </td>
+                                <td>${count}</td>
+                                <td>${new Date().toLocaleString('tr-TR')}</td>
+                                <td>
+                                    <span class="session-status status-active">
+                                        <span class="status-dot"></span>
+                                        Aktif
+                                    </span>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            tableContainer.innerHTML = tableHTML;
+        }
+
+        function refreshData() {
+            loadSessionData();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+[
+  {
+    "slug": "headtracker-imudan-stabil-takip",
+    "title": "Headtracker: IMU'dan Stabil Takip",
+    "excerpt": "ESP-NOW protokolü ile cihazlar arası doğrudan iletişim ve IMU tabanlı headtracker sistemi hakkında detaylı rehber.",
+    "date": "2024-12-14",
+    "cover": "images/blog-covers/elektronikSema.png",
+    "tags": [
+      "esp32",
+      "imu",
+      "headtracker",
+      "esp-now",
+      "elektronik"
+    ],
+    "featured": true,
+    "status": "published",
+    "publishDate": "2024-12-14T10:00:00.000Z",
+    "createdAt": "2024-12-14T10:00:00.000Z",
+    "updatedAt": "2025-10-01T11:54:03.228Z"
+  }
+]

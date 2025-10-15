@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Cihan Enes Durgun - İHA, Kablosuz Haberleşme ve Gömülü Sistemler</title>
+    <description>Meraklı Bir Mühendisin Blogu: Teknoloji, Kişisel Gelişim ve Hayata Dair Düşünceler. İHA, kablosuz haberleşme ve gömülü sistemler üzerine teknik notlar, proje günlükleri ve deneyler</description>
+    <link>https://cihanenesdurgun.com</link>
+    <atom:link href="https://cihanenesdurgun.com/rss.xml" rel="self" type="application/rss+xml" />
+    <language>tr</language>
+    <lastBuildDate>Wed, 15 Oct 2025 11:55:29 GMT</lastBuildDate>
+    
+        <item>
+      <title>Headtracker: IMU'dan Stabil Takip</title>
+      <description>ESP-NOW protokolü ile cihazlar arası doğrudan iletişim ve IMU tabanlı headtracker sistemi hakkında detaylı rehber.</description>
+      <link>https://cihanenesdurgun.com/post.html?slug=headtracker-imudan-stabil-takip</link>
+      <guid>https://cihanenesdurgun.com/post.html?slug=headtracker-imudan-stabil-takip</guid>
+      <pubDate>Sat, 14 Dec 2024 00:00:00 GMT</pubDate>
+      <category>esp32</category>
+      <category>imu</category>
+      <category>headtracker</category>
+      <category>esp-now</category>
+      <category>elektronik</category>
+    </item>
+  </channel>
+</rss>

@@ -1,0 +1,1087 @@
+/* ====== Tema değişkenleri ====== */
+:root{
+  /* Light theme colors */
+  --bg:#f8f8f6; --panel:#fafaf8; --ink:#0b0b0b; --muted:#6b7280; --line:#e5e7eb;
+  --accent:#84CC16;
+  --radius:16px; --wrap:1100px;
+  --shadow:0 10px 24px rgba(0,0,0,.06);
+  
+  /* Dark theme colors */
+  --dark-bg:#0b0d0f; --dark-panel:#14171a; --dark-ink:#e8edf2; --dark-muted:#9aa4b2; --dark-line:#2a2f35;
+  --dark-accent:#84CC16;
+
+  /* Kart ölçüleri (grid’ler için ortak) */
+  --grid-card-h: clamp(420px, 36vw, 480px);
+  --grid-thumb-h: clamp(180px, 16vw, 220px);
+  --grid-gap: 20px;
+}
+/* Dark theme styles */
+:root.dark{
+  --bg:var(--dark-bg); --panel:var(--dark-panel); --ink:var(--dark-ink); --muted:var(--dark-muted); --line:var(--dark-line);
+  --accent:var(--dark-accent); --shadow:0 12px 28px rgba(0,0,0,.35);
+  --radius:16px; --wrap:1100px;
+  
+  /* Kart ölçüleri (grid'ler için ortak) */
+  --grid-card-h: clamp(420px, 36vw, 480px);
+  --grid-thumb-h: clamp(180px, 16vw, 220px);
+  --grid-gap: 20px;
+}
+
+/* Smooth transitions for theme changes */
+* {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0}
+html{scroll-behavior:smooth}
+body{
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  background:var(--bg); color:var(--ink); line-height:1.65;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+}
+.wrap{max-width:var(--wrap); margin:auto; padding:0 20px}
+.section{padding:56px 0}
+h1,h2,h3{line-height:1.2; margin:0 0 .6rem}
+h1{font-size:clamp(28px,3.6vw,42px)}
+h2{font-size:clamp(22px,2.6vw,30px)}
+.muted{color:var(--muted)}
+
+/* ====== Progress + ToTop ====== */
+#progress{
+  position:fixed; inset:0 0 auto 0; height:3px; z-index:90;
+  background:linear-gradient(90deg, var(--accent), #22c55e);
+  transform-origin:0 50%; transform:scaleX(0);
+}
+#toTop{
+  position:fixed; right:20px; bottom:20px; z-index:90;
+  width:48px; height:48px; display:grid; place-items:center;
+  border:1px solid var(--line); background:color-mix(in srgb, var(--accent) 16%, var(--panel));
+  border-radius:50%; cursor:pointer; opacity:0; pointer-events:none;
+  transition:all .3s cubic-bezier(0.4, 0, 0.2, 1); 
+  box-shadow:0 8px 24px rgba(0,0,0,.12);
+  color:var(--ink);
+}
+#toTop.show{opacity:1; pointer-events:auto; transform:translateY(0)}
+#toTop:hover{
+  transform:translateY(-4px) scale(1.05);
+  box-shadow:0 12px 32px rgba(0,0,0,.16);
+  background:color-mix(in srgb, var(--accent) 24%, var(--panel));
+}
+#toTop svg{
+  width:20px; height:20px; fill:currentColor;
+  transition:transform .2s ease;
+}
+#toTop:hover svg{
+  transform:translateY(-1px);
+}
+
+@supports not (background: color-mix(in srgb, #000 10%, #fff)) {
+  #toTop{ background:#f0f7e6 }
+  .pill-nav{ background:rgba(255,255,255,.7) }
+  :root.dark .pill-nav{ background:#14171a }
+  :root.dark #toTop{ background:#1b1f24 }
+  .cta{ background:linear-gradient(180deg,#f0fdf4,#f8fafc) }
+  :root.dark .cta{ background:linear-gradient(180deg,#0f1411,#0e1216) }
+  .btn:hover{ box-shadow: 0 8px 24px rgba(132, 204, 22, 0.3) }
+}
+
+/* ====== Floating centered topbar ====== */
+.topbar{
+  position: fixed; top: 16px; left: 0; right: 0; z-index: 100;
+  background: transparent; border: 0; box-shadow: none;
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+  pointer-events: none;
+}
+
+/* Mobilde header'ı optimize et */
+@media (max-width: 679.98px) {
+  .topbar {
+    top: 12px; /* Mobilde daha az üst boşluk */
+  }
+  
+  .topbar-row {
+    height: 64px; /* Mobilde daha küçük header */
+    padding: 0 16px; /* Mobilde yan padding ekle */
+  }
+  
+  .pill-nav {
+    padding: 4px; /* Mobilde daha kompakt */
+    flex-wrap: nowrap; /* Mobilde linklerin yan yana kalmasını sağla */
+    gap: 4px; /* Mobilde daha az boşluk */
+  }
+  
+  .pill-nav a {
+    padding: 8px 12px; /* Mobilde daha küçük butonlar */
+    font-size: 0.9rem;
+    white-space: nowrap; /* Yazıların alt satıra geçmesini önle */
+  }
+  
+  .theme-chip {
+    width: 42px !important; /* Mobilde orta boy tema butonu */
+    height: 42px !important;
+    right: 12px !important; /* Mobilde sağ kenardan daha az uzaklaştır */
+  }
+  
+  .theme-chip svg {
+    width: 18px !important; /* Mobilde orta boy ikon */
+    height: 18px !important;
+  }
+  
+
+  
+  /* Mobilde main padding'ini azalt */
+  main {
+    padding-top: 80px; /* Daha da az padding */
+  }
+  
+  /* Mobilde toTop butonunu optimize et */
+  #toTop {
+    width: 44px;
+    height: 44px;
+    right: 16px;
+    bottom: 16px;
+  }
+  
+  #toTop svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* Çok küçük ekranlar için ek optimizasyon */
+@media (max-width: 400px) {
+  .pill-nav {
+    gap: 2px; /* Daha da az boşluk */
+  }
+  
+  .pill-nav a {
+    padding: 6px 10px; /* Daha da küçük butonlar */
+    font-size: 0.85rem; /* Daha da küçük font */
+  }
+  
+  .theme-chip {
+    width: 38px !important; /* Çok küçük ekranlarda orta boy */
+    height: 38px !important;
+    right: 8px !important;
+  }
+  
+  .theme-chip svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+}
+.topbar-row{
+  max-width: var(--wrap); height: 72px; margin: 0 auto; position: relative;
+}
+.pill-nav{
+  position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  pointer-events: auto; display: inline-flex; gap: 8px; padding: 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg) 70%, transparent);
+  border: 1px solid var(--line); box-shadow: var(--shadow);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+}
+.pill-nav a{
+  text-decoration:none; color:inherit; font-weight:600; border-radius:999px;
+  padding:10px 16px; line-height:1; border:1px solid transparent;
+  transition:background .2s, border-color .2s, transform .12s;
+}
+.pill-nav a:hover{transform:translateY(-1px)}
+.pill-nav a.active{
+  background:color-mix(in srgb, var(--accent) 16%, var(--panel));
+  border-color:color-mix(in srgb, var(--accent) 45%, var(--line));
+}
+.theme-chip{
+  position: absolute; top: 0; right: 0; width:48px; height:48px;
+  display:grid; place-items:center; border-radius:999px; border:1px solid var(--line);
+  background:color-mix(in srgb, var(--bg) 70%, #fff); color:var(--ink);
+  pointer-events: auto; transition:transform .2s, background .2s, border-color .2s;
+}
+.theme-chip:hover{transform:translateY(-1px)}
+.theme-chip svg{width:20px; height:20px; fill:currentColor}
+
+
+:root.dark .pill-nav{ background:color-mix(in srgb, var(--panel) 85%, transparent); border-color:#2a2f35; box-shadow:var(--shadow) }
+:root.dark .pill-nav a.active{
+  background:color-mix(in srgb, var(--accent) 24%, #121416);
+  border-color:color-mix(in srgb, var(--accent) 60%, #2a2f35); color:#f5fff2
+}
+:root.dark .theme-chip{ background:color-mix(in srgb, var(--panel) 85%, transparent); border-color:#2f3540; color:#e5e7eb }
+/* Koyu temada topbar-row arka planını şeffaf yap */
+:root.dark .topbar-row{ background: transparent; }
+:root.dark #toTop{ 
+  background:color-mix(in srgb, var(--accent) 20%, #1b1f24); 
+  border-color:#2f3540; 
+  color:#e5e7eb;
+  box-shadow:0 8px 24px rgba(0,0,0,.25);
+}
+:root.dark #toTop:hover{
+  background:color-mix(in srgb, var(--accent) 30%, #1b1f24);
+  box-shadow:0 12px 32px rgba(0,0,0,.35);
+}
+
+main{ padding-top: 112px }
+
+/* ====== Hero ====== */
+.hero{ display:grid; gap:28px; grid-template-columns:1fr; align-items:center; padding:48px 0 32px }
+@media (min-width:900px){ .hero{grid-template-columns:1fr 1.4fr; gap:44px} }
+.avatar{
+  width:min(320px,90%); aspect-ratio:4/5; object-fit:cover; border-radius:var(--radius);
+  border:1px solid var(--line); background:#ddd; box-shadow:var(--shadow);
+  transition:transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s;
+}
+.avatar:hover{ transform:translateY(-4px) rotateX(3deg) rotateY(-3deg) }
+.kicker{ 
+  color:var(--accent); 
+  font-weight:600; 
+  letter-spacing:.3px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 500;
+}
+.lead{ font-size:clamp(16px,1.6vw,18px); color:#1f2937 }
+:root.dark .lead{ color:#cfd7df }
+
+/* ====== MOBİL HERO OPTİMİZASYONU ====== */
+@media (max-width: 679.98px) {
+  .hero {
+    padding: 2px 0 6px !important; /* Çok az padding */
+    gap: 6px !important; /* Çok az gap */
+    text-align: center;
+    justify-items: center;
+  }
+  
+  .avatar {
+    width: min(260px, 85%) !important; /* Avatar'ı daha da büyüt */
+    margin: 0 auto;
+    order: -1; /* Avatar'ı üste al */
+  }
+  
+  .kicker {
+    font-size: 1.2rem;
+    margin-bottom: 3px !important; /* Çok az margin */
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 500;
+  }
+  
+  .lead {
+    font-size: 0.9rem;
+    line-height: 1.3 !important; /* Çok az line height */
+    margin: 0;
+    padding: 0 24px; /* Kenarlardan daha fazla boşluk */
+    max-width: 90%; /* Maksimum genişlik sınırı */
+  }
+  
+  /* Mobilde hero içeriğini düzenle */
+  .hero > div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 4px !important; /* Çok az gap */
+  }
+  
+  /* Mobilde başlıkları optimize et */
+  .hero h1 {
+    font-size: clamp(20px, 5vw, 28px) !important; /* Başlığı büyüt */
+    margin: 0 0 6px !important;
+    line-height: 1.2;
+    padding: 0 16px; /* Kenarlardan boşluk */
+  }
+  
+  .hero h2 {
+    font-size: clamp(13px, 3vw, 16px) !important;
+    margin: 0 0 6px !important;
+    line-height: 1.3;
+    padding: 0 20px; /* Kenarlardan daha fazla boşluk */
+  }
+  
+  /* Mobilde section-head'ı optimize et */
+  .section-head {
+    padding: 0 16px; /* Kenarlardan boşluk */
+    margin-bottom: 16px;
+  }
+  
+  .section-head h2 {
+    font-size: clamp(20px, 4vw, 24px) !important;
+    margin: 0 0 12px !important;
+  }
+  
+  .section-head p {
+    font-size: 0.9rem !important;
+    line-height: 1.5;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+/* Çok küçük ekranlar için hero optimizasyonu */
+@media (max-width: 479.98px) {
+  .hero {
+    padding: 0px 0 4px !important; /* Çok az padding */
+    gap: 4px !important; /* Çok az gap */
+  }
+  
+  .avatar {
+    width: min(240px, 80%) !important; /* Avatar'ı daha da büyüt */
+  }
+  
+  .kicker {
+    font-size: 1.1rem;
+    margin-bottom: 6px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 500;
+  }
+  
+  .lead {
+    font-size: 0.85rem;
+    line-height: 1.5;
+    padding: 0 28px; /* Daha fazla kenar boşluğu */
+    max-width: 85%; /* Daha dar maksimum genişlik */
+  }
+  
+  .hero > div {
+    gap: 6px; /* Daha da az gap */
+  }
+  
+  .hero h1 {
+    font-size: clamp(18px, 6vw, 24px) !important; /* Başlığı büyüt */
+    margin: 0 0 6px;
+    padding: 0 20px; /* Daha fazla kenar boşluğu */
+  }
+  
+  .hero h2 {
+    font-size: clamp(12px, 4vw, 16px);
+    margin: 0 0 10px;
+    padding: 0 24px; /* Daha fazla kenar boşluğu */
+  }
+  
+  /* Çok küçük ekranlarda section-head'ı optimize et */
+  .section-head {
+    padding: 0 20px; /* Daha fazla kenar boşluğu */
+    margin-bottom: 12px;
+  }
+  
+  .section-head h2 {
+    font-size: clamp(18px, 5vw, 22px) !important;
+    margin: 0 0 10px !important;
+  }
+  
+  .section-head p {
+    font-size: 0.85rem !important;
+    line-height: 1.4;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+/* ====== Bölüm başlığı ====== */
+.section-head{ display:flex; align-items:end; justify-content:space-between; gap:16px }
+.section-head h2{ position:relative }
+.section-head h2::after{
+  content:""; position:absolute; left:0; bottom:-6px; width:56px; height:3px;
+  border-radius:2px; background:var(--accent)
+}
+
+/* ====== Kart: temel ====== */
+.card{
+  position:relative; /* kart linki için */
+  background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+  box-shadow:var(--shadow); transition:transform .18s, box-shadow .18s, border-color .2s;
+  overflow:hidden;
+}
+.card:hover{ transform:translateY(-6px) }
+
+/* kart TIKLANABİLİR katman */
+.card-link{
+  position:absolute; inset:0; z-index:1;
+  border-radius:inherit;
+  color: inherit !important; /* Link rengini inherit yap */
+  text-decoration: none !important; /* Alt çizgiyi kaldır */
+}
+.card-link:focus{ outline:none }
+.card-link:hover,
+.card-link:visited,
+.card-link:active{
+  color: inherit !important; /* Tüm durumlarda aynı renk */
+  text-decoration: none !important; /* Tüm durumlarda alt çizgi yok */
+}
+.card-link:focus-visible{
+  outline:2px solid color-mix(in srgb, var(--accent) 70%, #000);
+  outline-offset:-4px;
+}
+
+/* ====== Gridler ====== */
+
+/* ====== ÖNE ÇIKAN YAZILAR ====== */
+/* Öne çıkan yazılar için özel stil */
+.card[data-featured="true"] {
+  position: relative;
+  border: 2px solid color-mix(in srgb, var(--accent) 20%, var(--line));
+  background: color-mix(in srgb, var(--accent) 3%, var(--panel));
+}
+
+/* Öne çıkan badge - Header stili */
+.featured-badge {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--accent);
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  z-index: 2;
+  border: 1px solid rgba(132, 204, 22, 0.6);
+  transition: all 0.2s ease;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Dark mode için badge */
+:root.dark .featured-badge {
+  background: rgba(0, 0, 0, 0.75);
+  color: #f7fff2;
+  border-color: rgba(132, 204, 22, 0.7);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Mobilde öne çıkan badge */
+@media (max-width: 679.98px) {
+  .featured-badge {
+    top: 12px;
+    left: 12px;
+    padding: 4px 8px;
+    font-size: 0.7rem;
+    border-radius: 10px;
+  }
+}
+
+.grid{
+  display:grid; gap: var(--grid-gap); margin-top:22px; grid-template-columns: 1fr; align-items: stretch;
+}
+.grid > .card{
+  display:flex; flex-direction:column; height: var(--grid-card-h);
+}
+.grid > .card .thumb{
+  width:100%; height: var(--grid-thumb-h); object-fit: cover; flex: 0 0 auto; display:block;
+}
+.grid > .card .card-body{
+  flex: 1 1 auto; display:flex; flex-direction:column; padding:14px;
+}
+.grid > .card h3{
+  margin:4px 0 6px; display:-webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow:hidden;
+}
+.grid > .card .meta{ font-size:12px; color:var(--muted); margin:0 0 6px }
+.grid > .card p{
+  margin-top:4px; display:-webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; overflow:hidden;
+}
+
+/* Öne çıkanlarda 1 satır daha fazla özet */
+.grid--featured > .card h3{ -webkit-line-clamp: 2; line-clamp: 2 }
+.grid--featured > .card p { -webkit-line-clamp: 4; line-clamp: 4 }
+
+/* kolon sayıları */
+@media (min-width:680px){ .grid{ grid-template-columns:repeat(2,1fr) } }
+@media (min-width:1040px){ .grid{ grid-template-columns:repeat(3,1fr) } }
+
+/* Küçük ekranda sabit yükseklikleri kaldır (sadece ana sayfa için) */
+@media (max-width:679.98px){
+  /* Ana sayfa grid'i için (blog sayfası değil) */
+  .grid:not(#blogResults.grid) > .card{ height:auto }
+  .grid:not(#blogResults.grid) > .card .thumb{ height:auto; aspect-ratio:16/9 }
+  .grid:not(#blogResults.grid) > .card h3,
+  .grid:not(#blogResults.grid) > .card p{ -webkit-line-clamp:unset; line-clamp:unset }
+  
+  /* Ana sayfa grid'i için tek kolon (blog sayfası değil) */
+  .grid:not(#blogResults.grid){ 
+    grid-template-columns: 1fr !important;
+    gap: 16px;
+    padding: 0 16px; /* Kenarlardan boşluk */
+  }
+  
+  /* ===== ANA SAYFA İÇİN MOBİL KART TASARIMI ===== */
+  /* Ana sayfada da mobilde kartları yatay düzende, kompakt yap */
+  .grid:not(#blogResults.grid) > .card {
+    display: flex !important;
+    flex-direction: row !important;
+    min-height: 120px;
+    max-height: 140px;
+    border-radius: 12px;
+    position: relative !important;
+    overflow: hidden !important;
+  }
+  
+  .grid:not(#blogResults.grid) > .card .card-link {
+    position: relative !important;
+    inset: auto !important;
+    display: flex !important;
+    flex-direction: row !important;
+    height: 100% !important;
+    padding: 0 !important;
+    z-index: 1 !important; /* Blog sayfasıyla aynı z-index */
+    cursor: pointer !important;
+    color: inherit !important;
+    text-decoration: none !important;
+    min-height: 44px !important;
+  }
+  
+  /* Ana sayfada thumbnail'ı sol tarafa al, küçült */
+  .grid:not(#blogResults.grid) > .card .thumb {
+    width: 120px !important;
+    height: 100% !important;
+    flex: 0 0 120px !important;
+    object-fit: cover;
+    border-radius: 12px 0 0 12px !important;
+  }
+  
+  /* Ana sayfada body'yi sağ tarafa al */
+  .grid:not(#blogResults.grid) > .card .card-body {
+    flex: 1 1 auto !important;
+    padding: 12px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+  }
+  
+  /* Ana sayfada başlığı küçült */
+  .grid:not(#blogResults.grid) > .card h3 {
+    font-size: 0.95rem !important;
+    margin: 0 0 4px !important;
+    line-height: 1.3 !important;
+    -webkit-line-clamp: 2 !important;
+    line-clamp: 2 !important;
+    display: -webkit-box !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+  }
+  
+  /* Ana sayfada meta bilgileri küçült */
+  .grid:not(#blogResults.grid) > .card .meta {
+    font-size: 9px !important;
+    margin: 0 0 4px !important;
+    color: var(--muted);
+  }
+  
+  /* Ana sayfada özet metni küçült */
+  .grid:not(#blogResults.grid) > .card p {
+    font-size: 0.8rem !important;
+    margin: 0 !important;
+    line-height: 1.4 !important;
+    -webkit-line-clamp: 2 !important;
+    line-clamp: 2 !important;
+    display: -webkit-box !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+  }
+  
+  /* Mobilde section padding'ini azalt */
+  .section {
+    padding: 40px 0;
+  }
+  
+  /* Mobilde wrap padding'ini azalt */
+  .wrap {
+    padding: 0 16px;
+  }
+  
+  /* Blog sayfasındaki grid için de kenar boşlukları */
+  #blogResults.grid {
+    padding: 0 16px; /* Kenarlardan boşluk */
+  }
+  
+  /* Blog sayfasındaki kartları da tıklanabilir yap */
+  #blogResults .card {
+    position: relative !important;
+    overflow: hidden !important;
+  }
+  
+  #blogResults .card-link {
+    z-index: 1 !important; /* Blog sayfasıyla aynı z-index */
+    cursor: pointer !important;
+    color: inherit !important;
+    text-decoration: none !important;
+    min-height: 44px !important;
+  }
+}
+
+/* Daha Fazla Blog satırı */
+.blog-actions{
+  display:flex; justify-content:center; margin-top:24px
+}
+
+/* ====== CTA ====== */
+.cta{
+  background:linear-gradient(180deg, color-mix(in srgb, var(--accent) 8%, var(--panel)), color-mix(in srgb, var(--accent) 3%, var(--panel))); border:1px solid var(--line); border-radius:var(--radius);
+  padding:28px; text-align:center; box-shadow:0 8px 24px rgba(0,0,0,.05)
+}
+:root.dark .cta{ background:linear-gradient(180deg, color-mix(in srgb, var(--accent) 12%, var(--panel)), color-mix(in srgb, var(--accent) 6%, var(--panel))); border-color:var(--line); box-shadow:0 10px 24px rgba(0,0,0,.4) }
+
+/* ====== Buttons ====== */
+.actions{ display:flex; flex-wrap:wrap; gap:12px; margin-top:18px }
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  padding:10px 16px; border-radius:12px; border:1px solid var(--line);
+  text-decoration:none; color:inherit; font-weight:600; position:relative; overflow:hidden;
+  transition:transform .15s, border-color .2s, background .2s, box-shadow .15s
+}
+.btn:hover{ 
+  transform:translateY(-1px); 
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.btn-primary{ background:color-mix(in srgb, var(--accent) 14%, #fff); border-color:color-mix(in srgb, var(--accent) 40%, var(--line)) }
+:root.dark .btn{ border-color:#2f3540 }
+:root.dark .btn:hover{ border-color:#3a414d }
+:root.dark .btn-primary{ background:color-mix(in srgb, var(--accent) 26%, #101214); border-color:color-mix(in srgb, var(--accent) 60%, #2f3540); color:#f7fff2 }
+
+/* ====== Footer ====== */
+footer{ 
+  border-top:1px solid var(--line); 
+  padding:18px 0; 
+  color:#6b7280; 
+  font-size:.95rem 
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.footer-left {
+  flex: 1;
+}
+
+.footer-right {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.version-info {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+.footer-link {
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.2s;
+  min-height: 44px; /* Touch target için */
+  display: flex;
+  align-items: center;
+}
+
+.footer-link:hover {
+  color: var(--accent);
+}
+
+/* ====== MOBİL OPTİMİZASYONLAR ====== */
+
+/* Küçük ekranlar için genel optimizasyonlar */
+@media (max-width: 679.98px) {
+  .wrap {
+    padding: 0 16px; /* Mobilde daha az padding */
+  }
+  
+  .section {
+    padding: 40px 0; /* Mobilde daha az section padding */
+  }
+  
+  .hero {
+    padding: 32px 0 24px;
+    gap: 20px;
+  }
+  
+  /* Mobilde avatar boyutunu küçült */
+  .avatar {
+    width: min(280px, 85%);
+  }
+  
+  /* Mobilde başlık boyutlarını optimize et */
+  h1 {
+    font-size: clamp(24px, 4vw, 32px);
+  }
+  
+  h2 {
+    font-size: clamp(20px, 3vw, 26px);
+  }
+  
+  /* Mobilde buton boyutlarını büyüt */
+  .btn {
+    padding: 12px 18px;
+  
+  /* Mobilde blog-actions'ı optimize et */
+  .blog-actions {
+    margin-top: 16px; /* Margin'i azalt */
+  }
+  
+  .blog-actions .btn {
+    padding: 10px 16px; /* Blog butonunu küçült */
+    font-size: 0.9rem; /* Font boyutunu küçült */
+    min-height: 44px; /* Touch target için minimum yükseklik */
+  }
+  
+  /* Mobilde CTA'yı optimize et */
+  .cta {
+    padding: 20px 16px; /* Mobilde daha az padding */
+    margin: 0 16px; /* Kenarlardan boşluk */
+  }
+  
+  .cta h2 {
+    font-size: clamp(18px, 4vw, 22px) !important; /* Başlığı küçült */
+    margin: 0 0 8px !important;
+  }
+  
+  .cta p {
+    font-size: 0.9rem !important; /* Açıklama metnini küçült */
+    line-height: 1.5;
+    margin: 0 0 16px !important;
+  }
+  
+  /* Mobilde CTA butonlarını optimize et */
+  .cta .actions {
+    gap: 8px; /* Butonlar arası boşluk */
+    margin-top: 12px; /* Üst margin */
+  }
+  
+  .cta .btn {
+    padding: 8px 12px; /* CTA butonlarını küçült */
+    font-size: 0.85rem; /* Font boyutunu küçült */
+    min-height: 40px; /* Touch target */
+  }
+    min-height: 48px;
+    font-size: 16px;
+  }
+  
+  /* Mobilde hero butonlarını 2x2 grid şeklinde düzenle */
+  .hero .actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 4px !important; /* Çok az margin */
+    max-width: 280px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  .hero .btn {
+    min-width: auto;
+    justify-content: center;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    min-height: 44px;
+  }
+  
+  /* Mobilde ToTop butonunu optimize et */
+  #toTop {
+    right: 16px;
+    bottom: 16px;
+    padding: 12px 14px;
+    min-height: 48px;
+    min-width: 48px;
+  }
+  
+  /* Mobilde footer'ı optimize et */
+  footer {
+    padding: 16px 0;
+    font-size: 0.9rem;
+  }
+  
+  .footer-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
+  }
+  
+  .footer-right {
+    justify-content: center;
+  }
+}
+
+/* Çok küçük ekranlar için ek optimizasyonlar */
+@media (max-width: 479.98px) {
+  .wrap {
+    padding: 0 12px;
+  }
+  
+  /* Çok küçük ekranlarda tema butonunu optimize et */
+  .topbar-row {
+    padding: 0 12px;
+  }
+  
+  .theme-chip {
+    right: 12px;
+  }
+  
+  .section {
+    padding: 32px 0;
+  }
+  
+  .hero {
+    padding: 24px 0 20px;
+    gap: 16px;
+  }
+  
+  .avatar {
+    width: min(240px, 80%);
+  }
+  
+  h1 {
+    font-size: clamp(22px, 5vw, 28px);
+  }
+  
+  h2 {
+    font-size: clamp(18px, 4vw, 24px);
+  }
+  
+  .btn {
+    padding: 14px 20px;
+    min-height: 52px;
+  }
+  
+  /* Çok küçük ekranlarda blog-actions'ı optimize et */
+  .blog-actions {
+    margin-top: 12px; /* Daha da az margin */
+  }
+  
+  .blog-actions .btn {
+    padding: 8px 14px; /* Daha da küçük blog butonu */
+    font-size: 0.85rem; /* Daha da küçük font */
+    min-height: 40px; /* Daha da küçük touch target */
+  }
+  
+  /* Çok küçük ekranlarda CTA'yı optimize et */
+  .cta {
+    padding: 16px 12px; /* Daha da az padding */
+    margin: 0 12px; /* Daha da az kenar boşluğu */
+  }
+  
+  .cta h2 {
+    font-size: clamp(16px, 5vw, 20px) !important; /* Daha da küçük başlık */
+    margin: 0 0 6px !important;
+  }
+  
+  .cta p {
+    font-size: 0.85rem !important; /* Daha da küçük açıklama */
+    line-height: 1.4;
+    margin: 0 0 12px !important;
+  }
+  
+  /* Çok küçük ekranlarda CTA butonlarını optimize et */
+  .cta .actions {
+    gap: 6px; /* Daha da az boşluk */
+    margin-top: 8px; /* Daha da az üst margin */
+  }
+  
+  .cta .btn {
+    padding: 6px 10px; /* Daha da küçük butonlar */
+    font-size: 0.8rem; /* Daha da küçük font */
+    min-height: 36px; /* Daha da küçük touch target */
+  }
+  
+  /* Çok küçük ekranlarda hero butonlarını 2x2 grid şeklinde düzenle */
+  .hero .actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 2px !important; /* Çok az margin */
+    max-width: 240px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  .hero .btn {
+    min-width: auto;
+    font-size: 0.85rem;
+    padding: 8px 10px;
+    min-height: 40px;
+  }
+  
+  /* Çok küçük ekranlarda grid'i tek kolon yap */
+  .grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px;
+    padding: 0 20px; /* Daha fazla kenar boşluğu */
+  }
+  
+  /* Blog sayfasındaki grid için de kenar boşlukları */
+  #blogResults.grid {
+    padding: 0 20px; /* Daha fazla kenar boşluğu */
+  }
+  
+  /* ===== ANA SAYFA İÇİN ÇOK KÜÇÜK EKRAN OPTİMİZASYONU ===== */
+  /* Ana sayfada çok küçük ekranlarda kartları daha da küçült */
+  .grid:not(#blogResults.grid) > .card {
+    min-height: 100px !important;
+    max-height: 120px !important;
+  }
+  
+  .grid:not(#blogResults.grid) > .card .thumb {
+    width: 100px !important;
+    flex: 0 0 100px !important;
+  }
+  
+  .grid:not(#blogResults.grid) > .card .card-body {
+    padding: 8px !important;
+  }
+  
+  .grid:not(#blogResults.grid) > .card h3 {
+    font-size: 0.9rem !important;
+    margin: 0 0 3px !important;
+  }
+  
+  .grid:not(#blogResults.grid) > .card p {
+    font-size: 0.75rem !important;
+  }
+  
+  .grid:not(#blogResults.grid) > .card .meta {
+    font-size: 8px !important;
+    margin: 0 0 3px !important;
+  }
+  
+  /* Çok küçük ekranlarda daha az padding */
+  .wrap {
+    padding: 0 12px;
+  }
+  
+  .section {
+    padding: 32px 0;
+  }
+  
+  main {
+    padding-top: 90px;
+  }
+}
+
+/* Tablet optimizasyonları */
+@media (min-width: 680px) and (max-width: 1023.98px) {
+  .wrap {
+    padding: 0 18px;
+  }
+  
+  .section {
+    padding: 48px 0;
+  }
+  
+  .hero {
+    padding: 40px 0 28px;
+    gap: 32px;
+  }
+  
+  .avatar {
+    width: min(300px, 88%);
+  }
+}
+
+/* Touch cihazlar için hover efektlerini optimize et */
+@media (hover: none) and (pointer: coarse) {
+  .btn:hover {
+    transform: none;
+  }
+  
+  .card:hover {
+    transform: none;
+  }
+  
+  .avatar:hover {
+    transform: none;
+  }
+  
+  /* Touch cihazlarda active state ekle */
+  .btn:active {
+    transform: scale(0.98);
+  }
+  
+  .card:active {
+    transform: scale(0.98);
+  }
+  
+  .avatar:active {
+    transform: scale(0.98);
+  }
+}
+
+/* iOS Safari için özel optimizasyonlar */
+@supports (-webkit-touch-callout: none) {
+  /* iOS'ta input zoom'u önle */
+  input, textarea, select {
+    font-size: 16px;
+  }
+  
+  /* iOS'ta smooth scroll'u optimize et */
+  html {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Android Chrome için özel optimizasyonlar */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+  /* Android'de touch target'ları optimize et */
+  .btn, .chip, .card-link {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@media (max-width: 600px) {
+  .footer-content {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+/* ====== Reveal animasyonu ====== */
+.reveal{ opacity:0; transform:translateY(16px); transition:opacity .6s, transform .6s }
+.reveal.in{ opacity:1; transform:none }
+
+:root.dark .avatar{ border-color:#2a2f35; box-shadow:0 16px 40px rgba(0,0,0,.45) }
+
+@media (prefers-reduced-motion:reduce){
+  .avatar, .btn, .card, .card:hover .thumb{ transition:none }
+  .reveal{ opacity:1; transform:none }
+}
+
+/* ====== A11y: odak görünebilirliği ====== */
+.card:focus-within,
+.pill-nav a:focus-visible,
+.btn:focus-visible,
+.theme-chip:focus-visible,
+#toTop:focus-visible{
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, #000);
+  outline-offset: 2px;
+  border-radius: 12px;
+}
+
+
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --line: #000000;
+    --muted: #666666;
+  }
+  :root.dark {
+    --line: #ffffff;
+    --muted: #cccccc;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .avatar, .btn, .card, .card:hover .thumb { transition: none; }
+  .reveal { opacity: 1; transform: none; }
+}

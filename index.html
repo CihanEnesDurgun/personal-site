@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cihan Enes Durgun - İHA, Kablosuz Haberleşme ve Gömülü Sistemler</title>
+  <meta name="description" content="Meraklı Bir Mühendisin Blogu: Teknoloji, Kişisel Gelişim ve Hayata Dair Düşünceler. İHA, kablosuz haberleşme ve gömülü sistemler üzerine teknik notlar, proje günlükleri ve deneyler" />
+  <meta name="keywords" content="İHA, UAV, ESP32, RC, kablosuz haberleşme, gömülü sistemler, IMU, LoRa" />
+  <meta name="author" content="Cihan Enes Durgun" />
+  
+  <!-- Open Graph -->
+  <meta property="og:title" content="Cihan Enes Durgun - İHA, Kablosuz Haberleşme ve Gömülü Sistemler" />
+  <meta property="og:description" content="Meraklı Bir Mühendisin Blogu: Teknoloji, Kişisel Gelişim ve Hayata Dair Düşünceler. İHA, kablosuz haberleşme ve gömülü sistemler üzerine teknik notlar, proje günlükleri ve deneyler" />
+  <meta property="og:type" content="website" />
+      <!-- PRODUCTION MODE -->
+    <!-- <meta property="og:url" content="https://cihanenesdurgun.com" /> -->
+    <!-- DEVELOPMENT MODE -->
+    <meta property="og:url" content="http://localhost:3000" />
+  <meta property="og:image" content="images/profile/avatar.jpg" />
+  
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Cihan Enes Durgun - İHA, Kablosuz Haberleşme ve Gömülü Sistemler" />
+  <meta name="twitter:description" content="Meraklı Bir Mühendisin Blogu: Teknoloji, Kişisel Gelişim ve Hayata Dair Düşünceler. İHA, kablosuz haberleşme ve gömülü sistemler üzerine teknik notlar, proje günlükleri ve deneyler" />
+  <meta name="twitter:image" content="images/profile/avatar.jpg" />
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="images/system/cedlogo (2).png" />
+  <link rel="apple-touch-icon" href="images/system/cedlogo (2).png" />
+  
+  <!-- RSS Feed -->
+  <link rel="alternate" type="application/rss+xml" title="RSS Feed" href="rss.xml" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Ana site stilleri -->
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Skip to content link for screen readers -->
+
+  
+  <!-- Scroll progress + ToTop -->
+  <div id="progress" aria-hidden="true"></div>
+  <button id="toTop" aria-label="Yukarı çık" title="Yukarı çık">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 4l-8 8h6v8h4v-8h6l-8-8z"/>
+    </svg>
+  </button>
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="wrap topbar-row">
+      <nav class="pill-nav" aria-label="Ana menü">
+        <a href="#" data-nav="home" class="active">Ana Sayfa</a>
+        <a href="#blog" data-nav="blog">Blog</a>
+        <a href="#contact" data-nav="contact">İletişim</a>
+      </nav>
+      <button id="themeToggle" class="theme-chip" aria-label="Tema değiştir" title="Tema değiştir"></button>
+    </div>
+  </header>
+
+  <main id="main-content">
+    <!-- Hero (JS doldurur) -->
+    <section id="home" class="wrap section hero"></section>
+
+    <!-- Blog -->
+    <section id="blog" class="wrap section">
+      <header class="section-head">
+        <div>
+          <h2>Blog</h2>
+          <p class="muted">Teknik notlar, proje günlükleri ve deneyler</p>
+        </div>
+      </header>
+
+      <!-- Blog yazıları (öne çıkanlar + diğerleri) -->
+      <div id="blog-grid" class="grid" aria-label="Blog yazıları"></div>
+
+      <!-- Daha fazla blog (tek ve doğru yer) -->
+      <div class="blog-actions">
+        <a class="btn btn-primary" href="blog.html">Daha Fazla Blog ...</a>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section id="contact" class="wrap section">
+      <div id="cta" class="cta"></div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <div class="footer-content">
+        <div class="footer-left">
+          © <span id="year"></span> <span id="owner">Cihan Enes Durgun</span>. Tüm hakları saklıdır.
+        </div>
+        <div class="footer-right">
+          <span class="version-info">v2.0.4</span>
+          <a href="rss.xml" class="footer-link" aria-label="RSS Feed">RSS</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Theme Manager Module (must load first) -->
+  <script src="theme-manager.js"></script>
+  <script src="scripts.js" defer></script>
+  
+  <!-- Analytics (Plausible - privacy friendly) -->
+      <!-- <script defer data-domain="cihanenesdurgun.com" src="https://plausible.io/js/script.js"></script> -->
+  
+  <!-- Alternative: Google Analytics 4 -->
+  <!--
+      <!-- <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script> -->
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'GA_MEASUREMENT_ID');
+  </script>
+  
+</body>
+</html>

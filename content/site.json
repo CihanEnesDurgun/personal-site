@@ -1,0 +1,34 @@
+{
+  "hero": {
+    "name": "Cihan Enes Durgun",
+    "avatar": "images/profile/avatar.jpg",
+    "headline": "İHA, Kablosuz Haberleşme ve Gömülü Sistemler",
+    "bio": "Bir mühendisin blogu: Teknoloji, kişisel gelişim ve hayata dair düşünceler. İHA, kablosuz haberleşme ve gömülü sistemler üzerine teknik notlar, proje günlükleri ve deneyler."
+  },
+  "site": {
+    "title": "Cihan Enes Durgun - İHA, Kablosuz Haberleşme ve Gömülü Sistemler",
+    "description": "Meraklı Bir Mühendisin Blogu: Teknoloji, Kişisel Gelişim ve Hayata Dair Düşünceler. İHA, kablosuz haberleşme ve gömülü sistemler üzerine teknik notlar, proje günlükleri ve deneyler",
+    "url": "https://cihanenesdurgun.com",
+    "language": "tr"
+  },
+  "social": {
+    "email": "cihanenesdurgun@hotmail.com",
+    "github": "https://github.com/cihanenesdurgun",
+    "linkedin": "https://linkedin.com/in/cihanenesdurgun",
+    "twitter": "",
+    "youtube": ""
+  },
+  "contact": {
+    "email": "cihanenesdurgun@gmail.com",
+    "phone": "+90 555 123 45 67",
+    "location": "İstanbul, Türkiye"
+  },
+  "lastUpdated": "2025-01-24T01:48:00.000Z",
+  "links": {
+    "email": "cihanenesdurgun@hotmail.com",
+    "github": "https://github.com/cihanenesdurgun",
+    "linkedin": "https://linkedin.com/in/cihanenesdurgun",
+    "twitter": "",
+    "youtube": ""
+  }
+}

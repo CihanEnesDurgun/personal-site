@@ -1,0 +1,1440 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Panel - Cihan Enes Durgun</title>
+  <meta name="description" content="Blog yönetim paneli" />
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="../images/system/cedlogo (2).png" />
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Admin Panel Styles -->
+  <link rel="stylesheet" href="admin.css" />
+  <link rel="stylesheet" href="image-upload-modal.css" />
+</head>
+<body>
+  <!-- Skip to content link for screen readers -->
+
+  
+  <!-- Admin Header -->
+  <header class="admin-header">
+    <div class="header-content">
+      <div class="header-left">
+        <h1 class="admin-title">Admin Panel</h1>
+        <p class="admin-subtitle">Blog Yönetimi <span class="version-badge">v2.0.4</span></p>
+      </div>
+      <div class="header-right">
+        <button id="themeToggle" class="theme-chip" aria-label="Tema değiştir" title="Tema değiştir"></button>
+        <a href="../index.html" class="view-site-btn" title="Siteyi görüntüle">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+          </svg>
+          Siteyi Görüntüle
+        </a>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- Admin Navigation -->
+  <nav class="admin-nav">
+    <div class="nav-content">
+      <button class="nav-tab active" data-tab="dashboard">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+        </svg>
+        Dashboard
+      </button>
+      <button class="nav-tab" data-tab="analytics">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"/>
+        </svg>
+        İstatistikler
+      </button>
+      <button class="nav-tab" data-tab="comments">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M21.99 4c0-1.1-.89-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18zM18 14H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
+        </svg>
+        Yorumlar
+      </button>
+      <button class="nav-tab" data-tab="trash">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+        </svg>
+        Geri Dönüşüm <span id="trashCount" class="tab-count">(0)</span>
+      </button>
+                      <button class="nav-tab" data-tab="personal">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M20 3H4c-1.1 0-1.99.9-1.99 2L2 15c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-8 12c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/>
+                  </svg>
+                  Görünüm & Tema
+                </button>
+                <button class="nav-tab" data-tab="gallery">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M22 16V4c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2zm-11-4l2.03 2.71L16 11l4 5H8l3-4zM2 6v14c0 1.1.9 2 2 2h14v-2H4V6H2z"/>
+                  </svg>
+                  Galeri
+                </button>
+                <button class="nav-tab" data-tab="security">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
+                  </svg>
+                  Güvenlik & Oturumlar
+                </button>
+    </div>
+  </nav>
+
+  <main id="main-content" class="admin-main">
+    <!-- Dashboard Overview -->
+    <section class="dashboard-section">
+      <div class="dashboard-header">
+        <h2>Dashboard</h2>
+        <a href="../markdown-editor/index.html?new=true" class="btn btn-primary">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+          </svg>
+          Yeni Blog Yazısı
+        </a>
+      </div>
+      
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">📝</div>
+          <div class="stat-content">
+            <h3 id="totalPosts">0</h3>
+            <p>Toplam Yazı</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">⭐</div>
+          <div class="stat-content">
+            <h3 id="featuredPosts">0</h3>
+            <p>Öne Çıkan</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📅</div>
+          <div class="stat-content">
+            <h3 id="recentPosts">0</h3>
+            <p>Bu Ay</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🏷️</div>
+          <div class="stat-content">
+            <h3 id="totalTags">0</h3>
+            <p>Toplam Etiket</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Blog Posts Management -->
+    <section class="posts-section">
+      <div class="section-header">
+        <h2>Blog Yazıları</h2>
+        <div class="filters">
+          <input type="text" id="searchPosts" placeholder="Yazı ara..." class="search-input">
+          <select id="filterStatus" class="filter-select">
+            <option value="all">Tümü</option>
+            <option value="featured">Öne Çıkan</option>
+            <option value="recent">Son Yazılar</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="posts-table-container">
+        <table class="posts-table">
+          <thead>
+            <tr>
+              <th>Başlık</th>
+              <th>Tarih</th>
+              <th>Etiketler</th>
+              <th>Durum</th>
+              <th>Görüntülenme</th>
+              <th>İşlemler</th>
+            </tr>
+          </thead>
+          <tbody id="postsTableBody">
+            <!-- Posts will be loaded here -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Analytics Section -->
+    <section id="analytics-section" class="analytics-section" style="display: none;">
+      <div class="section-header">
+        <h2>Ziyaretçi İstatistikleri</h2>
+        <div class="analytics-controls">
+          <select id="timeRange" class="filter-select">
+            <option value="7">Son 7 Gün</option>
+            <option value="30" selected>Son 30 Gün</option>
+            <option value="90">Son 90 Gün</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="analytics-grid">
+        <div class="analytics-card">
+          <div class="analytics-header">
+            <h3>Genel İstatistikler</h3>
+          </div>
+          <div class="analytics-content">
+            <div class="stat-item">
+              <span class="stat-label">Toplam Görüntüleme</span>
+              <span class="stat-value" id="totalViews">0</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Popüler Yazı</span>
+              <span class="stat-value" id="popularPage">-</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Toplam Yorum</span>
+              <span class="stat-value" id="totalComments">0</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Son Güncelleme</span>
+              <span class="stat-value" id="lastUpdated">-</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="analytics-card">
+          <div class="analytics-header">
+            <h3>Popüler Yazılar</h3>
+          </div>
+          <div class="analytics-content">
+            <div id="popularPosts" class="popular-posts">
+              <!-- Popular posts will be loaded here -->
+            </div>
+          </div>
+        </div>
+
+        <div class="analytics-card">
+          <div class="analytics-header">
+            <h3>Popüler Etiketler</h3>
+          </div>
+          <div class="analytics-content">
+            <div id="popularTags" class="popular-tags">
+              <!-- Popular tags will be loaded here -->
+            </div>
+          </div>
+        </div>
+
+        <div class="analytics-card full-width">
+          <div class="analytics-header">
+            <h3>Günlük Görüntüleme Grafiği</h3>
+          </div>
+          <div class="analytics-content">
+            <div class="chart-container">
+              <canvas id="dailyChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Comments Management Section -->
+    <section id="comments-section" class="comments-section" style="display: none;">
+      <div class="section-header">
+        <h2>Yorum Yönetimi</h2>
+        <div class="comments-controls">
+          <select id="commentFilter" class="filter-select">
+            <option value="all">Tüm Yorumlar</option>
+            <option value="pending">Onay Bekleyen</option>
+            <option value="approved">Onaylanmış</option>
+            <option value="rejected">Reddedilmiş</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="comments-table-container">
+        <table class="comments-table">
+          <thead>
+            <tr>
+              <th>Yazar</th>
+              <th>Yorum</th>
+              <th>Yazı</th>
+              <th>Tarih</th>
+              <th>Durum</th>
+              <th>İşlemler</th>
+            </tr>
+          </thead>
+          <tbody id="commentsTableBody">
+            <!-- Comments will be loaded here -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Trash Section -->
+    <section id="trash-section" class="trash-section" style="display: none;">
+      <div class="section-header">
+        <h2>🗑️ Geri Dönüşüm Kutusu</h2>
+        <div class="trash-controls">
+          <input type="text" id="searchTrash" placeholder="Silinen yazı ara..." class="search-input">
+          <button id="emptyTrashBtn" class="btn btn-danger">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+            </svg>
+            Tümünü Sil
+          </button>
+        </div>
+      </div>
+      
+      <div class="trash-info">
+        <p class="muted">
+          <svg viewBox="0 0 24 24" width="16" height="16">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+          </svg>
+          Silinen yazılar burada 30 gün boyunca saklanır. Süre sonunda otomatik olarak kalıcı olarak silinir.
+        </p>
+      </div>
+      
+      <div class="trash-table-container">
+        <table class="trash-table">
+          <thead>
+            <tr>
+              <th>Başlık</th>
+              <th>Silinme Tarihi & Kalan Süre</th>
+              <th>Önceki Durum</th>
+              <th>Etiketler</th>
+              <th>İşlemler</th>
+            </tr>
+          </thead>
+          <tbody id="trashTableBody">
+            <!-- Deleted posts will be loaded here -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Personal Information Section -->
+    <section id="personal-section" class="personal-section" style="display: none;">
+      <!-- Homepage Editor Subsection -->
+      <div class="subsection">
+        <div class="subsection-header">
+          <h2>🏠 Ana Sayfa Görünümü</h2>
+          <div class="subsection-controls">
+            <button id="editHomepageBtn" class="btn btn-primary">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+              </svg>
+              Ana Sayfayı Düzenle
+            </button>
+          </div>
+        </div>
+        <div class="subsection-info">
+          <p class="muted">
+            <svg viewBox="0 0 24 24" width="16" height="16">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            </svg>
+            Ana ekranınızdaki profil bilgilerini, sosyal medya linklerini ve site ayarlarını düzenleyebilirsiniz.
+          </p>
+        </div>
+        <div class="homepage-preview">
+          <div class="preview-header">
+            <h3>📱 Mevcut Ana Ekran Önizlemesi</h3>
+          </div>
+          <div class="preview-container">
+            <div id="homepagePreview" class="homepage-preview-content">
+              <!-- Preview will be loaded here -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Theme Editor Subsection -->
+      <div class="subsection">
+        <div class="subsection-header">
+          <h2>🎨 Tema & Renkler</h2>
+          <div class="subsection-controls">
+            <button id="editThemeBtn" class="btn btn-primary">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+              </svg>
+              Temayı Düzenle
+            </button>
+          </div>
+        </div>
+        <div class="subsection-info">
+          <p class="muted">
+            <svg viewBox="0 0 24 24" width="16" height="16">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            </svg>
+            Sitenizin renk paletini, arka plan rengini ve buton stillerini özelleştirebilirsiniz.
+          </p>
+        </div>
+        
+        <!-- Theme Preview Section -->
+        <div class="theme-preview">
+          <div class="preview-header">
+            <h3>🎨 Mevcut Tema Önizlemesi</h3>
+            <p class="muted">Sitenizde kullanılan renk paleti ve tema ayarları</p>
+          </div>
+          
+          <div class="color-palette">
+            <div class="palette-section">
+              <h4>🌞 Açık Tema</h4>
+              <div class="color-grid">
+                <div class="color-item">
+                  <div class="color-swatch" id="lightBgSwatch" title="Arka Plan"></div>
+                  <span class="color-name">Arka Plan</span>
+                  <span class="color-value" id="lightBgPreview">#f8f8f6</span>
+                </div>
+                <div class="color-item">
+                  <div class="color-swatch" id="lightPanelSwatch" title="Panel"></div>
+                  <span class="color-name">Panel</span>
+                  <span class="color-value" id="lightPanelPreview">#fafaf8</span>
+                </div>
+                <div class="color-item">
+                  <div class="color-swatch" id="lightInkSwatch" title="Metin"></div>
+                  <span class="color-name">Metin</span>
+                  <span class="color-value" id="lightInkPreview">#0b0b0b</span>
+                </div>
+                <div class="color-item">
+                  <div class="color-swatch" id="lightMutedSwatch" title="İkincil Metin"></div>
+                  <span class="color-name">İkincil Metin</span>
+                  <span class="color-value" id="lightMutedPreview">#6b7280</span>
+                </div>
+                <div class="color-item">
+                  <div class="color-swatch" id="lightLineSwatch" title="Çizgiler"></div>
+                  <span class="color-name">Çizgiler</span>
+                  <span class="color-value" id="lightLinePreview">#e5e7eb</span>
+                </div>
+                <div class="color-item accent-color">
+                  <div class="color-swatch" id="lightAccentSwatch" title="Vurgu Rengi"></div>
+                  <span class="color-name">Vurgu Rengi</span>
+                  <span class="color-value" id="lightAccentPreview">#152bcb</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="palette-section">
+              <h4>🌙 Koyu Tema</h4>
+              <div class="color-grid">
+                <div class="color-item">
+                  <div class="color-swatch" id="darkBgSwatch" title="Arka Plan"></div>
+                  <span class="color-name">Arka Plan</span>
+                  <span class="color-value" id="darkBgPreview">#0b0d0f</span>
+                </div>
+                <div class="color-item">
+                  <div class="color-swatch" id="darkPanelSwatch" title="Panel"></div>
+                  <span class="color-name">Panel</span>
+                  <span class="color-value" id="darkPanelPreview">#14171a</span>
+                </div>
+                <div class="color-item">
+                  <div class="color-swatch" id="darkInkSwatch" title="Metin"></div>
+                  <span class="color-name">Metin</span>
+                  <span class="color-value" id="darkInkPreview">#e8edf2</span>
+                </div>
+                <div class="color-item">
+                  <div class="color-swatch" id="darkMutedSwatch" title="İkincil Metin"></div>
+                  <span class="color-name">İkincil Metin</span>
+                  <span class="color-value" id="darkMutedPreview">#9aa4b2</span>
+                </div>
+                <div class="color-item">
+                  <div class="color-swatch" id="darkLineSwatch" title="Çizgiler"></div>
+                  <span class="color-name">Çizgiler</span>
+                  <span class="color-value" id="darkLinePreview">#2a2f35</span>
+                </div>
+                <div class="color-item accent-color">
+                  <div class="color-swatch" id="darkAccentSwatch" title="Vurgu Rengi"></div>
+                  <span class="color-name">Vurgu Rengi</span>
+                  <span class="color-value" id="darkAccentPreview">#153acb</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="theme-info">
+            <div class="info-item">
+              <span class="info-label">Border Radius:</span>
+              <span class="info-value" id="borderRadius">16px</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Gölge Yoğunluğu:</span>
+              <span class="info-value" id="shadowIntensity">60%</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Font Ailesi:</span>
+              <span class="info-value" id="fontFamily">Inter</span>
+            </div>
+          </div>
+        </div>
+        
+      </div>
+
+
+    </section>
+
+    <!-- Security & Sessions Section -->
+    <section id="security-section" class="security-section" style="display: none;">
+      <!-- Account Security Subsection -->
+      <div class="subsection">
+        <div class="subsection-header">
+          <h2>🔐 Hesap Güvenliği</h2>
+          <div class="subsection-controls">
+            <button id="editAccountBtn" class="btn btn-primary">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+              </svg>
+              Şifre Değiştir
+            </button>
+          </div>
+        </div>
+        <div class="subsection-info">
+          <p class="muted">
+            <svg viewBox="0 0 24 24" width="16" height="16">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            </svg>
+            Kullanıcı adınızı ve şifrenizi güvenli bir şekilde değiştirebilirsiniz.
+          </p>
+        </div>
+        <div class="account-info">
+          <div class="info-card">
+            <div class="info-item">
+              <span class="info-label">Kullanıcı Adı:</span>
+              <span class="info-value">admin</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Son Güncelleme:</span>
+              <span class="info-value">Hiç güncellenmedi</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Güvenlik Durumu:</span>
+              <span class="info-value" style="color: #10b981;">✅ Güvenli</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Sessions Subsection -->
+      <div class="subsection">
+        <div class="subsection-header">
+          <h2>🟢 Aktif Oturumlar</h2>
+          <div class="subsection-controls">
+            <button id="refreshSessionsBtn" class="btn btn-secondary btn-sm">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+              </svg>
+              Yenile
+            </button>
+            <button id="terminateAllSessionsBtn" class="btn btn-danger btn-sm">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+              </svg>
+              Tümünü Sonlandır
+            </button>
+          </div>
+        </div>
+        <div class="subsection-info">
+          <p class="muted">
+            <svg viewBox="0 0 24 24" width="16" height="16">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            </svg>
+            Şu anda aktif olan tüm oturumları görüntüleyebilir ve yönetebilirsiniz.
+          </p>
+        </div>
+        <div class="sessions-container">
+          <div id="activeSessionsList" class="sessions-list">
+            <!-- Active sessions will be loaded here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Login History Subsection -->
+      <div class="subsection">
+        <div class="subsection-header">
+          <h2>📊 Son Girişler</h2>
+          <div class="subsection-controls">
+            <button id="refreshLoginHistoryBtn" class="btn btn-secondary btn-sm">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+              </svg>
+              Yenile
+            </button>
+          </div>
+        </div>
+        <div class="subsection-info">
+          <p class="muted">
+            <svg viewBox="0 0 24 24" width="16" height="16">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            </svg>
+            Son başarılı giriş denemelerinin geçmişini görüntüleyebilirsiniz.
+          </p>
+        </div>
+        <div class="login-history-container">
+          <div id="loginHistoryList" class="login-history-list">
+            <!-- Login history will be loaded here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Failed Login Attempts Subsection -->
+      <div class="subsection">
+        <div class="subsection-header">
+          <h2>🚨 Hatalı Giriş Denemeleri</h2>
+          <div class="subsection-controls">
+            <button id="refreshFailedLoginsBtn" class="btn btn-secondary btn-sm">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+              </svg>
+              Yenile
+            </button>
+            <button id="clearFailedLoginsBtn" class="btn btn-danger btn-sm">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+              </svg>
+              Logları Temizle
+            </button>
+          </div>
+        </div>
+        <div class="subsection-info">
+          <p class="muted">
+            <svg viewBox="0 0 24 24" width="16" height="16">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            </svg>
+            Başarısız giriş denemelerini ve şüpheli IP adreslerini takip edebilirsiniz.
+          </p>
+        </div>
+        <div class="failed-logins-container">
+          <div id="failedLoginsList" class="failed-logins-list">
+            <!-- Failed logins will be loaded here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- IP Analysis Subsection -->
+      <div class="subsection">
+        <div class="subsection-header">
+          <h2>🌐 IP Analizi</h2>
+          <div class="subsection-controls">
+            <button id="refreshIPAnalysisBtn" class="btn btn-secondary btn-sm">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+              </svg>
+              Yenile
+            </button>
+          </div>
+        </div>
+        <div class="subsection-info">
+          <p class="muted">
+            <svg viewBox="0 0 24 24" width="16" height="16">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            </svg>
+            Şüpheli IP adreslerini analiz edebilir ve gerekirse engelleyebilirsiniz.
+          </p>
+        </div>
+        <div class="ip-analysis-container">
+          <div id="ipAnalysisList" class="ip-analysis-list">
+            <!-- IP analysis will be loaded here -->
+          </div>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- New Post Modal -->
+  <div id="newPostModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Yeni Blog Yazısı</h3>
+        <button class="modal-close" aria-label="Kapat">×</button>
+      </div>
+      <form id="newPostForm" class="post-form">
+        <div class="form-group">
+          <label for="postTitle">Başlık</label>
+          <input type="text" id="postTitle" name="title" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="postSlug">URL Slug</label>
+          <input type="text" id="postSlug" name="slug" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="postExcerpt">Özet</label>
+          <textarea id="postExcerpt" name="excerpt" rows="3" required></textarea>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="postDate">Tarih</label>
+            <input type="date" id="postDate" name="date" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="postCover">Kapak Görseli</label>
+            <div class="input-with-button">
+              <input type="text" id="postCover" name="cover" placeholder="images/blog-covers/post-cover.jpg">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="openImageUploadModal('blog-cover')">
+                🖼️ Resim Seç
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="postTags">Etiketler (virgülle ayırın)</label>
+          <input type="text" id="postTags" name="tags" placeholder="ESP32, RC, Wireless">
+        </div>
+        
+        <div class="form-group">
+          <label for="postContent">İçerik (Markdown)</label>
+          <div class="markdown-editor-container">
+            <div class="editor-toolbar">
+              <button type="button" class="editor-btn" onclick="formatText('bold')" title="Kalın (Ctrl+B)">
+                <strong>B</strong>
+              </button>
+              <button type="button" class="editor-btn" onclick="formatText('italic')" title="İtalik (Ctrl+I)">
+                <em>I</em>
+              </button>
+              <button type="button" class="editor-btn" onclick="formatText('h1')" title="Başlık 1">H1</button>
+              <button type="button" class="editor-btn" onclick="formatText('h2')" title="Başlık 2">H2</button>
+              <button type="button" class="editor-btn" onclick="formatText('h3')" title="Başlık 3">H3</button>
+              <button type="button" class="editor-btn" onclick="formatText('link')" title="Link">🔗</button>
+              <button type="button" class="editor-btn" onclick="formatText('image')" title="Resim">🖼️</button>
+              <button type="button" class="editor-btn" onclick="formatText('code')" title="Kod Bloğu">💻</button>
+              <button type="button" class="editor-btn" onclick="formatText('list')" title="Liste">📝</button>
+              <button type="button" class="editor-btn" onclick="formatText('blockquote')" title="Alıntı">💬</button>
+            </div>
+            <div id="markdownEditor" class="markdown-editor" contenteditable="true"></div>
+            <textarea id="postContent" name="content" style="display: none;" required></textarea>
+          </div>
+        </div>
+        
+
+        
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary modal-cancel">İptal</button>
+          <button type="submit" class="btn btn-primary">📝 Taslağı Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Post Modal -->
+  <div id="editPostModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Blog Yazısını Düzenle</h3>
+        <button class="modal-close" aria-label="Kapat">×</button>
+      </div>
+      <form id="editPostForm" class="post-form">
+        <input type="hidden" id="editPostSlug" name="originalSlug">
+        <!-- Same form fields as new post -->
+        <div class="form-group">
+          <label for="editPostTitle">Başlık</label>
+          <input type="text" id="editPostTitle" name="title" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="editPostSlug">URL Slug</label>
+          <input type="text" id="editPostSlugNew" name="slug" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="editPostExcerpt">Özet</label>
+          <textarea id="editPostExcerpt" name="excerpt" rows="3" required></textarea>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="editPostDate">Tarih</label>
+            <input type="date" id="editPostDate" name="date" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="editPostCover">Kapak Görseli</label>
+            <div class="input-with-button">
+              <input type="text" id="editPostCover" name="cover" placeholder="images/blog-covers/post-cover.jpg">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="openImageUploadModal('blog-cover')">
+                🖼️ Resim Seç
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="editPostTags">Etiketler (virgülle ayırın)</label>
+          <input type="text" id="editPostTags" name="tags" placeholder="ESP32, RC, Wireless">
+        </div>
+        
+        <div class="form-group">
+          <label for="editPostContent">İçerik (Markdown)</label>
+          <div class="markdown-editor-container">
+            <div class="editor-toolbar">
+              <button type="button" class="editor-btn" onclick="formatText('bold')" title="Kalın (Ctrl+B)">
+                <strong>B</strong>
+              </button>
+              <button type="button" class="editor-btn" onclick="formatText('italic')" title="İtalik (Ctrl+I)">
+                <em>I</em>
+              </button>
+              <button type="button" class="editor-btn" onclick="formatText('h1')" title="Başlık 1">H1</button>
+              <button type="button" class="editor-btn" onclick="formatText('h2')" title="Başlık 2">H2</button>
+              <button type="button" class="editor-btn" onclick="formatText('h3')" title="Başlık 3">H3</button>
+              <button type="button" class="editor-btn" onclick="formatText('link')" title="Link">🔗</button>
+              <button type="button" class="editor-btn" onclick="formatText('image')" title="Resim">🖼️</button>
+              <button type="button" class="editor-btn" onclick="formatText('code')" title="Kod Bloğu">💻</button>
+              <button type="button" class="editor-btn" onclick="formatText('list')" title="Liste">📝</button>
+              <button type="button" class="editor-btn" onclick="formatText('blockquote')" title="Alıntı">💬</button>
+            </div>
+            <div id="editMarkdownEditor" class="markdown-editor" contenteditable="true"></div>
+            <textarea id="editPostContent" name="content" style="display: none;" required></textarea>
+          </div>
+        </div>
+        
+
+        
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary modal-cancel">İptal</button>
+          <button type="submit" class="btn btn-primary">Değişiklikleri Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div id="deleteModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Yazıyı Sil</h3>
+        <button class="modal-close" aria-label="Kapat">×</button>
+      </div>
+      <div class="modal-body">
+        <p>Bu yazıyı silmek istediğinizden emin misiniz?</p>
+        <p class="delete-warning">⚠️ Yazınız geri dönüşüm kutusuna taşınacak ve 30 gün boyunca orada kalacak. Bu süre içinde yazıyı geri yükleyebilir veya kalıcı olarak silebilirsiniz.</p>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary modal-cancel">İptal</button>
+        <button type="button" class="btn btn-danger" id="confirmDelete">Evet, Sil</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Schedule Modal -->
+  <div id="scheduleModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>⏰ Yazıyı Zamanla</h3>
+        <button class="modal-close" aria-label="Kapat">×</button>
+      </div>
+      <div class="modal-body">
+        <p>Bu yazının ne zaman yayınlanmasını istiyorsunuz?</p>
+        <div class="form-group">
+          <label for="scheduleDateTime">Yayın Tarihi ve Saati</label>
+          <input type="datetime-local" id="scheduleDateTime" name="publishDate" required>
+        </div>
+        <div class="schedule-info">
+          <p class="muted">
+            <svg viewBox="0 0 24 24" width="16" height="16">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            </svg>
+            Yazı belirlediğiniz tarih ve saatte otomatik olarak yayınlanacak.
+          </p>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary modal-cancel">İptal</button>
+        <button type="button" class="btn btn-warning" id="confirmSchedule">⏰ Zamanla</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Homepage Editor Modal -->
+  <div id="homepageEditorModal" class="modal homepage-editor-modal" aria-hidden="true">
+    <div class="modal-content large-modal">
+      <div class="modal-header">
+        <h3>🏠 Ana Ekran Düzenleyici</h3>
+        <button class="modal-close" aria-label="Kapat">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="editor-layout">
+          <div class="editor-form">
+            <form id="homepageEditorForm">
+              <div class="form-section">
+                <h4>👤 Profil Bilgileri</h4>
+                <div class="form-group">
+                  <label for="heroName">İsim</label>
+                  <input type="text" id="heroName" name="hero.name" required>
+                </div>
+                <div class="form-group">
+                  <label for="heroAvatar">Avatar Görseli</label>
+                  <div class="input-with-button">
+                    <input type="text" id="heroAvatar" name="hero.avatar" placeholder="images/profile/avatar.jpg">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="openImageUploadModal('avatar')">
+                      🖼️ Resim Seç
+                    </button>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="heroHeadline">Başlık</label>
+                  <input type="text" id="heroHeadline" name="hero.headline" required>
+                </div>
+                <div class="form-group">
+                  <label for="heroBio">Kişisel Tanıtım</label>
+                  <textarea id="heroBio" name="hero.bio" rows="4" required></textarea>
+                </div>
+              </div>
+
+              <div class="form-section">
+                <h4>🔗 Sosyal Medya Linkleri</h4>
+                <div class="form-group">
+                  <label for="linkEmail">E-posta</label>
+                  <input type="email" id="linkEmail" name="social.email">
+                </div>
+                <div class="form-group">
+                  <label for="linkGithub">GitHub</label>
+                  <input type="url" id="linkGithub" name="social.github" placeholder="https://github.com/username">
+                </div>
+                <div class="form-group">
+                  <label for="linkLinkedin">LinkedIn</label>
+                  <input type="url" id="linkLinkedin" name="social.linkedin" placeholder="https://linkedin.com/in/username">
+                </div>
+                <div class="form-group">
+                  <label for="linkTwitter">Twitter</label>
+                  <input type="url" id="linkTwitter" name="social.twitter" placeholder="https://twitter.com/username">
+                </div>
+                <div class="form-group">
+                  <label for="linkYoutube">YouTube</label>
+                  <input type="url" id="linkYoutube" name="social.youtube" placeholder="https://youtube.com/@username">
+                </div>
+              </div>
+
+              <div class="form-section">
+                <h4>🌐 Site Ayarları</h4>
+                <div class="form-group">
+                  <label for="siteTitle">Site Başlığı</label>
+                  <input type="text" id="siteTitle" name="site.title" required>
+                </div>
+                <div class="form-group">
+                  <label for="siteDescription">Site Açıklaması</label>
+                  <textarea id="siteDescription" name="site.description" rows="3" required></textarea>
+                </div>
+                <div class="form-group">
+                  <label for="siteUrl">Site URL</label>
+                  <input type="url" id="siteUrl" name="site.url" required>
+                </div>
+                <div class="form-group">
+                  <label for="siteLanguage">Dil</label>
+                  <select id="siteLanguage" name="site.language">
+                    <option value="tr">Türkçe</option>
+                    <option value="en">English</option>
+                  </select>
+                </div>
+              </div>
+            </form>
+          </div>
+          
+          <div class="editor-preview">
+            <div class="preview-header">
+              <h4>📱 Canlı Önizleme</h4>
+              <button type="button" id="refreshPreview" class="btn btn-secondary btn-sm">
+                <svg viewBox="0 0 24 24" width="16" height="16">
+                  <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+                </svg>
+                Yenile
+              </button>
+            </div>
+            <div class="preview-container">
+              <div id="livePreview" class="live-preview-content">
+                <!-- Live preview will be rendered here -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary modal-cancel">İptal</button>
+        <button type="button" class="btn btn-secondary" id="saveAsDraft">Taslak Olarak Kaydet</button>
+        <button type="submit" form="homepageEditorForm" class="btn btn-primary">✅ Değişiklikleri Uygula</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Account Settings Modal -->
+  <div id="accountSettingsModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>🔐 Hesap Ayarları</h3>
+        <button class="modal-close" aria-label="Kapat">×</button>
+      </div>
+      <div class="modal-body">
+        <form id="accountSettingsForm">
+          <div class="form-group">
+            <label for="currentUsername">Mevcut Kullanıcı Adı</label>
+            <input type="text" id="currentUsername" value="admin" readonly>
+            <small class="form-help">Kullanıcı adı değiştirilemez</small>
+          </div>
+
+          <div class="form-group">
+            <label for="newUsername">Yeni Kullanıcı Adı</label>
+            <input type="text" id="newUsername" placeholder="Yeni kullanıcı adınızı girin" required>
+            <small class="form-help">En az 3 karakter olmalıdır</small>
+          </div>
+
+          <div class="form-group">
+            <label for="currentPassword">Mevcut Şifre</label>
+            <input type="password" id="currentPassword" placeholder="Mevcut şifrenizi girin" required>
+            <small class="form-help">Güvenlik için mevcut şifrenizi doğrulayın</small>
+          </div>
+
+          <div class="form-group">
+            <label for="newPassword">Yeni Şifre</label>
+            <input type="password" id="newPassword" placeholder="Yeni şifrenizi girin" required>
+            <small class="form-help">En az 6 karakter olmalıdır</small>
+          </div>
+
+          <div class="form-group">
+            <label for="confirmPassword">Yeni Şifre (Tekrar)</label>
+            <input type="password" id="confirmPassword" placeholder="Yeni şifrenizi tekrar girin" required>
+            <small class="form-help">Şifrenizi doğrulamak için tekrar girin</small>
+          </div>
+        </form>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary modal-cancel">İptal</button>
+        <button type="submit" form="accountSettingsForm" class="btn btn-primary">✅ Değişiklikleri Kaydet</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Theme Editor Modal -->
+  <div id="themeEditorModal" class="modal" aria-hidden="true">
+    <div class="modal-content large-modal">
+      <div class="modal-header">
+        <h3>🎨 Tema Düzenleyici</h3>
+        <button class="modal-close" aria-label="Kapat">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="theme-editor-layout">
+          <div class="theme-editor-form">
+            <form id="themeEditorForm">
+              <div class="theme-section">
+                <h4>🌞 Açık Tema Renkleri</h4>
+                <div class="color-group">
+                  <div class="form-group">
+                    <label for="lightBg">Arka Plan Rengi</label>
+                    <div class="color-input-group">
+                      <input type="color" id="lightBg" name="light.bg" value="#f8f8f6">
+                      <input type="text" id="lightBgText" placeholder="#f8f8f6" readonly>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="lightPanel">Panel Rengi</label>
+                    <div class="color-input-group">
+                      <input type="color" id="lightPanel" name="light.panel" value="#fafaf8">
+                      <input type="text" id="lightPanelText" placeholder="#fafaf8" readonly>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="lightInk">Metin Rengi</label>
+                    <div class="color-input-group">
+                      <input type="color" id="lightInk" name="light.ink" value="#0b0b0b">
+                      <input type="text" id="lightInkText" placeholder="#0b0b0b" readonly>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="lightMuted">Soluk Metin</label>
+                    <div class="color-input-group">
+                      <input type="color" id="lightMuted" name="light.muted" value="#6b7280">
+                      <input type="text" id="lightMutedText" placeholder="#6b7280" readonly>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="lightLine">Çizgi Rengi</label>
+                    <div class="color-input-group">
+                      <input type="color" id="lightLine" name="light.line" value="#e5e7eb">
+                      <input type="text" id="lightLineText" placeholder="#e5e7eb" readonly>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="lightAccent">Vurgu Rengi</label>
+                    <div class="color-input-group">
+                      <input type="color" id="lightAccent" name="light.accent" value="#152bcb">
+                      <input type="text" id="lightAccentText" placeholder="#152bcb" readonly>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="theme-section">
+                <h4>🌙 Koyu Tema Renkleri</h4>
+                <div class="color-group">
+                  <div class="form-group">
+                    <label for="darkBg">Arka Plan Rengi</label>
+                    <div class="color-input-group">
+                      <input type="color" id="darkBg" name="dark.bg" value="#0b0d0f">
+                      <input type="text" id="darkBgText" placeholder="#0b0d0f" readonly>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="darkPanel">Panel Rengi</label>
+                    <div class="color-input-group">
+                      <input type="color" id="darkPanel" name="dark.panel" value="#14171a">
+                      <input type="text" id="darkPanelText" placeholder="#14171a" readonly>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="darkInk">Metin Rengi</label>
+                    <div class="color-input-group">
+                      <input type="color" id="darkInk" name="dark.ink" value="#e8edf2">
+                      <input type="text" id="darkInkText" placeholder="#e8edf2" readonly>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="darkMuted">Soluk Metin</label>
+                    <div class="color-input-group">
+                      <input type="color" id="darkMuted" name="dark.muted" value="#9aa4b2">
+                      <input type="text" id="darkMutedText" placeholder="#9aa4b2" readonly>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="darkLine">Çizgi Rengi</label>
+                    <div class="color-input-group">
+                      <input type="color" id="darkLine" name="dark.line" value="#2a2f35">
+                      <input type="text" id="darkLineText" placeholder="#2a2f35" readonly>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="darkAccent">Vurgu Rengi</label>
+                    <div class="color-input-group">
+                      <input type="color" id="darkAccent" name="dark.accent" value="#153acb">
+                      <input type="text" id="darkAccentText" placeholder="#153acb" readonly>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="theme-section">
+                <h4>🎯 Genel Ayarlar</h4>
+                <div class="form-group">
+                  <label for="borderRadius">Köşe Yuvarlaklığı</label>
+                  <input type="range" id="borderRadius" name="borderRadius" min="0" max="32" value="16" step="1">
+                  <div class="range-value">
+                    <span id="borderRadiusValue">16px</span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="shadowIntensity">Gölge Yoğunluğu</label>
+                  <input type="range" id="shadowIntensity" name="shadowIntensity" min="0" max="100" value="60" step="5">
+                  <div class="range-value">
+                    <span id="shadowIntensityValue">60%</span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="fontFamily">Yazı Tipi</label>
+                  <select id="fontFamily" name="fontFamily">
+                    <option value="Inter">Inter (Modern)</option>
+                    <option value="Roboto">Roboto (Temiz)</option>
+                    <option value="Open Sans">Open Sans (Okunabilir)</option>
+                    <option value="Poppins">Poppins (Şık)</option>
+                    <option value="Montserrat">Montserrat (Profesyonel)</option>
+                  </select>
+                </div>
+              </div>
+            </form>
+          </div>
+          
+          <div class="theme-preview">
+            <div class="preview-header">
+              <h4>📱 Canlı Tema Önizlemesi</h4>
+              <div class="theme-toggle">
+                <button type="button" id="previewLightTheme" class="btn btn-secondary btn-sm active">🌞 Açık</button>
+                <button type="button" id="previewDarkTheme" class="btn btn-secondary btn-sm">🌙 Koyu</button>
+              </div>
+            </div>
+            <div class="preview-container">
+              <div id="themeLivePreview" class="theme-live-preview-content">
+                <!-- Live theme preview will be rendered here -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary modal-cancel">İptal</button>
+        <button type="button" class="btn btn-secondary" id="resetTheme">Varsayılana Döndür</button>
+        <button type="submit" form="themeEditorForm" class="btn btn-primary">✅ Temayı Uygula</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gallery Section -->
+  <section id="gallery-section" class="gallery-section" style="display: none;">
+    <div class="section-header">
+      <h2>🖼️ Resim Galerisi</h2>
+      <div class="gallery-controls">
+        <select id="galleryFolder" class="filter-select">
+          <option value="all">Tüm Klasörler</option>
+          <option value="system">Sistem İkonları</option>
+          <option value="profile">Profil Fotoğrafları</option>
+          <option value="blog-covers">Blog Kapak Resimleri</option>
+          <option value="blog-content">Blog İçerik Resimleri</option>
+        </select>
+        <button id="uploadToGalleryBtn" class="btn btn-primary">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+          </svg>
+          Yeni Resim Ekle
+        </button>
+      </div>
+    </div>
+
+    <!-- Gallery Upload Area -->
+    <div class="gallery-upload-area" id="galleryUploadArea" style="display: none;">
+      <div class="upload-zone" id="uploadZone">
+        <div class="upload-content">
+          <svg class="upload-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+          </svg>
+          <h4>Resim Yükle</h4>
+          <p>Resimleri buraya sürükleyip bırakın veya tıklayarak seçin</p>
+          <input type="file" id="galleryFileInput" multiple accept="image/*" style="display: none;">
+          <button type="button" class="btn btn-secondary" onclick="document.getElementById('galleryFileInput').click()">
+            Bilgisayardan Seç
+          </button>
+        </div>
+      </div>
+      
+      <div class="upload-settings">
+        <div class="form-group">
+          <label for="uploadTargetFolder">Hedef Klasör:</label>
+          <select id="uploadTargetFolder" class="form-select">
+            <option value="blog-content">Blog İçerik Resimleri</option>
+            <option value="blog-covers">Blog Kapak Resimleri</option>
+            <option value="profile">Profil Fotoğrafları</option>
+            <option value="system">Sistem İkonları</option>
+          </select>
+        </div>
+        <div class="upload-actions">
+          <button type="button" class="btn btn-primary" id="startUploadBtn" disabled>
+            Yüklemeyi Başlat
+          </button>
+          <button type="button" class="btn btn-secondary" onclick="closeGalleryUpload()">
+            İptal
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gallery Content -->
+    <div class="gallery-content">
+      <!-- System Icons -->
+      <div class="gallery-folder" id="system-folder">
+        <div class="folder-header">
+          <h3>🖥️ Sistem İkonları</h3>
+          <span class="folder-count">(0 resim)</span>
+        </div>
+        <div class="folder-images" id="systemImages">
+          <!-- System images will be loaded here -->
+        </div>
+      </div>
+
+      <!-- Profile Photos -->
+      <div class="gallery-folder" id="profile-folder">
+        <div class="folder-header">
+          <h3>👤 Profil Fotoğrafları</h3>
+          <span class="folder-count">(0 resim)</span>
+        </div>
+        <div class="folder-images" id="profileImages">
+          <!-- Profile images will be loaded here -->
+        </div>
+      </div>
+
+      <!-- Blog Cover Images -->
+      <div class="gallery-folder" id="blog-covers-folder">
+        <div class="folder-header">
+          <h3>📝 Blog Kapak Resimleri</h3>
+          <span class="folder-count">(0 resim)</span>
+        </div>
+        <div class="folder-images" id="blogCoversImages">
+          <!-- Blog cover images will be loaded here -->
+        </div>
+      </div>
+
+      <!-- Blog Content Images -->
+      <div class="gallery-folder" id="blog-content-folder">
+        <div class="folder-header">
+          <h3>📄 Blog İçerik Resimleri</h3>
+          <span class="folder-count">(0 resim)</span>
+        </div>
+        <div class="folder-images" id="blogContentImages">
+          <!-- Blog content images will be loaded here -->
+        </div>
+      </div>
+
+      <!-- Recently Deleted Images -->
+      <div class="gallery-folder deleted-folder" id="deleted-folder">
+        <div class="folder-header">
+          <h3>🗑️ Son Silinenler</h3>
+          <span class="folder-count">(0 resim)</span>
+          <div class="deleted-actions">
+            <button class="btn btn-danger btn-sm" id="deleteAllDeletedBtn" onclick="galleryManager.deleteAllDeleted()" disabled>
+              Tümünü Sil
+            </button>
+            <button class="btn btn-success btn-sm" id="restoreAllDeletedBtn" onclick="galleryManager.restoreAllDeleted()" disabled>
+              Tümünü Kurtar
+            </button>
+          </div>
+        </div>
+        <div class="folder-images" id="deletedImages">
+          <!-- Deleted images will be loaded here -->
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Image Upload Modal -->
+  <div id="imageUploadModal" class="modal" aria-hidden="true">
+    <div class="modal-content large-modal">
+      <div class="modal-header">
+        <h3>🖼️ Resim Yükle</h3>
+        <button class="modal-close" aria-label="Kapat" onclick="closeImageUploadModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="image-upload-container">
+          <!-- Upload Area -->
+          <div class="upload-area" id="uploadArea">
+            <div class="upload-content">
+              <div class="upload-icon">📁</div>
+              <h4>Resim Yükle</h4>
+              <p>Resimleri buraya sürükleyip bırakın veya seçmek için tıklayın</p>
+              <input type="file" id="imageFileInput" accept="image/*" multiple style="display: none;">
+              <button type="button" class="btn btn-primary" onclick="document.getElementById('imageFileInput').click()">
+                Resim Seç
+              </button>
+            </div>
+          </div>
+
+          <!-- Upload Progress -->
+          <div class="upload-progress" id="uploadProgress" style="display: none;">
+            <div class="progress-bar">
+              <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <p class="progress-text" id="progressText">Yükleniyor...</p>
+          </div>
+
+          <!-- Image Preview -->
+          <div class="image-preview" id="imagePreview" style="display: none;">
+            <div class="preview-header">
+              <h4>Yüklenen Resim</h4>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="resetImageUpload()">
+                Yeni Resim
+              </button>
+            </div>
+            <div class="preview-content">
+              <img id="previewImage" src="" alt="Önizleme">
+              <div class="image-info">
+                <div class="info-item">
+                  <span class="info-label">Dosya Adı:</span>
+                  <span class="info-value" id="fileName"></span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Boyut:</span>
+                  <span class="info-value" id="fileSize"></span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Boyutlar:</span>
+                  <span class="info-value" id="imageDimensions"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Image Settings -->
+          <div class="image-settings" id="imageSettings" style="display: none;">
+            <h4>Resim Ayarları</h4>
+            <div class="settings-grid">
+              <div class="form-group">
+                <label for="imageAlt">Alt Metin (Açıklama)</label>
+                <input type="text" id="imageAlt" placeholder="Resmin açıklamasını girin">
+              </div>
+              <div class="form-group">
+                <label for="imageCaption">Altyazı</label>
+                <input type="text" id="imageCaption" placeholder="Resmin altında görünecek açıklama">
+              </div>
+              <div class="form-group">
+                <label for="imageWidth">Genişlik (%)</label>
+                <select id="imageWidth">
+                  <option value="25">25% - Küçük</option>
+                  <option value="50" selected>50% - Orta (Varsayılan)</option>
+                  <option value="75">75% - Büyük</option>
+                  <option value="100">100% - Tam Genişlik</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="imageAlignment">Hizalama</label>
+                <select id="imageAlignment">
+                  <option value="center" selected>Ortalanmış</option>
+                  <option value="left">Sola</option>
+                  <option value="right">Sağa</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Usage Type Selection -->
+          <div class="usage-selection" id="usageSelection" style="display: none;">
+            <h4>Kullanım Türü</h4>
+            <div class="usage-options">
+              <label class="usage-option">
+                <input type="radio" name="usageType" value="blog-cover" id="usageBlogCover">
+                <div class="option-content">
+                  <div class="option-icon">📝</div>
+                  <div class="option-text">
+                    <strong>Blog Kapak Resmi</strong>
+                    <span>Blog yazısının ana görseli</span>
+                  </div>
+                </div>
+              </label>
+              <label class="usage-option">
+                <input type="radio" name="usageType" value="blog-content" id="usageBlogContent" checked>
+                <div class="option-content">
+                  <div class="option-icon">📄</div>
+                  <div class="option-text">
+                    <strong>Blog İçeriği</strong>
+                    <span>Yazı içinde kullanılacak resim</span>
+                  </div>
+                </div>
+              </label>
+              <label class="usage-option">
+                <input type="radio" name="usageType" value="avatar" id="usageAvatar">
+                <div class="option-content">
+                  <div class="option-icon">👤</div>
+                  <div class="option-text">
+                    <strong>Profil Fotoğrafı</strong>
+                    <span>Ana sayfa avatar resmi</span>
+                  </div>
+                </div>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeImageUploadModal()">İptal</button>
+        <button type="button" class="btn btn-primary" id="insertImageBtn" onclick="insertImage()" disabled>
+          Resmi Ekle
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart.js Library -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <!-- Theme Manager Module (must load first) -->
+  <script src="../theme-manager.js"></script>
+  <script src="auth.js" defer></script>
+  <script src="admin.js" defer></script>
+</body>
+</html>

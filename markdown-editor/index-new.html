@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown Editörü - Güncellendi</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="../images/system/cedlogo (2).png" />
+
+    <!-- Google Fonts: Montserrat & Nunito Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;700;800;900&family=Nunito+Sans:opsz,wght@6..12,400;6..12,500;6..12,600;6..12,700&display=swap" rel="stylesheet">
+
+    <!-- Markdown dönüştürücü (CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <!-- Global temel stiller -->
+    <link href="../styles.css" rel="stylesheet" />
+    <!-- Editör özel stiller -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="antialiased">
+    <!-- Okuma İlerleme Çubuğu -->
+    <div id="progressBar"></div>
+
+    <!-- Üst kapsül -->
+    <header class="topbar">
+      <div class="wrap topbar-row">
+        <nav class="pill-nav" aria-label="Ana menü">
+          <a href="../index.html">Ana Sayfa</a>
+          <a href="../blog.html">Blog</a>
+          <a href="../index.html#contact">İletişim</a>
+        </nav>
+        <button id="themeToggle" class="theme-chip" aria-label="Tema değiştir" title="Tema değiştir"></button>
+      </div>
+    </header>
+
+    <!-- Admin Panel Butonu -->
+    <a href="../admin/index.html" class="admin-fixed-button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5"></path>
+            <path d="M12 19l-7-7 7-7"></path>
+        </svg>
+        Admin Paneli
+    </a>
+    
+    <!-- Ana Konteyner -->
+    <div class="wrap" style="padding-top: 48px; padding-bottom: 48px;">
+      <main class="max-w-3xl mx-auto">
+        <!-- Yazı Başlığı ve Meta Bilgileri -->
+        <div class="mb-8 text-center">
+          <h1 id="documentTitle" contenteditable="true" onclick="this.focus()">Yeni Blog Yazısı</h1>
+          <div class="flex justify-center items-center space-x-4">
+            <span>Yazar: Cihan Enes Durgun</span>
+            <span>•</span>
+            <span id="currentDate">Bugün</span>
+            <span>•</span>
+            <span id="readingTime">~0 dk okuma</span>
+          </div>
+        </div>
+
+        <!-- Basit Editör Toolbar -->
+        <div class="editor-toolbar-simple">
+          <div class="toolbar-left">
+            <div class="format-buttons">
+              <button onclick="formatText('bold')" class="format-btn" title="Kalın (Ctrl+B)"><strong>B</strong></button>
+              <button onclick="formatText('italic')" class="format-btn" title="İtalik (Ctrl+I)"><em>I</em></button>
+              <button onclick="formatText('h1')" class="format-btn" title="Başlık 1">H1</button>
+              <button onclick="formatText('h2')" class="format-btn" title="Başlık 2">H2</button>
+              <button onclick="formatText('link')" class="format-btn" title="Link">🔗</button>
+              <button onclick="formatText('image')" class="format-btn" title="Resim">🖼️</button>
+              <button onclick="formatText('list')" class="format-btn" title="Liste">•</button>
+              <button onclick="formatText('code')" class="format-btn" title="Kod">{ }</button>
+            </div>
+          </div>
+          
+          <div class="toolbar-right">
+            <div class="view-toggle">
+              <button onclick="setViewMode('edit')" class="view-btn active" data-mode="edit">✏️</button>
+              <button onclick="setViewMode('preview')" class="view-btn" data-mode="preview">👁️</button>
+            </div>
+            <button onclick="showBlogSaveForm()" class="save-btn-main">💾 Kaydet</button>
+            <button onclick="showRawMarkdownPreview()" class="preview-btn-main">👁️ Önizle</button>
+          </div>
+        </div>
+
+        <!-- Yazı İçeriği -->
+        <div id="postContent" class="blog-content">
+          <!-- Edit Mode -->
+          <div class="editor-section edit-mode" id="editMode">
+            <div class="editor-content blog-content" id="editorContent" contenteditable="true" placeholder="Buraya yazmaya başlayın...">
+              <p>Buraya yazmaya başlayın...</p>
+            </div>
+          </div>
+          
+          <!-- Preview Mode -->
+          <div class="editor-section preview-mode" id="previewMode" style="display: none;">
+            <div class="preview-content blog-content" id="livePreviewContent"></div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Post Form Modal -->
+    <div id="postFormModal" class="post-form-modal">
+        <div class="post-form-content">
+            <div class="post-form-header">
+                <h3>📝 Blog Yazısı Bilgileri</h3>
+                <button class="post-form-close" onclick="closePostForm()">&times;</button>
+            </div>
+            
+            <form id="postForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="postTitle">Başlık</label>
+                        <input type="text" id="postTitle" placeholder="Blog yazısının başlığı" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="postSlug">URL Slug</label>
+                        <input type="text" id="postSlug" placeholder="url-slug-formatinda" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="postExcerpt">Özet</label>
+                    <textarea id="postExcerpt" rows="3" placeholder="Blog yazısının kısa özeti" required></textarea>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="postDate">Tarih</label>
+                        <input type="date" id="postDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="postTags">Etiketler (virgülle ayırın)</label>
+                        <input type="text" id="postTags" placeholder="ESP32, RC, Wireless">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="postCover">Kapak Görseli URL</label>
+                    <input type="text" id="postCover" placeholder="images/post-cover.jpg">
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="form-btn secondary" onclick="closePostForm()">İptal</button>
+                    <button type="button" class="form-btn primary" onclick="submitPost()">Taslak Olarak Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Markdown Preview Modal -->
+    <div class="preview-modal" id="previewModal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>📄 Markdown Önizleme</h3>
+                <button onclick="closePreviewModal()" class="close-btn">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="markdown-preview-container">
+                    <textarea id="markdownOutput" readonly class="markdown-textarea" placeholder="Markdown içeriği burada görünecek..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="modal-buttons">
+                    <button onclick="copyMarkdown()" class="copy-btn">📋 Kopyala</button>
+                    <button onclick="closePreviewModal()">Kapat</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Save Indicator -->
+    <div id="saveIndicator" class="save-indicator">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 6L9 17l-5-5"></path>
+        </svg>
+        Kaydedildi!
+    </div>
+
+    <footer>
+      <div class="wrap">
+        <div class="footer-content">
+          <div class="footer-left">
+            © <span id="year"></span> <span id="owner">Cihan Enes Durgun</span>. Tüm hakları saklıdır.
+          </div>
+          <div class="footer-right">
+            <a href="../rss.xml" class="footer-link" aria-label="RSS Feed">RSS</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

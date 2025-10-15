@@ -1,0 +1,13 @@
+{
+  "development_mode": "on",
+  "development": {
+    "domain": "http://localhost:3000",
+    "apiUrl": "http://localhost:3000/api",
+    "corsOrigins": ["http://localhost:3000", "http://127.0.0.1:3000"]
+  },
+  "production": {
+    "domain": "https://cihanenesdurgun.com",
+    "apiUrl": "https://cihanenesdurgun.com/api",
+    "corsOrigins": ["https://cihanenesdurgun.com"]
+  }
+}
