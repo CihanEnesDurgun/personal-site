@@ -44,11 +44,24 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const rateLimit = require('express-rate-limit');
+const { exec } = require('child_process');
+const { promisify } = require('util');
 const SessionManager = require('./lib/sessionManager');
 const LogCleanupManager = require('./lib/logCleanupManager');
 
+const execAsync = promisify(exec);
+
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// ULTRA SIMPLE TEST ENDPOINT - Before ANY middleware
+app.get('/api/simple-test', (req, res) => {
+  res.json({ 
+    success: true, 
+    message: 'Server is running - no middleware',
+    timestamp: new Date().toISOString()
+  });
+});
 
 // Initialize Session Manager with error handling
 let sessionManager;
@@ -178,6 +191,12 @@ const corsOptions = {
 // Apply security middleware - CORS only for API routes
 app.use('/api', cors(corsOptions));
 app.use(generalLimiter); // Rate limiting enabled for security
+
+// Webhook endpoint needs raw body for signature verification
+// Add raw body parser for webhook endpoint only
+app.use('/api/webhook/deploy', bodyParser.raw({ type: 'application/json', limit: '10mb' }));
+
+// Regular body parsers for other endpoints
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
 
@@ -3544,6 +3563,115 @@ app.get('/rss.xml', async (req, res) => {
   } catch (error) {
     console.error('Error serving RSS feed:', error);
     res.status(500).send('RSS feed oluşturulurken hata oluştu');
+  }
+});
+
+// GitHub Webhook endpoint for automatic deployment
+app.post('/api/webhook/deploy', async (req, res) => {
+  try {
+    // Parse JSON from raw body
+    let payload;
+    try {
+      payload = JSON.parse(req.body.toString());
+    } catch (parseError) {
+      console.error('❌ Failed to parse webhook payload:', parseError);
+      return res.status(400).json({ error: 'Invalid JSON payload' });
+    }
+
+    // Verify webhook secret if configured
+    const webhookSecret = process.env.GITHUB_WEBHOOK_SECRET;
+    if (webhookSecret) {
+      const signature = req.headers['x-hub-signature-256'];
+      if (!signature) {
+        console.warn('⚠️  Webhook request missing signature');
+        return res.status(401).json({ error: 'Unauthorized: Missing signature' });
+      }
+
+      // Verify signature using raw body
+      const hmac = crypto.createHmac('sha256', webhookSecret);
+      const digest = 'sha256=' + hmac.update(req.body).digest('hex');
+      
+      if (signature !== digest) {
+        console.warn('⚠️  Webhook signature verification failed');
+        return res.status(401).json({ error: 'Unauthorized: Invalid signature' });
+      }
+    }
+
+    // Check if this is a push event to main branch
+    const event = req.headers['x-github-event'];
+
+    if (event === 'push' && payload.ref === 'refs/heads/main') {
+      console.log('🚀 Deployment webhook triggered');
+      console.log(`📦 Commit: ${payload.head_commit?.id?.substring(0, 7)} - ${payload.head_commit?.message}`);
+      console.log(`👤 Author: ${payload.head_commit?.author?.name}`);
+
+      // Get the deployment script path
+      const deployScriptPath = path.join(__dirname, 'deploy.sh');
+      const projectPath = process.env.DEPLOY_PATH || __dirname;
+
+      // Check if deploy.sh exists
+      if (await fs.pathExists(deployScriptPath)) {
+        console.log('📜 Running deployment script...');
+        
+        // Execute deployment script asynchronously
+        execAsync(`bash ${deployScriptPath}`, {
+          cwd: projectPath,
+          env: { ...process.env, PATH: process.env.PATH }
+        }).then(({ stdout, stderr }) => {
+          if (stdout) console.log('✅ Deployment output:', stdout);
+          if (stderr) console.warn('⚠️  Deployment warnings:', stderr);
+          console.log('✅ Deployment completed successfully');
+        }).catch((error) => {
+          console.error('❌ Deployment error:', error.message);
+        });
+
+        // Respond immediately (don't wait for deployment to finish)
+        res.status(200).json({
+          success: true,
+          message: 'Deployment started',
+          commit: payload.head_commit?.id?.substring(0, 7),
+          author: payload.head_commit?.author?.name,
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        // If deploy.sh doesn't exist, try direct git pull
+        console.log('📜 deploy.sh not found, attempting direct git pull...');
+        
+        execAsync('git pull origin main', {
+          cwd: projectPath,
+          env: { ...process.env, PATH: process.env.PATH }
+        }).then(({ stdout, stderr }) => {
+          if (stdout) console.log('✅ Git pull output:', stdout);
+          if (stderr) console.warn('⚠️  Git pull warnings:', stderr);
+          console.log('✅ Git pull completed successfully');
+        }).catch((error) => {
+          console.error('❌ Git pull error:', error.message);
+        });
+
+        res.status(200).json({
+          success: true,
+          message: 'Git pull started',
+          commit: payload.head_commit?.id?.substring(0, 7),
+          author: payload.head_commit?.author?.name,
+          timestamp: new Date().toISOString()
+        });
+      }
+    } else {
+      // Not a push to main branch, ignore
+      console.log(`ℹ️  Webhook event ignored: ${event} to ${payload.ref}`);
+      res.status(200).json({
+        success: true,
+        message: 'Event ignored (not a push to main branch)',
+        event: event,
+        ref: payload.ref
+      });
+    }
+  } catch (error) {
+    console.error('❌ Webhook error:', error);
+    res.status(500).json({
+      error: 'Webhook processing failed',
+      message: error.message
+    });
   }
 });
 
