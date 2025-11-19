@@ -3709,7 +3709,7 @@ app.listen(PORT, async () => {
     await cleanupSessionData();
   }, SESSION_LIMITS.CLEANUP_INTERVAL);
   
-  console.log(`🚀 Personal Site v2.0.4 - Admin API Server running on port ${PORT}`);
+  console.log(`🚀 Personal Site v0.1.0 - Admin API Server running on port ${PORT}`);
   console.log(`🔐 Security & Session Management System Active`);
   console.log(`📊 Stats Data Cleanup & Validation System Active`);
   console.log(`🧹 Session Data Cleanup System Active (every ${SESSION_LIMITS.CLEANUP_INTERVAL / (60 * 1000)} minutes)`);
