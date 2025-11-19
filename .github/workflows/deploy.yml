@@ -1,10 +1,13 @@
 name: Deploy to cPanel
 
+# Workflow şimdilik devre dışı - GitHub Secrets yapılandırıldıktan sonra aktif edilebilir
+# GitHub Secrets gerekli: CPANEL_HOST, CPANEL_USERNAME, CPANEL_SSH_KEY
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  # push:
+  #   branches: [ main ]
+  # pull_request:
+  #   branches: [ main ]
+  workflow_dispatch: # Sadece manuel çalıştırma için
 
 jobs:
   deploy:
