@@ -95,7 +95,42 @@ function initShareButtons(post) {
   });
 }
 
+// Wait for marked.js to load
+function waitForMarked() {
+  return new Promise((resolve) => {
+    if (typeof marked !== 'undefined') {
+      resolve();
+      return;
+    }
+    
+    // Check every 100ms if marked is loaded
+    const checkInterval = setInterval(() => {
+      if (typeof marked !== 'undefined') {
+        clearInterval(checkInterval);
+        resolve();
+      }
+    }, 100);
+    
+    // Timeout after 5 seconds
+    setTimeout(() => {
+      clearInterval(checkInterval);
+      if (typeof marked === 'undefined') {
+        console.error('marked.js failed to load after 5 seconds');
+        renderError('Markdown kütüphanesi yüklenemedi. Sayfayı yenileyin.');
+      }
+      resolve();
+    }, 5000);
+  });
+}
+
 async function boot(){
+  // Wait for marked.js to be loaded
+  await waitForMarked();
+  
+  if (typeof marked === 'undefined') {
+    renderError('Markdown kütüphanesi yüklenemedi. Lütfen sayfayı yenileyin.');
+    return;
+  }
   const q = (s) => document.querySelector(s);
   const urlParams = new URLSearchParams(window.location.search);
   const slug = urlParams.get('slug');
@@ -239,33 +274,15 @@ async function boot(){
   }
 }
 
-// ====== Configuration Loader ======
-let API_BASE_URL = 'http://localhost:3000'; // Default fallback
-
-// Load configuration from server
-async function loadConfig() {
-  try {
-    const response = await fetch('/api/config');
-    if (response.ok) {
-      const config = await response.json();
-      API_BASE_URL = config.domain;
-      console.log(`🔧 Post page loaded in ${config.mode} mode`);
-      console.log(`🌐 API URL: ${API_BASE_URL}`);
-    } else {
-      console.warn('⚠️ Failed to load config, using fallback URL');
-    }
-  } catch (error) {
-    console.warn('⚠️ Config loading failed, using fallback URL:', error);
-  }
-}
-
-// Initialize config on page load
-loadConfig();
+// ====== Development Mode Configuration ======
+// Auto-detect development mode based on current hostname
+const DEVELOPMENT_MODE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const API_BASE_URL = DEVELOPMENT_MODE ? `${window.location.protocol}//${window.location.host}` : 'https://cihanenesdurgun.com';
 
 // ====== Statistics Tracking ======
 async function trackPostView(slug) {
   try {
-    await fetch(`${API_BASE_URL}/api/stats/postview`, {
+    await fetch(`${API_BASE_URL}/api/analytics/track-post`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -297,8 +314,21 @@ async function loadComments(slug) {
     if (data.success) {
       const comments = data.comments;
       
-      // Update comment count
-      commentCount.textContent = `${comments.length} yorum`;
+      // Update comment count (count all comments including replies and sub-replies)
+      const totalComments = comments.reduce((total, comment) => {
+        let count = 1; // Main comment
+        if (comment.replies) {
+          count += comment.replies.reduce((replyTotal, reply) => {
+            let replyCount = 1; // Direct reply
+            if (reply.replies) {
+              replyCount += reply.replies.length; // Sub-replies
+            }
+            return replyTotal + replyCount;
+          }, 0);
+        }
+        return total + count;
+      }, 0);
+      commentCount.textContent = `${totalComments} yorum`;
       
       // Render comments
       if (comments.length === 0) {
@@ -311,18 +341,7 @@ async function loadComments(slug) {
           </div>
         `;
       } else {
-        commentsList.innerHTML = comments.map(comment => `
-          <div class="comment-item ${comment.approved === false ? 'comment-pending' : ''}">
-            <div class="comment-header">
-              <div class="comment-author">
-                <div class="comment-name">${escapeHtml(comment.name)}</div>
-                <div class="comment-date">${formatCommentDate(comment.date)}</div>
-              </div>
-              ${comment.approved === false ? '<div class="comment-status pending">Onay Bekliyor</div>' : ''}
-            </div>
-            <div class="comment-content">${escapeHtml(comment.content)}</div>
-          </div>
-        `).join('');
+        commentsList.innerHTML = comments.map(comment => renderCommentWithReplies(comment, slug)).join('');
       }
     } else {
       commentsList.innerHTML = '<p class="muted">Yorumlar yüklenirken bir hata oluştu.</p>';
@@ -456,6 +475,198 @@ function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
+}
+
+// Render comment with replies
+function renderCommentWithReplies(comment, slug) {
+  const repliesHtml = comment.replies ? comment.replies.map(reply => renderReply(reply, slug)).join('') : '';
+  
+  return `
+    <div class="comment-item ${comment.approved === false ? 'comment-pending' : ''}" data-comment-id="${comment.id}">
+      <div class="comment-header">
+        <div class="comment-author">
+          <div class="comment-name">${escapeHtml(comment.name)}</div>
+          <div class="comment-date">${formatCommentDate(comment.date)}</div>
+        </div>
+        ${comment.approved === false ? '<div class="comment-status pending">Onay Bekliyor</div>' : ''}
+      </div>
+      <div class="comment-content">${escapeHtml(comment.content)}</div>
+      <div class="comment-actions">
+        <button class="reply-btn" onclick="showReplyForm('${comment.id}', '${escapeHtml(comment.name)}', '${slug}')">
+          <svg viewBox="0 0 24 24" width="16" height="16">
+            <path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/>
+          </svg>
+          Yanıtla
+        </button>
+      </div>
+      ${repliesHtml}
+    </div>
+  `;
+}
+
+// Render reply
+function renderReply(reply, slug) {
+  const subRepliesHtml = reply.replies ? reply.replies.map(subReply => renderReply(subReply, slug)).join('') : '';
+  
+  return `
+    <div class="comment-reply ${reply.approved === false ? 'comment-pending' : ''}" data-comment-id="${reply.id}">
+      <div class="comment-header">
+        <div class="comment-author">
+          <div class="comment-name">${escapeHtml(reply.name)}</div>
+          <div class="comment-date">${formatCommentDate(reply.date)}</div>
+        </div>
+        ${reply.approved === false ? '<div class="comment-status pending">Onay Bekliyor</div>' : ''}
+      </div>
+      <div class="comment-content">
+        <span class="reply-to-user">@${escapeHtml(reply.reply_to_name)}</span> ${escapeHtml(reply.content)}
+      </div>
+      <div class="comment-actions">
+        <button class="reply-btn" onclick="showReplyForm('${reply.id}', '${escapeHtml(reply.name)}', '${slug}')">
+          <svg viewBox="0 0 24 24" width="16" height="16">
+            <path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/>
+          </svg>
+          Yanıtla
+        </button>
+      </div>
+      ${subRepliesHtml}
+    </div>
+  `;
+}
+
+// Show reply form
+function showReplyForm(parentId, parentName, slug) {
+  // Remove any existing reply forms
+  const existingForms = document.querySelectorAll('.reply-form');
+  existingForms.forEach(form => form.remove());
+  
+  // Find the comment element
+  const commentElement = document.querySelector(`[data-comment-id="${parentId}"]`);
+  if (!commentElement) return;
+  
+  // Create reply form
+  const replyForm = document.createElement('div');
+  replyForm.className = 'reply-form';
+  replyForm.innerHTML = `
+    <div class="reply-form-content">
+      <h5>${parentName} kullanıcısına yanıt ver</h5>
+      <form class="comment-form reply-comment-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="replyName">İsim *</label>
+            <input type="text" id="replyName" name="name" required>
+          </div>
+          <div class="form-group">
+            <label for="replyEmail">E-posta *</label>
+            <input type="email" id="replyEmail" name="email" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="replyContent">Yanıtınız *</label>
+          <textarea id="replyContent" name="content" rows="3" required 
+                    placeholder="${parentName} kullanıcısına yanıt verin..."></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">
+            <svg viewBox="0 0 24 24" width="16" height="16">
+              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+            </svg>
+            Yanıtı Gönder
+          </button>
+          <button type="button" class="btn btn-secondary" onclick="this.closest('.reply-form').remove()">
+            İptal
+          </button>
+        </div>
+      </form>
+    </div>
+  `;
+  
+  // Insert after the comment actions
+  const commentActions = commentElement.querySelector('.comment-actions');
+  commentActions.parentNode.insertBefore(replyForm, commentActions.nextSibling);
+  
+  // Initialize reply form
+  initReplyForm(parentId, slug);
+}
+
+// Initialize reply form
+function initReplyForm(parentId, slug) {
+  const replyForm = document.querySelector('.reply-comment-form');
+  if (!replyForm) return;
+  
+  replyForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(replyForm);
+    const name = formData.get('name').trim();
+    const email = formData.get('email').trim();
+    const content = formData.get('content').trim();
+    
+    // Basic validation
+    if (!name || !email || !content) {
+      showCommentMessage('Lütfen tüm alanları doldurun.', 'error');
+      return;
+    }
+    
+    if (content.length < 3) {
+      showCommentMessage('Yanıt en az 3 karakter olmalıdır.', 'error');
+      return;
+    }
+    
+    try {
+      // Disable form
+      const submitBtn = replyForm.querySelector('button[type="submit"]');
+      const originalText = submitBtn.innerHTML;
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `
+        <svg viewBox="0 0 24 24" width="16" height="16" style="animation: spin 1s linear infinite;">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+        </svg>
+        Gönderiliyor...
+      `;
+      
+      // Submit reply
+      const response = await fetch(`${API_BASE_URL}/api/comments/${slug}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          name, 
+          email, 
+          content, 
+          parent_id: parentId 
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        showCommentMessage('Yanıtınız başarıyla gönderildi! Yanıtınız onaylandıktan sonra görünecek.', 'success');
+        replyForm.reset();
+        
+        // Remove reply form
+        replyForm.closest('.reply-form').remove();
+        
+        // Reload comments to show the new reply
+        loadComments(slug);
+      } else {
+        showCommentMessage(data.error || 'Yanıt gönderilirken bir hata oluştu.', 'error');
+      }
+    } catch (error) {
+      console.error('Error submitting reply:', error);
+      showCommentMessage('Yanıt gönderilirken bir hata oluştu.', 'error');
+    } finally {
+      // Re-enable form
+      const submitBtn = replyForm.querySelector('button[type="submit"]');
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = `
+        <svg viewBox="0 0 24 24" width="16" height="16">
+          <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+        </svg>
+        Yanıtı Gönder
+      `;
+    }
+  });
 }
 
 // Markdown render sonrası stil düzeltmeleri

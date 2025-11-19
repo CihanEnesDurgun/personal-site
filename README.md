@@ -234,11 +234,25 @@ personal-site/
 ├── content/              # İçerik dosyaları
 │   ├── posts.json        # Blog yazıları metadata
 │   └── posts/            # Markdown dosyaları
+├── docs/                 # Dokümantasyon
+│   ├── deployment/       # Deployment rehberleri
+│   ├── security/         # Güvenlik dokümantasyonu
+│   └── project/          # Proje bilgileri
 ├── images/               # Görseller
 ├── server.js             # Backend API server
 ├── package.json          # Proje bağımlılıkları
 └── README.md             # Bu dosya
 ```
+
+## 📚 Dokümantasyon
+
+Tüm dokümantasyon dosyaları [`docs/`](./docs/) klasöründe organize edilmiştir:
+
+- **📦 [Deployment Rehberleri](./docs/deployment/)** - cPanel yükleme, deployment adımları
+- **🔒 [Güvenlik Dokümantasyonu](./docs/security/)** - Environment variables, güvenlik kurulumu
+- **📋 [Proje Bilgileri](./docs/project/)** - Proje özeti, sistem analizi raporları
+
+Hızlı başlangıç için: [`docs/deployment/quick-start-cpanel.md`](./docs/deployment/quick-start-cpanel.md)
 
 ## 🔧 API Endpoints
 

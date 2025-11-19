@@ -1,27 +1,8 @@
 /* ====== Admin API Service Module ====== */
 
-// ====== Configuration Loader ======
-let API_BASE_URL = 'http://localhost:3000/api'; // Default fallback
-
-// Load configuration from server
-async function loadConfig() {
-  try {
-    const response = await fetch('/api/config');
-    if (response.ok) {
-      const config = await response.json();
-      API_BASE_URL = config.apiUrl;
-      console.log(`🔧 API Service loaded in ${config.mode} mode`);
-      console.log(`🌐 API URL: ${API_BASE_URL}`);
-    } else {
-      console.warn('⚠️ Failed to load config, using fallback URL');
-    }
-  } catch (error) {
-    console.warn('⚠️ Config loading failed, using fallback URL:', error);
-  }
-}
-
-// Initialize config on module load
-loadConfig();
+// ====== Development Mode Configuration ======
+const DEVELOPMENT_MODE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const API_BASE_URL = DEVELOPMENT_MODE ? `${window.location.protocol}//${window.location.host}/api` : 'https://cihanenesdurgun.com/api';
 
 // ====== API Service ======
 class ApiService {
@@ -67,18 +48,31 @@ class ApiService {
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
         const text = await response.text();
-        throw new Error(`Expected JSON but got: ${text.substring(0, 100)}...`);
+        throw new Error(`JSON bekleniyordu ancak alındı: ${text.substring(0, 100)}...`);
       }
 
       const data = await response.json();
       
       if (!response.ok) {
-        throw new Error(data.error || `HTTP ${response.status}: API request failed`);
+        // Create error with code information
+        const apiError = new Error(data.error || `HTTP ${response.status}: API isteği başarısız`);
+        // Attach error code and details to error object
+        if (data.code) apiError.code = data.code;
+        if (data.statusCode) apiError.statusCode = data.statusCode;
+        if (data.details) apiError.details = data.details;
+        if (data.requestId) apiError.requestId = data.requestId;
+        // Attach full response data for error code mapping
+        apiError.responseData = data;
+        throw apiError;
       }
 
       return data;
     } catch (error) {
       console.error('API Error:', error);
+      // If error doesn't have code but has responseData, try to extract it
+      if (error.responseData && error.responseData.code && !error.code) {
+        error.code = error.responseData.code;
+      }
       throw error;
     }
   }
@@ -162,7 +156,25 @@ class ApiService {
     });
 
     if (!response.ok) {
-      throw new Error('Upload failed');
+      // Try to get error details from response
+      let errorData;
+      try {
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          errorData = await response.json();
+        }
+      } catch (e) {
+        // If parsing fails, use default error
+      }
+      
+      // Create error with code information
+      const apiError = new Error(errorData?.error || 'Yükleme başarısız');
+      if (errorData?.code) apiError.code = errorData.code;
+      if (errorData?.statusCode) apiError.statusCode = errorData.statusCode;
+      if (errorData?.details) apiError.details = errorData.details;
+      if (errorData?.requestId) apiError.requestId = errorData.requestId;
+      apiError.responseData = errorData;
+      throw apiError;
     }
 
     return await response.json();

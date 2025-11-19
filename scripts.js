@@ -170,7 +170,7 @@
   }
   function renderCTA(site) {
     $("#cta").innerHTML = `
-      <h2>Birlikte üretelim?</h2>
+      <h2>Birlikte Üretelim Mi?</h2>
       <p class="muted">Fikir, proje ya da iş birliği için bir mesaj uzağındayım.</p>
       <div class="actions" style="justify-content:center;margin-top:14px">
         ${site.social?.email ? `<a class="btn btn-primary" href="mailto:${site.social.email}">E‑posta</a>` : ""}
@@ -261,13 +261,24 @@
     trackPageView('home');
   });
   
+  // ====== Development Mode Configuration ======
+  // Auto-detect development mode based on hostname
+  const isLocalhost = window.location.hostname === 'localhost' || 
+                      window.location.hostname === '127.0.0.1' ||
+                      window.location.hostname === '0.0.0.0';
+  const DEVELOPMENT_MODE = isLocalhost;
+  const API_BASE_URL = DEVELOPMENT_MODE ? `http://${window.location.hostname}:${window.location.port || 3000}` : 'https://cihanenesdurgun.com';
+
   // ====== Statistics Tracking ======
   async function trackPageView(page) {
+    // Skip analytics in development mode to avoid CORS issues
+    if (DEVELOPMENT_MODE) {
+      console.log('📊 Analytics skipped in development mode');
+      return;
+    }
+    
     try {
-              // PRODUCTION MODE
-          await fetch('https://cihanenesdurgun.com/api/stats/pageview', {
-          // DEVELOPMENT MODE
-          // await fetch('http://localhost:3000/api/stats/pageview', {
+      await fetch(`${API_BASE_URL}/api/analytics/track-page`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

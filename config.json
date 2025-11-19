@@ -1,5 +1,5 @@
 {
-  "development_mode": "on",
+  "development_mode": "off",
   "development": {
     "domain": "http://localhost:3000",
     "apiUrl": "http://localhost:3000/api",

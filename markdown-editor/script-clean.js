@@ -427,7 +427,7 @@ async function submitPost() {
             return;
         }
         
-        const response = await fetch('http://localhost:3000/api/posts', {
+        const response = await fetch('https://cihanenesdurgun.com/api/posts', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

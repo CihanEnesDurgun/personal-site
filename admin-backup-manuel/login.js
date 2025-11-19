@@ -80,28 +80,9 @@ async function loadCustomTheme() {
   }
 }
 
-// ====== Configuration Loader ======
-let API_BASE_URL = 'http://localhost:3000/api'; // Default fallback
-
-// Load configuration from server
-async function loadConfig() {
-  try {
-    const response = await fetch('/api/config');
-    if (response.ok) {
-      const config = await response.json();
-      API_BASE_URL = config.apiUrl;
-      console.log(`🔧 Login page (backup) loaded in ${config.mode} mode`);
-      console.log(`🌐 API URL: ${API_BASE_URL}`);
-    } else {
-      console.warn('⚠️ Failed to load config, using fallback URL');
-    }
-  } catch (error) {
-    console.warn('⚠️ Config loading failed, using fallback URL:', error);
-  }
-}
-
-// Initialize config on page load
-loadConfig();
+// ====== Development Mode Configuration ======
+const DEVELOPMENT_MODE = true; // Set to false for production
+const API_BASE_URL = DEVELOPMENT_MODE ? 'http://localhost:3000/api' : 'https://cihanenesdurgun.com/api';
 
 // ====== CONFIG ======
 const CONFIG = {

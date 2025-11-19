@@ -3835,3 +3835,33 @@ input[type="range"]::-moz-range-thumb {
   background: #4b5563;
   transform: translateY(-1px);
 }
+
+/* ========== COMMENT REPLIES STYLES ========== */
+
+/* Reply indicator in admin panel */
+.reply-indicator {
+  background: var(--accent);
+  color: white;
+  font-size: 0.75em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 8px;
+  font-weight: 500;
+}
+
+.reply-to-info {
+  font-size: 0.85em;
+  color: var(--muted);
+  margin-top: 4px;
+  font-style: italic;
+}
+
+/* Dark theme adjustments for reply indicators */
+:root.dark .reply-indicator {
+  background: var(--accent);
+  color: var(--dark-bg);
+}
+
+:root.dark .reply-to-info {
+  color: var(--dark-muted);
+}

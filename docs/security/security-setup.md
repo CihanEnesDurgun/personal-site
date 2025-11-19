@@ -36,7 +36,7 @@ SESSION_CLEANUP_INTERVAL=5
 RATE_LIMIT_MAX=100
 
 # CORS Origin - İzin verilen domain'ler
-CORS_ORIGIN=http://localhost:3000,https://yourdomain.com
+CORS_ORIGIN=http://localhost:3000,https://cihanenesdurgun.com
 ```
 
 ### 3. Güvenli JWT Secret Oluşturma
@@ -58,7 +58,7 @@ Production ortamında:
 ```env
 NODE_ENV=production
 JWT_SECRET=your-production-secret-key-here
-CORS_ORIGIN=https://yourdomain.com
+CORS_ORIGIN=https://cihanenesdurgun.com
 RATE_LIMIT_MAX=50
 ```
 

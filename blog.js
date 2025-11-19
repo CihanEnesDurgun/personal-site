@@ -208,33 +208,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-// ====== Configuration Loader ======
-let API_BASE_URL = 'http://localhost:3000'; // Default fallback
-
-// Load configuration from server
-async function loadConfig() {
-  try {
-    const response = await fetch('/api/config');
-    if (response.ok) {
-      const config = await response.json();
-      API_BASE_URL = config.domain;
-      console.log(`🔧 Blog page loaded in ${config.mode} mode`);
-      console.log(`🌐 API URL: ${API_BASE_URL}`);
-    } else {
-      console.warn('⚠️ Failed to load config, using fallback URL');
-    }
-  } catch (error) {
-    console.warn('⚠️ Config loading failed, using fallback URL:', error);
-  }
-}
-
-// Initialize config on page load
-loadConfig();
+// ====== Statistics Tracking ======
+// ====== Development Mode Configuration ======
+// Auto-detect development mode based on current hostname
+const DEVELOPMENT_MODE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const API_BASE_URL = DEVELOPMENT_MODE ? `${window.location.protocol}//${window.location.host}` : 'https://cihanenesdurgun.com';
 
 // ====== Statistics Tracking ======
 async function trackPageView(page) {
   try {
-    await fetch(`${API_BASE_URL}/api/stats/pageview`, {
+    await fetch(`${API_BASE_URL}/api/analytics/track-page`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

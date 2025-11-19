@@ -1,27 +1,8 @@
 /* ====== Admin Panel JavaScript ====== */
 
-// ====== Configuration Loader ======
-let API_BASE_URL = 'http://localhost:3000/api'; // Default fallback
-
-// Load configuration from server
-async function loadConfig() {
-  try {
-    const response = await fetch('/api/config');
-    if (response.ok) {
-      const config = await response.json();
-      API_BASE_URL = config.apiUrl;
-      console.log(`🔧 Admin panel loaded in ${config.mode} mode`);
-      console.log(`🌐 API URL: ${API_BASE_URL}`);
-    } else {
-      console.warn('⚠️ Failed to load config, using fallback URL');
-    }
-  } catch (error) {
-    console.warn('⚠️ Config loading failed, using fallback URL:', error);
-  }
-}
-
-// Initialize config on page load
-loadConfig();
+// ====== Development Mode Configuration ======
+const DEVELOPMENT_MODE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const API_BASE_URL = DEVELOPMENT_MODE ? `${window.location.protocol}//${window.location.host}/api` : 'https://cihanenesdurgun.com/api';
 
 // ====== CONFIG ======
 // Note: Credentials are handled by login form input - never hardcode passwords!
@@ -74,18 +55,31 @@ class ApiService {
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
         const text = await response.text();
-        throw new Error(`Expected JSON but got: ${text.substring(0, 100)}...`);
+        throw new Error(`JSON bekleniyordu ancak alındı: ${text.substring(0, 100)}...`);
       }
 
       const data = await response.json();
       
       if (!response.ok) {
-        throw new Error(data.error || `HTTP ${response.status}: API request failed`);
+        // Create error with code information
+        const apiError = new Error(data.error || `HTTP ${response.status}: API isteği başarısız`);
+        // Attach error code and details to error object
+        if (data.code) apiError.code = data.code;
+        if (data.statusCode) apiError.statusCode = data.statusCode;
+        if (data.details) apiError.details = data.details;
+        if (data.requestId) apiError.requestId = data.requestId;
+        // Attach full response data for error code mapping
+        apiError.responseData = data;
+        throw apiError;
       }
 
       return data;
     } catch (error) {
       console.error('API Error:', error);
+      // If error doesn't have code but has responseData, try to extract it
+      if (error.responseData && error.responseData.code && !error.code) {
+        error.code = error.responseData.code;
+      }
       throw error;
     }
   }
@@ -169,7 +163,25 @@ class ApiService {
     });
 
     if (!response.ok) {
-      throw new Error('Upload failed');
+      // Try to get error details from response
+      let errorData;
+      try {
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          errorData = await response.json();
+        }
+      } catch (e) {
+        // If parsing fails, use default error
+      }
+      
+      // Create error with code information
+      const apiError = new Error(errorData?.error || 'Yükleme başarısız');
+      if (errorData?.code) apiError.code = errorData.code;
+      if (errorData?.statusCode) apiError.statusCode = errorData.statusCode;
+      if (errorData?.details) apiError.details = errorData.details;
+      if (errorData?.requestId) apiError.requestId = errorData.requestId;
+      apiError.responseData = errorData;
+      throw apiError;
     }
 
     return await response.json();
@@ -294,7 +306,7 @@ async function saveCustomThemeToServer(themeData) {
       // Get fresh token
       const token = localStorage.getItem('admin_token');
       if (!token) {
-        throw new Error('No admin token found');
+        throw new Error('Admin token bulunamadı');
       }
       
       // Save to server
@@ -308,7 +320,7 @@ async function saveCustomThemeToServer(themeData) {
       });
       
       if (!response.ok) {
-        throw new Error('Failed to save theme to server');
+        throw new Error('Tema sunucuya kaydedilemedi');
       }
       
     // Apply theme immediately
@@ -338,7 +350,7 @@ async function resetThemeToDefaults() {
     try {
       const token = localStorage.getItem('admin_token');
       if (!token) {
-        throw new Error('No admin token found');
+        throw new Error('Admin token bulunamadı');
       }
       
       // Reset on server
@@ -350,7 +362,7 @@ async function resetThemeToDefaults() {
       });
       
       if (!response.ok) {
-        throw new Error('Failed to reset theme on server');
+        throw new Error('Tema sunucuda sıfırlanamadı');
       }
     
     const data = await response.json();
@@ -580,7 +592,7 @@ class BlogManager {
           });
           console.log('Post status counts (fallback):', statusCounts);
         } else {
-          throw new Error('Fallback failed');
+          throw new Error('Yedek yöntem başarısız');
         }
       } catch (fallbackError) {
         console.error('Fallback also failed:', fallbackError);
@@ -1271,8 +1283,10 @@ class BlogManager {
       
       this.showNotification('Blog yazısı taslak olarak kaydedildi! Yayınlamak için onaylayın.', 'success');
     } catch (error) {
+      const errorCode = typeof window !== 'undefined' && window.getErrorCode ? window.getErrorCode(error) : null;
       console.error('Error saving post:', error);
-      this.showNotification(`Blog yazısı kaydedilirken hata oluştu: ${error.message}`, 'error');
+      if (errorCode) console.error(`Hata Kodu: ${errorCode} - Detaylar için docs/HATA_KODLARI_REHBERI.md dosyasına bakın`);
+      this.showNotification(`Blog yazısı kaydedilirken hata oluştu: ${error.message}`, 'error', null, error);
     }
   }
   
@@ -1319,7 +1333,7 @@ class BlogManager {
       this.showNotification('Blog yazısı başarıyla güncellendi!', 'success');
     } catch (error) {
       console.error('Error updating post:', error);
-      this.showNotification(`Blog yazısı güncellenirken hata oluştu: ${error.message}`, 'error');
+      this.showNotification(`Blog yazısı güncellenirken hata oluştu: ${error.message}`, 'error', null, error);
     }
   }
   
@@ -1348,7 +1362,7 @@ class BlogManager {
       this.postToDelete = null;
     } catch (error) {
       console.error('Error deleting post:', error);
-      this.showNotification(`Blog yazısı silinirken hata oluştu: ${error.message}`, 'error');
+      this.showNotification(`Blog yazısı silinirken hata oluştu: ${error.message}`, 'error', null, error);
     }
   }
   
@@ -1366,7 +1380,7 @@ class BlogManager {
       this.showNotification('Blog yazısı başarıyla yayınlandı!', 'success');
     } catch (error) {
       console.error('Error publishing post:', error);
-      this.showNotification(`Blog yazısı yayınlanırken hata oluştu: ${error.message}`, 'error');
+      this.showNotification(`Blog yazısı yayınlanırken hata oluştu: ${error.message}`, 'error', null, error);
     }
   }
   
@@ -1412,7 +1426,7 @@ class BlogManager {
       this.postToSchedule = null;
     } catch (error) {
       console.error('Error scheduling post:', error);
-      this.showNotification(`Blog yazısı zamanlanırken hata oluştu: ${error.message}`, 'error');
+      this.showNotification(`Blog yazısı zamanlanırken hata oluştu: ${error.message}`, 'error', null, error);
     }
   }
 
@@ -1444,7 +1458,7 @@ class BlogManager {
       );
     } catch (error) {
       console.error('Error toggling featured status:', error);
-      this.showNotification(`Öne çıkarılan durumu değiştirilirken hata oluştu: ${error.message}`, 'error');
+      this.showNotification(`Öne çıkarılan durumu değiştirilirken hata oluştu: ${error.message}`, 'error', null, error);
     }
   }
 
@@ -1474,7 +1488,7 @@ class BlogManager {
       this.showNotification('Blog yazısı başarıyla geri yüklendi!', 'success');
     } catch (error) {
       console.error('Error restoring post:', error);
-      this.showNotification(`Blog yazısı geri yüklenirken hata oluştu: ${error.message}`, 'error');
+      this.showNotification(`Blog yazısı geri yüklenirken hata oluştu: ${error.message}`, 'error', null, error);
     }
   }
 
@@ -1507,7 +1521,7 @@ class BlogManager {
       this.showNotification('Blog yazısı kalıcı olarak silindi!', 'success');
     } catch (error) {
       console.error('Error permanently deleting post:', error);
-      this.showNotification(`Blog yazısı kalıcı olarak silinirken hata oluştu: ${error.message}`, 'error');
+      this.showNotification(`Blog yazısı kalıcı olarak silinirken hata oluştu: ${error.message}`, 'error', null, error);
     }
   }
 
@@ -1528,7 +1542,7 @@ class BlogManager {
       this.showNotification('Blog yazısı başarıyla geri yüklendi!', 'success');
     } catch (error) {
       console.error('Error restoring post:', error);
-      this.showNotification(`Blog yazısı geri yüklenirken hata oluştu: ${error.message}`, 'error');
+      this.showNotification(`Blog yazısı geri yüklenirken hata oluştu: ${error.message}`, 'error', null, error);
     }
   }
 
@@ -1602,17 +1616,39 @@ class BlogManager {
       }
     } catch (error) {
       console.error('Error emptying trash:', error);
-      this.showNotification(`Geri dönüşüm kutusu boşaltılırken hata oluştu: ${error.message}`, 'error');
+      this.showNotification(`Geri dönüşüm kutusu boşaltılırken hata oluştu: ${error.message}`, 'error', null, error);
     }
   }
   
 
   
-  showNotification(message, type = 'info') {
+  showNotification(message, type = 'info', errorCode = null, error = null) {
+    // Get error code from error object if provided
+    if (!errorCode && error) {
+      if (error.code && typeof window !== 'undefined' && window.getErrorCode) {
+        errorCode = window.getErrorCode(error);
+      } else if (error.responseData && error.responseData.code && typeof window !== 'undefined' && window.getErrorCode) {
+        errorCode = window.getErrorCode(error.responseData);
+      } else if (typeof window !== 'undefined' && window.getErrorCode) {
+        errorCode = window.getErrorCode(error);
+      }
+    }
+    
+    // If still no code, try to get from message
+    if (!errorCode && typeof window !== 'undefined' && window.getErrorCode) {
+      errorCode = window.getErrorCode(message);
+    }
+    
+    // Format message with error code
+    let displayMessage = message;
+    if (errorCode && type === 'error') {
+      displayMessage = `${message} [Hata Kodu: ${errorCode}]`;
+    }
+    
     // Create notification element
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
-    notification.textContent = message;
+    notification.textContent = displayMessage;
     
     // Add styles
     notification.style.cssText = `
@@ -1746,10 +1782,21 @@ class BlogManager {
     
     this.filteredComments.forEach(comment => {
       const row = document.createElement('tr');
+      
+      // Determine if this is a reply
+      const isReply = comment.parent_id !== null && comment.parent_id !== undefined;
+      const replyIndicator = isReply ? `<span class="reply-indicator">↳ Yanıt</span>` : '';
+      const replyToInfo = isReply && comment.reply_to_name ? 
+        `<div class="reply-to-info">@${this.escapeHtml(comment.reply_to_name)} kullanıcısına yanıt</div>` : '';
+      
       row.innerHTML = `
         <td class="comment-author-cell">
-          <div class="comment-author-name">${this.escapeHtml(comment.name)}</div>
+          <div class="comment-author-name">
+            ${this.escapeHtml(comment.name)}
+            ${replyIndicator}
+          </div>
           <div class="comment-author-email">${this.escapeHtml(comment.email)}</div>
+          ${replyToInfo}
         </td>
         <td class="comment-content-cell">
           <div class="comment-content">${this.escapeHtml(comment.content)}</div>
@@ -3000,7 +3047,7 @@ class HomepageEditor {
 
     } catch (error) {
       console.error('Error saving account settings:', error);
-      this.showNotification(error.message || 'Hesap ayarları kaydedilirken hata oluştu!', 'error');
+      this.showNotification(error.message || 'Hesap ayarları kaydedilirken hata oluştu!', 'error', null, error);
     }
   }
 
@@ -4348,13 +4395,42 @@ class GalleryManager {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Upload failed');
+        // Try to get error details from response
+        let errorData;
+        try {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            errorData = await response.json();
+          } else {
+            const text = await response.text();
+            errorData = { error: text || 'Upload failed' };
+          }
+        } catch (e) {
+          errorData = { error: 'Upload failed' };
+        }
+        
+        // Create error with code information
+        const apiError = new Error(errorData?.error || 'Upload failed');
+        if (errorData?.code) apiError.code = errorData.code;
+        if (errorData?.statusCode) apiError.statusCode = errorData.statusCode;
+        if (errorData?.details) apiError.details = errorData.details;
+        if (errorData?.requestId) apiError.requestId = errorData.requestId;
+        apiError.responseData = errorData;
+        throw apiError;
       }
 
       return await response.json();
     } catch (error) {
-      throw new Error(`Failed to upload ${file.name}: ${error.message}`);
+      // Preserve error code if it exists
+      const errorMessage = error.responseData 
+        ? error.message 
+        : `Failed to upload ${file.name}: ${error.message}`;
+      const preservedError = new Error(errorMessage);
+      if (error.code) preservedError.code = error.code;
+      if (error.statusCode) preservedError.statusCode = error.statusCode;
+      if (error.details) preservedError.details = error.details;
+      if (error.responseData) preservedError.responseData = error.responseData;
+      throw preservedError;
     }
   }
 
@@ -5317,8 +5393,21 @@ async function handleAvatarUpload(files) {
     }
     
   } catch (error) {
+    const errorCode = typeof window !== 'undefined' && window.getErrorCode ? window.getErrorCode(error) : null;
     console.error('Avatar upload error:', error);
-    alert('Avatar yüklenirken hata oluştu: ' + error.message);
+    if (errorCode) {
+      console.error(`Hata Kodu: ${errorCode} - Detaylar için docs/HATA_KODLARI_REHBERI.md dosyasına bakın`);
+    }
+    
+    const errorMessage = errorCode 
+      ? `Avatar yüklenirken hata oluştu: ${error.message} [Hata Kodu: ${errorCode}]`
+      : `Avatar yüklenirken hata oluştu: ${error.message}`;
+    
+    if (typeof window !== 'undefined' && window.blogManager && window.blogManager.showNotification) {
+      window.blogManager.showNotification(errorMessage, 'error', errorCode, error);
+    } else {
+      alert(errorMessage);
+    }
     
     // Reload gallery on error
     await loadAvatarGallery();

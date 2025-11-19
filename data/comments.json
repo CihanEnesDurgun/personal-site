@@ -3,26 +3,47 @@
     "lora-deneme": [],
     "headtracker-imudan-stabil-takip": [
       {
-        "id": "mgp6bgcct8g3htph9d",
+        "id": "mh29fed0xti3lvw1qo",
         "name": "cihan",
-        "email": "24010103063@subu.edu.tr",
-        "content": "test yorumu 1310",
-        "date": "2025-10-13T13:33:13.980Z",
+        "email": "cihanenesdurgun1410@gmail.com",
+        "content": "yorum 1",
+        "date": "2025-10-22T17:21:17.172Z",
         "approved": true,
-        "ip": "::1"
+        "ip": "::1",
+        "parent_id": null,
+        "thread_id": "mh29fed0xti3lvw1qo",
+        "depth": 0,
+        "reply_to_name": null
       },
       {
-        "id": "mgqeso6l253e8t3f7v2",
-        "name": "cihan",
+        "id": "mh29gg7uve2fwl1zggh",
+        "name": "test-yanıtlayıcı",
         "email": "24010103063@subu.edu.tr",
-        "content": "test yorumu",
-        "date": "2025-10-14T10:18:20.397Z",
+        "content": "test",
+        "date": "2025-10-22T17:22:06.234Z",
         "approved": true,
-        "ip": "::1"
+        "ip": "::1",
+        "parent_id": "mh29fed0xti3lvw1qo",
+        "thread_id": "mh29fed0xti3lvw1qo",
+        "depth": 1,
+        "reply_to_name": "cihan"
+      },
+      {
+        "id": "mhnpb1jzm3n12zukfuf",
+        "name": "TESTCİHAN",
+        "email": "cihanenesdurgun1410@gmail.com",
+        "content": "test yorumu 123",
+        "date": "2025-11-06T17:28:57.503Z",
+        "approved": true,
+        "ip": "::ffff:127.0.0.1",
+        "parent_id": null,
+        "thread_id": "mhnpb1jzm3n12zukfuf",
+        "depth": 0,
+        "reply_to_name": null
       }
     ],
     "lora-vs-espnow-gecikme-menzil": [],
     "test-yazisi-1243-editoru-test-ediyoruz": []
   },
-  "lastUpdated": "2025-10-14T13:06:54.536Z"
+  "lastUpdated": "2025-11-06T17:29:35.147Z"
 }

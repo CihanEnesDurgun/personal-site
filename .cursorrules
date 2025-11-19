@@ -1,0 +1,34 @@
+# Cursor Rules - Personal Site Project
+
+## Tarih ve Saat Kullanımı
+
+Sistemin herhangi bir yerinde tarih ve saat ile ilgili bir işlem yapman gerektiğinde:
+
+1. **Her zaman güncel tarih ve saati kullan** - Sabit değerler veya mock tarihler kullanma
+2. **JavaScript/Node.js için:**
+   - ISO formatı için: `new Date().toISOString()`
+   - Timestamp için: `Date.now()`
+   - Türkçe format için: `new Date().toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' })`
+   - Tarih formatı için: `new Date().toLocaleDateString('tr-TR')`
+
+3. **Örnek kullanımlar:**
+   ```javascript
+   // ISO format (veritabanı, API için)
+   const timestamp = new Date().toISOString();
+   
+   // Unix timestamp (milisaniye)
+   const timestamp = Date.now();
+   
+   // Türkçe formatlı tarih/saat
+   const turkishDateTime = new Date().toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' });
+   
+   // Sadece tarih
+   const turkishDate = new Date().toLocaleDateString('tr-TR');
+   ```
+
+4. **Önemli notlar:**
+   - Blog yazıları, yorumlar, loglar gibi zaman damgalı içerikler için her zaman `new Date()` kullan
+   - Cache, session gibi süre bazlı işlemler için `Date.now()` kullan
+   - Kullanıcıya gösterilecek tarihler için Türkçe format kullan
+   - Sistem içi işlemler için ISO format tercih et
+

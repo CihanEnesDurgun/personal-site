@@ -80,28 +80,10 @@ async function loadCustomTheme() {
   }
 }
 
-// ====== Configuration Loader ======
-let API_BASE_URL = 'http://localhost:3000/api'; // Default fallback
-
-// Load configuration from server
-async function loadConfig() {
-  try {
-    const response = await fetch('/api/config');
-    if (response.ok) {
-      const config = await response.json();
-      API_BASE_URL = config.apiUrl;
-      console.log(`🔧 Login page loaded in ${config.mode} mode`);
-      console.log(`🌐 API URL: ${API_BASE_URL}`);
-    } else {
-      console.warn('⚠️ Failed to load config, using fallback URL');
-    }
-  } catch (error) {
-    console.warn('⚠️ Config loading failed, using fallback URL:', error);
-  }
-}
-
-// Initialize config on page load
-loadConfig();
+// ====== Development Mode Configuration ======
+// Auto-detect development mode based on current hostname
+const DEVELOPMENT_MODE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const API_BASE_URL = DEVELOPMENT_MODE ? `${window.location.protocol}//${window.location.host}/api` : 'https://cihanenesdurgun.com/api';
 
 // ====== CONFIG ======
 const CONFIG = {
@@ -140,7 +122,7 @@ class ApiService {
       this.setToken(data.token);
       return data;
     } else {
-      throw new Error(data.error || 'Login failed');
+      throw new Error(data.error || 'Giriş başarısız');
     }
   }
 }
@@ -403,7 +385,7 @@ class LoginUI {
       window.location.href = 'index.html';
       
     } catch (error) {
-      this.showError(error.message);
+      this.showError(error.message, error);
       this.setLoadingState(false);
       
       // Add shake animation to form
@@ -453,8 +435,22 @@ class LoginUI {
     }
   }
   
-  showError(message) {
-    $('#errorMessage').textContent = message;
+  showError(message, error = null) {
+    // Get error code if error object is provided
+    let errorCode = null;
+    if (error && typeof window !== 'undefined' && window.getErrorCode) {
+      errorCode = window.getErrorCode(error);
+    } else if (typeof window !== 'undefined' && window.getErrorCode) {
+      errorCode = window.getErrorCode(message);
+    }
+    
+    // Format message with error code
+    let displayMessage = message;
+    if (errorCode) {
+      displayMessage = `${message} [Hata Kodu: ${errorCode}]`;
+    }
+    
+    $('#errorMessage').textContent = displayMessage;
     $('#errorModal').classList.add('show');
   }
   

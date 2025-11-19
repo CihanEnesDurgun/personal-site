@@ -6,8 +6,28 @@
     <link>https://cihanenesdurgun.com</link>
     <atom:link href="https://cihanenesdurgun.com/rss.xml" rel="self" type="application/rss+xml" />
     <language>tr</language>
-    <lastBuildDate>Wed, 15 Oct 2025 14:37:40 GMT</lastBuildDate>
+    <lastBuildDate>Wed, 19 Nov 2025 07:09:56 GMT</lastBuildDate>
     
+        <item>
+      <title>Hoşgeldiniz! Blog Sitem Hakkında...</title>
+      <description>Blog sitemiz hakkında bilgi verdiğimiz, sitemize yeni gelen misafirlerimiz için bilgi metni.</description>
+      <link>https://cihanenesdurgun.com/post.html?slug=hosgeldiniz-blog-sitem-hakkinda</link>
+      <guid>https://cihanenesdurgun.com/post.html?slug=hosgeldiniz-blog-sitem-hakkinda</guid>
+      <pubDate>Sat, 15 Nov 2025 00:00:00 GMT</pubDate>
+      <category>markdown</category>
+      <category>test</category>
+    </item>
+
+        <item>
+      <title>Sistem Hataları Notlarım</title>
+      <description>Bu yazıda sistemimizdeki hataları not ediyorum.</description>
+      <link>https://cihanenesdurgun.com/post.html?slug=sistem-hatalari-notlarim</link>
+      <guid>https://cihanenesdurgun.com/post.html?slug=sistem-hatalari-notlarim</guid>
+      <pubDate>Thu, 16 Oct 2025 00:00:00 GMT</pubDate>
+      <category>Sistem</category>
+      <category>Test</category>
+    </item>
+
         <item>
       <title>Headtracker: IMU'dan Stabil Takip</title>
       <description>ESP-NOW protokolü ile cihazlar arası doğrudan iletişim ve IMU tabanlı headtracker sistemi hakkında detaylı rehber.</description>
