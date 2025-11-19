@@ -4,7 +4,7 @@
     "title": "Hoşgeldiniz! Blog Sitem Hakkında...",
     "excerpt": "Blog sitemiz hakkında bilgi verdiğimiz, sitemize yeni gelen misafirlerimiz için bilgi metni.",
     "date": "2025-11-15",
-    "cover": "http://127.0.0.1:3000/images/blog-covers/IMG_6663.jpg",
+    "cover": "images/blog-covers/IMG_6663.jpg",
     "coverCaption": "IMG_6663.jpg",
     "tags": [
       "markdown",
