@@ -2445,6 +2445,21 @@ app.get('/api/stats', authenticateToken, async (req, res) => {
   }
 });
 
+// Simple test endpoint (before any middleware)
+app.get('/api/test', (req, res) => {
+  try {
+    res.json({ 
+      status: 'OK', 
+      message: 'Server is running',
+      timestamp: new Date().toISOString(),
+      nodeEnv: process.env.NODE_ENV,
+      port: process.env.PORT
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
@@ -3537,16 +3552,28 @@ app.use(express.static('.'));
 
 // Start server
 app.listen(PORT, async () => {
-  // Validate and clean up stats data on startup
-  console.log('🔍 Validating stats data on startup...');
-  await validateStatsData();
+  try {
+    // Validate and clean up stats data on startup
+    console.log('🔍 Validating stats data on startup...');
+    await validateStatsData();
+  } catch (error) {
+    console.error('❌ Error validating stats data:', error.message);
+  }
   
-  // Clean up session data on startup
-  console.log('🧹 Cleaning up session data on startup...');
-  await cleanupSessionData();
+  try {
+    // Clean up session data on startup
+    console.log('🧹 Cleaning up session data on startup...');
+    await cleanupSessionData();
+  } catch (error) {
+    console.error('❌ Error cleaning up session data:', error.message);
+  }
   
-  // Generate initial RSS feed
-  await generateRSS();
+  try {
+    // Generate initial RSS feed
+    await generateRSS();
+  } catch (error) {
+    console.error('❌ Error generating RSS feed:', error.message);
+  }
   
   // Set up automatic session cleanup scheduler
   setInterval(async () => {
