@@ -18,8 +18,9 @@ if [ -f "package.json" ]; then
 fi
 
 # Set proper permissions
-chmod -R 755 .
-chmod 644 *.html *.css *.js *.json *.xml *.md
+# Set proper permissions
+find . -type d -exec chmod 755 {} +
+find . -type f -name "*.html" -o -name "*.css" -o -name "*.js" -o -name "*.json" -o -name "*.xml" -o -name "*.md" -exec chmod 644 {} +
 
 # Restart Node.js application if server.js exists
 if [ -f "server.js" ]; then

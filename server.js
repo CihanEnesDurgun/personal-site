@@ -1,3 +1,7 @@
+// ====== Merkezi Versiyon Tanımı (version.js'den okunur) ======
+const { APP_VERSION } = require('./src/js/version');
+
+// nodemon restart trigger
 // Load environment variables
 require('dotenv').config();
 
@@ -23,10 +27,19 @@ if (process.env.JWT_SECRET && process.env.JWT_SECRET.length < 32) {
   process.exit(1);
 }
 
-console.log('✅ Environment variables loaded successfully');
-console.log(`🔐 JWT_SECRET: ${process.env.JWT_SECRET ? 'SET (' + process.env.JWT_SECRET.length + ' chars)' : 'NOT SET'}`);
-console.log(`🔒 BCRYPT_SALT_ROUNDS: ${process.env.BCRYPT_SALT_ROUNDS}`);
-console.log(`🌍 NODE_ENV: ${process.env.NODE_ENV || 'NOT SET'} (CSP will use ${process.env.NODE_ENV === 'production' ? 'PRODUCTION' : 'DEVELOPMENT'} mode)`);
+// Configurable Logger
+const isProduction = process.env.NODE_ENV === 'production';
+const logger = {
+  log: (...args) => { if (!isProduction) console.log(...args); },
+  info: (...args) => console.log(...args), // Keep info for essential startup logs
+  warn: (...args) => console.warn(...args), // Keep warnings
+  error: (...args) => console.error(...args) // Keep errors
+};
+
+logger.log('✅ Environment variables loaded successfully');
+logger.log(`🔐 JWT_SECRET: ${process.env.JWT_SECRET ? 'SET (' + process.env.JWT_SECRET.length + ' chars)' : 'NOT SET'}`);
+logger.log(`🔒 BCRYPT_SALT_ROUNDS: ${process.env.BCRYPT_SALT_ROUNDS}`);
+logger.log(`🌍 NODE_ENV: ${process.env.NODE_ENV || 'NOT SET'} (CSP will use ${process.env.NODE_ENV === 'production' ? 'PRODUCTION' : 'DEVELOPMENT'} mode)`);
 
 // Validate and set BCRYPT_SALT_ROUNDS with safe default
 const BCRYPT_SALT_ROUNDS = parseInt(process.env.BCRYPT_SALT_ROUNDS, 10) || 12;
@@ -52,12 +65,12 @@ const LogCleanupManager = require('./lib/logCleanupManager');
 const execAsync = promisify(exec);
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3002; // TEMPORARILY SET TO 3002 for debugging
 
 // ULTRA SIMPLE TEST ENDPOINT - Before ANY middleware
 app.get('/api/simple-test', (req, res) => {
-  res.json({ 
-    success: true, 
+  res.json({
+    success: true,
     message: 'Server is running - no middleware',
     timestamp: new Date().toISOString()
   });
@@ -67,10 +80,10 @@ app.get('/api/simple-test', (req, res) => {
 let sessionManager;
 try {
   sessionManager = new SessionManager();
-  console.log('✅ Session Manager initialized successfully');
+  logger.log('✅ Session Manager initialized successfully');
 } catch (error) {
   console.error('❌ Session Manager initialization failed:', error);
-  console.log('⚠️  Continuing with basic JWT authentication only');
+  logger.log('⚠️  Continuing with basic JWT authentication only');
   sessionManager = null;
 }
 
@@ -79,7 +92,7 @@ let logCleanupManager;
 try {
   logCleanupManager = new LogCleanupManager(30); // 30 days retention
   logCleanupManager.scheduleCleanup();
-  console.log('✅ Log Cleanup Manager initialized successfully');
+  logger.log('✅ Log Cleanup Manager initialized successfully');
 } catch (error) {
   console.error('❌ Log Cleanup Manager initialization failed:', error);
   logCleanupManager = null;
@@ -128,8 +141,8 @@ const loginLimiter = process.env.NODE_ENV === 'production' ? rateLimit({
 }) : (req, res, next) => next(); // No rate limiting in development
 
 // CORS Configuration - Enhanced Security
-const allowedOrigins = process.env.CORS_ORIGIN ? 
-  process.env.CORS_ORIGIN.split(',').map(origin => origin.trim()).filter(origin => origin && !origin.includes('yourdomain.com')) : 
+const allowedOrigins = process.env.CORS_ORIGIN ?
+  process.env.CORS_ORIGIN.split(',').map(origin => origin.trim()).filter(origin => origin && !origin.includes('yourdomain.com')) :
   ['http://localhost:3000', 'http://127.0.0.1:3000'];
 
 const corsOptions = {
@@ -140,31 +153,34 @@ const corsOptions = {
         console.warn('🚨 Production: Request blocked - No origin header');
         return callback(new Error('Production modunda origin header gereklidir'), false);
       }
-      
-      // Validate origin format in production
-      if (!/^https?:\/\/[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?::[0-9]+)?$/.test(origin)) {
+
+      // Validate origin format in production - allow localhost and 127.0.0.1 for local production testing
+      const isLocal = /^(https?:\/\/localhost|https?:\/\/127\.0\.0\.1)(:[0-9]+)?$/.test(origin);
+      const isValidRemote = /^https?:\/\/[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?::[0-9]+)?$/.test(origin);
+
+      if (!isLocal && !isValidRemote) {
         console.warn(`🚨 Production: Invalid origin format: ${origin}`);
         return callback(new Error('Geçersiz origin formatı'), false);
       }
     }
-    
+
     // Development mode - allow localhost and 127.0.0.1
     if (process.env.NODE_ENV !== 'production') {
       if (!origin) {
-        console.log('🔧 Development: Allowing request without origin');
+        logger.log('🔧 Development: Allowing request without origin');
         return callback(null, true);
       }
-      
+
       // Allow localhost and 127.0.0.1 in development
       if (/^(http:\/\/localhost|http:\/\/127\.0\.0\.1)(:[0-9]+)?$/.test(origin)) {
-        console.log(`🔧 Development: Allowing local origin: ${origin}`);
+        logger.log(`🔧 Development: Allowing local origin: ${origin}`);
         return callback(null, true);
       }
     }
-    
+
     // Check against allowed origins
     if (allowedOrigins.indexOf(origin) !== -1) {
-      console.log(`✅ CORS: Allowed origin: ${origin}`);
+      logger.log(`✅ CORS: Allowed origin: ${origin}`);
       callback(null, true);
     } else {
       console.warn(`🚨 CORS blocked request from origin: ${origin}`);
@@ -174,10 +190,10 @@ const corsOptions = {
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: [
-    'Content-Type', 
-    'Authorization', 
-    'X-Requested-With', 
-    'Origin', 
+    'Content-Type',
+    'Authorization',
+    'X-Requested-With',
+    'Origin',
     'Accept',
     'Cache-Control',
     'Pragma'
@@ -204,22 +220,22 @@ app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
 app.use((req, res, next) => {
   // Prevent MIME type sniffing
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  
+
   // Prevent clickjacking
   res.setHeader('X-Frame-Options', 'DENY');
-  
+
   // XSS Protection (legacy browsers)
   res.setHeader('X-XSS-Protection', '1; mode=block');
-  
+
   // Control referrer information
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  
+
   // Feature policy / Permissions policy
   res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=()');
-  
+
   // Content Security Policy (CSP) - Basic protection
   if (process.env.NODE_ENV === 'production') {
-    res.setHeader('Content-Security-Policy', 
+    res.setHeader('Content-Security-Policy',
       "default-src 'self'; " +
       "script-src 'self' 'unsafe-inline'; " +
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
@@ -230,9 +246,9 @@ app.use((req, res, next) => {
     );
   } else {
     // Development mode - more permissive CSP
-    res.setHeader('Content-Security-Policy', 
+    res.setHeader('Content-Security-Policy',
       "default-src 'self'; " +
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; " +
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " +
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
       "font-src 'self' data: https://fonts.gstatic.com; " +
       "img-src 'self' data: https:; " +
@@ -240,15 +256,15 @@ app.use((req, res, next) => {
       "frame-ancestors 'none'"
     );
   }
-  
+
   // HSTS (HTTP Strict Transport Security) - Production only
   if (process.env.NODE_ENV === 'production') {
     res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
   }
-  
+
   // Remove server identification
   res.removeHeader('X-Powered-By');
-  
+
   next();
 });
 
@@ -266,7 +282,7 @@ const logError = (error, req, context = {}) => {
     userAgent: req.headers['user-agent'],
     context: context
   };
-  
+
   // Console logging with colors
   console.error('🚨 API Error:', {
     message: error.message,
@@ -275,7 +291,7 @@ const logError = (error, req, context = {}) => {
     ip: req.ip,
     timestamp: logData.timestamp
   });
-  
+
   // In production, you might want to send to external logging service
   if (process.env.NODE_ENV === 'production') {
     // TODO: Send to external logging service (e.g., Sentry, LogRocket)
@@ -283,6 +299,11 @@ const logError = (error, req, context = {}) => {
   } else {
     console.error('🔍 Development Error Details:', error.stack);
   }
+
+  // DUMP ERROR TO FILE SO AGENT CAN READ IT
+  try {
+    require('fs').writeFileSync(require('path').join(__dirname, 'last_error.txt'), String(error.stack || error));
+  } catch (e) { }
 };
 
 // Standardized error response creator
@@ -294,15 +315,15 @@ const createErrorResponse = (statusCode, message, details = null, code = null, c
     statusCode: statusCode,
     requestId: context.requestId || generateRequestId()
   };
-  
+
   if (details) {
     errorResponse.details = details;
   }
-  
+
   if (code) {
     errorResponse.code = code;
   }
-  
+
   // Add helpful links for common errors
   if (code === 'VALIDATION_ERROR') {
     errorResponse.help = 'Girdi verilerinizin formatını ve gerekli alanları kontrol edin';
@@ -311,7 +332,7 @@ const createErrorResponse = (statusCode, message, details = null, code = null, c
   } else if (code === 'RATE_LIMIT_EXCEEDED') {
     errorResponse.help = 'Daha fazla istek göndermeden önce bekleyin';
   }
-  
+
   return errorResponse;
 };
 
@@ -323,13 +344,13 @@ const generateRequestId = () => {
 // Input validation helper
 const validateRequired = (data, requiredFields, context = {}) => {
   const missing = [];
-  
+
   requiredFields.forEach(field => {
     if (data[field] === undefined || data[field] === null || data[field] === '') {
       missing.push(field);
     }
   });
-  
+
   if (missing.length > 0) {
     const error = new Error(`Eksik gerekli alanlar: ${missing.join(', ')}`);
     error.code = 'VALIDATION_ERROR';
@@ -347,17 +368,17 @@ app.use((err, req, res, next) => {
     user: req.user ? req.user.username : 'anonymous',
     ...err.context
   };
-  
+
   // Log the error with full context
   logError(err, req, context);
-  
+
   const isDevelopment = process.env.NODE_ENV === 'development';
-  
+
   // Handle specific error types
   if (err.name === 'ValidationError') {
     return res.status(400).json(createErrorResponse(400, 'Doğrulama Hatası', err.message, 'VALIDATION_ERROR', context));
   }
-  
+
   if (err.name === 'MulterError') {
     if (err.code === 'LIMIT_FILE_SIZE') {
       return res.status(400).json(createErrorResponse(400, 'Dosya çok büyük', `Maksimum boyut: ${MAX_FILE_SIZE / (1024 * 1024)}MB`, 'FILE_SIZE_LIMIT', context));
@@ -367,48 +388,48 @@ app.use((err, req, res, next) => {
     }
     return res.status(400).json(createErrorResponse(400, 'Dosya yükleme hatası', err.message, 'UPLOAD_ERROR', context));
   }
-  
+
   // Handle custom error codes
   if (err.code === 'VALIDATION_ERROR') {
     return res.status(400).json(createErrorResponse(400, err.message, err.details, 'VALIDATION_ERROR', context));
   }
-  
+
   if (err.code === 'AUTHENTICATION_ERROR') {
     return res.status(401).json(createErrorResponse(401, err.message || 'Kimlik doğrulama başarısız', null, 'AUTHENTICATION_ERROR', context));
   }
-  
+
   if (err.code === 'AUTHORIZATION_ERROR') {
     return res.status(403).json(createErrorResponse(403, err.message || 'Erişim reddedildi', null, 'AUTHORIZATION_ERROR', context));
   }
-  
+
   if (err.code === 'NOT_FOUND') {
     return res.status(404).json(createErrorResponse(404, err.message || 'Kaynak bulunamadı', null, 'NOT_FOUND', context));
   }
-  
+
   // Handle JWT errors
   if (err.name === 'JsonWebTokenError') {
     return res.status(401).json(createErrorResponse(401, 'Geçersiz token', null, 'INVALID_TOKEN', context));
   }
-  
+
   if (err.name === 'TokenExpiredError') {
     return res.status(401).json(createErrorResponse(401, 'Token süresi dolmuş', null, 'TOKEN_EXPIRED', context));
   }
-  
+
   // Handle file system errors
   if (err.code === 'ENOENT') {
     return res.status(404).json(createErrorResponse(404, 'Dosya bulunamadı', null, 'FILE_NOT_FOUND', context));
   }
-  
+
   if (err.code === 'EACCES') {
     return res.status(403).json(createErrorResponse(403, 'İzin reddedildi', null, 'PERMISSION_DENIED', context));
   }
-  
+
   // Default error response
   const statusCode = err.status || err.statusCode || 500;
-  const errorMessage = isDevelopment ? err.message : 'Sunucu hatası';
-  const errorDetails = isDevelopment ? (err.details || err.stack) : null;
+  const errorMessage = err.stack ? err.stack.toString() : (err.message || 'Sunucu hatası');
+  const errorDetails = err.details || err.stack || null;
   const errorCode = err.code || 'INTERNAL_ERROR';
-  
+
   res.status(statusCode).json(createErrorResponse(statusCode, errorMessage, errorDetails, errorCode, context));
 });
 
@@ -438,18 +459,18 @@ const fileFilter = (req, file, cb) => {
   if (!ALLOWED_FILE_TYPES.includes(file.mimetype)) {
     return cb(new Error(`Dosya tipi izin verilmiyor. İzin verilen tipler: ${ALLOWED_FILE_TYPES.join(', ')}`), false);
   }
-  
+
   // Check file extension
   const fileExtension = path.extname(file.originalname).toLowerCase();
   if (!ALLOWED_EXTENSIONS.includes(fileExtension)) {
     return cb(new Error(`Dosya uzantısı izin verilmiyor. İzin verilen uzantılar: ${ALLOWED_EXTENSIONS.join(', ')}`), false);
   }
-  
+
   // Check file size
   if (file.size > MAX_FILE_SIZE) {
     return cb(new Error(`Dosya çok büyük. Maksimum boyut: ${MAX_FILE_SIZE / (1024 * 1024)}MB`), false);
   }
-  
+
   // File is valid
   cb(null, true);
 };
@@ -462,10 +483,10 @@ const storage = multer.diskStorage({
   filename: function (req, file, cb) {
     // Preserve original filename but ensure it's safe
     let filename = file.originalname;
-    
+
     // Remove any path separators and dangerous characters
     filename = filename.replace(/[\/\\:*?"<>|]/g, '_');
-    
+
     // Ensure filename is not empty and has proper extension
     if (!filename || filename.trim() === '') {
       const timestamp = Date.now();
@@ -473,12 +494,12 @@ const storage = multer.diskStorage({
       const fileExtension = path.extname(file.originalname).toLowerCase();
       filename = `upload-${timestamp}-${randomSuffix}${fileExtension}`;
     }
-    
+
     cb(null, filename);
   }
 });
 
-const upload = multer({ 
+const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
@@ -526,7 +547,7 @@ const authenticateToken = async (req, res, next) => {
           };
           req.session = session;
         } else {
-          return res.status(403).json({ 
+          return res.status(403).json({
             error: 'Oturum süresi dolmuş veya geçersiz',
             code: 'INVALID_SESSION'
           });
@@ -540,11 +561,11 @@ const authenticateToken = async (req, res, next) => {
       // Basic JWT validation only
       req.user = decoded;
     }
-    
+
     next();
   } catch (error) {
     console.error('❌ Authentication error:', error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: 'Kimlik doğrulama başarısız',
       code: 'AUTH_ERROR'
     });
@@ -564,7 +585,7 @@ class FileCache {
     this.accessCount = new Map();
     this.lastAccess = new Map();
   }
-  
+
   // Get cached data
   get(key) {
     const item = this.cache.get(key);
@@ -576,14 +597,14 @@ class FileCache {
     }
     return null;
   }
-  
+
   // Set cache data
   set(key, data) {
     // Check cache size limit
     if (this.cache.size >= CACHE_CONFIG.MAX_SIZE) {
       this.evictLRU();
     }
-    
+
     this.cache.set(key, {
       data: data,
       timestamp: Date.now()
@@ -591,40 +612,40 @@ class FileCache {
     this.accessCount.set(key, 1);
     this.lastAccess.set(key, Date.now());
   }
-  
+
   // Invalidate cache
   invalidate(key) {
     this.cache.delete(key);
     this.accessCount.delete(key);
     this.lastAccess.delete(key);
   }
-  
+
   // Clear all cache
   clear() {
     this.cache.clear();
     this.accessCount.clear();
     this.lastAccess.clear();
   }
-  
+
   // Evict least recently used items
   evictLRU() {
     if (this.cache.size === 0) return;
-    
+
     let oldestKey = null;
     let oldestTime = Date.now();
-    
+
     for (const [key, time] of this.lastAccess) {
       if (time < oldestTime) {
         oldestTime = time;
         oldestKey = key;
       }
     }
-    
+
     if (oldestKey) {
       this.invalidate(oldestKey);
     }
   }
-  
+
   // Get cache statistics
   getStats() {
     return {
@@ -634,7 +655,7 @@ class FileCache {
       memoryUsage: process.memoryUsage()
     };
   }
-  
+
   // Calculate cache hit rate
   calculateHitRate() {
     const totalAccesses = Array.from(this.accessCount.values()).reduce((a, b) => a + b, 0);
@@ -650,39 +671,39 @@ const fileCache = new FileCache();
 const readUsersFile = async () => {
   const cacheKey = 'users.json';
   let cachedData = fileCache.get(cacheKey);
-  
+
   if (cachedData) {
     return cachedData;
   }
-  
+
   try {
     const data = await fs.readFile(path.join(__dirname, 'data', 'users.json'), 'utf8');
     const parsedData = JSON.parse(data);
-    
+
     // Cache the data
     fileCache.set(cacheKey, parsedData);
-    
+
     return parsedData;
   } catch (error) {
     console.error('Error reading users file:', error);
     // Create default admin user with secure random password
     const defaultPassword = process.env.DEFAULT_ADMIN_PASSWORD || crypto.randomBytes(16).toString('hex');
     const hashedPassword = await bcrypt.hash(defaultPassword, BCRYPT_SALT_ROUNDS);
-    const defaultData = { 
-      admin: { 
-        username: 'admin', 
-        password: hashedPassword, 
+    const defaultData = {
+      admin: {
+        username: 'admin',
+        password: hashedPassword,
         lastUpdated: new Date().toISOString(),
         isHashed: true
       }
     };
-    
-    console.log('🔐 Default admin user created with secure password');
-    console.log('⚠️  IMPORTANT: Change the default password immediately after first login!');
-    
+
+    logger.log('🔐 Default admin user created with secure password');
+    logger.log('⚠️  IMPORTANT: Change the default password immediately after first login!');
+
     // Cache the default data
     fileCache.set(cacheKey, defaultData);
-    
+
     return defaultData;
   }
 };
@@ -690,10 +711,10 @@ const readUsersFile = async () => {
 const writeUsersFile = async (users) => {
   try {
     await fs.writeFile(path.join(__dirname, 'data', 'users.json'), JSON.stringify(users, null, 2));
-    
+
     // Invalidate cache after write
     fileCache.invalidate('users.json');
-    
+
     return true;
   } catch (error) {
     console.error('Error writing users file:', error);
@@ -726,60 +747,60 @@ const cleanupSessionData = async () => {
     const sessions = await readSessionsFile();
     const now = Date.now();
     let cleaned = false;
-    
+
     // Clean up expired active sessions
     const validActiveSessions = sessions.activeSessions.filter(session => {
       const sessionAge = now - new Date(session.lastActivity).getTime();
       return sessionAge < SESSION_LIMITS.SESSION_TIMEOUT;
     });
-    
+
     if (validActiveSessions.length !== sessions.activeSessions.length) {
       sessions.activeSessions = validActiveSessions;
       cleaned = true;
-      console.log(`🧹 Cleaned up ${sessions.activeSessions.length - validActiveSessions.length} expired sessions`);
+      logger.log(`🧹 Cleaned up ${sessions.activeSessions.length - validActiveSessions.length} expired sessions`);
     }
-    
+
     // Limit active sessions per user
     const userSessionCounts = {};
     const limitedActiveSessions = [];
-    
+
     validActiveSessions.forEach(session => {
       if (!userSessionCounts[session.username]) {
         userSessionCounts[session.username] = 0;
       }
-      
+
       if (userSessionCounts[session.username] < SESSION_LIMITS.ACTIVE_SESSIONS) {
         limitedActiveSessions.push(session);
         userSessionCounts[session.username]++;
       }
     });
-    
+
     if (limitedActiveSessions.length !== validActiveSessions.length) {
       sessions.activeSessions = limitedActiveSessions;
       cleaned = true;
-      console.log(`🧹 Limited active sessions to ${SESSION_LIMITS.ACTIVE_SESSIONS} per user`);
+      logger.log(`🧹 Limited active sessions to ${SESSION_LIMITS.ACTIVE_SESSIONS} per user`);
     }
-    
+
     // Limit login history
     if (sessions.loginHistory.length > SESSION_LIMITS.LOGIN_HISTORY) {
       sessions.loginHistory = sessions.loginHistory.slice(0, SESSION_LIMITS.LOGIN_HISTORY);
       cleaned = true;
-      console.log(`🧹 Limited login history to ${SESSION_LIMITS.LOGIN_HISTORY} records`);
+      logger.log(`🧹 Limited login history to ${SESSION_LIMITS.LOGIN_HISTORY} records`);
     }
-    
+
     // Limit failed logins
     if (sessions.failedLogins.length > SESSION_LIMITS.FAILED_LOGINS) {
       sessions.failedLogins = sessions.failedLogins.slice(0, SESSION_LIMITS.FAILED_LOGINS);
       cleaned = true;
-      console.log(`🧹 Limited failed logins to ${SESSION_LIMITS.FAILED_LOGINS} records`);
+      logger.log(`🧹 Limited failed logins to ${SESSION_LIMITS.FAILED_LOGINS} records`);
     }
-    
+
     // Save cleaned data if any changes
     if (cleaned) {
       await writeSessionsFile(sessions);
-      console.log('✅ Session data cleanup completed');
+      logger.log('✅ Session data cleanup completed');
     }
-    
+
     return sessions;
   } catch (error) {
     console.error('Error during session cleanup:', error);
@@ -830,12 +851,12 @@ const readThemeFile = async () => {
       console.warn('⚠️ Error checking theme file existence:', pathError.message);
       return defaultTheme;
     }
-    
+
     if (!exists) {
       console.warn('⚠️ Theme file does not exist, using defaults');
       return defaultTheme;
     }
-    
+
     let data;
     try {
       data = await fs.readFile(THEME_FILE, 'utf8');
@@ -843,12 +864,12 @@ const readThemeFile = async () => {
       console.warn('⚠️ Error reading theme file:', readError.message);
       return defaultTheme;
     }
-    
+
     if (!data || data.trim().length === 0) {
       console.warn('⚠️ Theme file is empty, using defaults');
       return defaultTheme;
     }
-    
+
     let theme;
     try {
       theme = JSON.parse(data);
@@ -856,19 +877,19 @@ const readThemeFile = async () => {
       console.warn('⚠️ Error parsing theme JSON:', parseError.message);
       return defaultTheme;
     }
-    
+
     // Validate theme structure
     if (!theme || typeof theme !== 'object') {
       console.warn('⚠️ Invalid theme JSON structure, using defaults');
       return defaultTheme;
     }
-    
+
     // Ensure required properties exist
     if (!theme.light || !theme.dark || typeof theme.light !== 'object' || typeof theme.dark !== 'object') {
       console.warn('⚠️ Theme missing light/dark configuration, using defaults');
       return defaultTheme;
     }
-    
+
     return theme;
   } catch (error) {
     console.error('❌ Unexpected error in readThemeFile:', error.message);
@@ -889,11 +910,11 @@ const writeThemeFile = async (theme) => {
 };
 
 const getClientIP = (req) => {
-  return req.headers['x-forwarded-for'] || 
-         req.connection.remoteAddress || 
-         req.socket.remoteAddress ||
-         (req.connection.socket ? req.connection.socket.remoteAddress : null) ||
-         req.ip;
+  return req.headers['x-forwarded-for'] ||
+    req.connection.remoteAddress ||
+    req.socket.remoteAddress ||
+    (req.connection.socket ? req.connection.socket.remoteAddress : null) ||
+    req.ip;
 };
 
 const getUserAgent = (req) => {
@@ -911,14 +932,14 @@ const logSuccessfulLogin = async (username, req) => {
       timestamp: new Date().toISOString(),
       success: true
     };
-    
+
     sessions.loginHistory.unshift(loginRecord);
-    
+
     // Keep only last 100 login records
     if (sessions.loginHistory.length > 100) {
       sessions.loginHistory = sessions.loginHistory.slice(0, 100);
     }
-    
+
     await writeSessionsFile(sessions);
   } catch (error) {
     console.error('Error logging successful login:', error);
@@ -937,14 +958,14 @@ const logFailedLogin = async (username, req, reason = 'Invalid credentials') => 
       reason,
       success: false
     };
-    
+
     sessions.failedLogins.unshift(failedLoginRecord);
-    
+
     // Keep only last 200 failed login records
     if (sessions.failedLogins.length > 200) {
       sessions.failedLogins = sessions.failedLogins.slice(0, 200);
     }
-    
+
     await writeSessionsFile(sessions);
   } catch (error) {
     console.error('Error logging failed login:', error);
@@ -963,11 +984,11 @@ const addActiveSession = async (username, token, req) => {
       loginTime: new Date().toISOString(),
       lastActivity: new Date().toISOString()
     };
-    
+
     // Remove existing session for this user if exists
     sessions.activeSessions = sessions.activeSessions.filter(s => s.username !== username);
     sessions.activeSessions.unshift(sessionRecord);
-    
+
     await writeSessionsFile(sessions);
   } catch (error) {
     console.error('Error adding active session:', error);
@@ -997,6 +1018,11 @@ const readPostsFile = async () => {
 const writePostsFile = async (posts) => {
   try {
     await fs.writeFile(POSTS_FILE, JSON.stringify(posts, null, 2));
+    // Trigger automated RSS and Sitemap generation
+    setImmediate(async () => {
+      await generateRSS();
+      await generateSitemap();
+    });
     return true;
   } catch (error) {
     console.error('Error writing posts file:', error);
@@ -1014,14 +1040,14 @@ const generateSlug = (title) => {
     'Ş': 'S', 'ş': 's',
     'Ü': 'U', 'ü': 'u'
   };
-  
+
   let slug = title;
-  
+
   // Türkçe karakterleri değiştir
   Object.keys(turkishToEnglish).forEach(turkishChar => {
     slug = slug.replace(new RegExp(turkishChar, 'g'), turkishToEnglish[turkishChar]);
   });
-  
+
   return slug
     .toLowerCase()
     .replace(/[^a-z0-9\s-]/g, '')
@@ -1063,29 +1089,29 @@ const cleanupStatsData = async () => {
   try {
     const stats = await readStatsFile();
     const posts = await readPostsFile();
-    
+
     // Get valid post slugs (only published and draft posts)
     const validPostSlugs = posts
       .filter(post => post.status !== 'deleted')
       .map(post => post.slug);
-    
+
     // Clean up postViews - remove stats for deleted posts
     const cleanedPostViews = {};
     let totalPostViews = 0;
-    
+
     Object.keys(stats.postViews).forEach(slug => {
       if (validPostSlugs.includes(slug)) {
         cleanedPostViews[slug] = stats.postViews[slug];
         totalPostViews += stats.postViews[slug];
       } else {
-        console.log(`🧹 Cleaning up stats for deleted post: ${slug}`);
+        logger.log(`🧹 Cleaning up stats for deleted post: ${slug}`);
       }
     });
-    
+
     // Update stats with cleaned data
     stats.postViews = cleanedPostViews;
     stats.totalViews = (stats.pageViews.home || 0) + (stats.pageViews.blog || 0) + totalPostViews;
-    
+
     // Clean up daily stats - remove references to deleted posts
     Object.keys(stats.dailyStats).forEach(date => {
       if (stats.dailyStats[date].pageViews) {
@@ -1099,11 +1125,11 @@ const cleanupStatsData = async () => {
         stats.dailyStats[date].pageViews = validPageViews;
       }
     });
-    
+
     // Save cleaned stats
     await writeStatsFile(stats);
-    console.log(`✅ Stats data cleaned successfully. Total views: ${stats.totalViews}`);
-    
+    logger.log(`✅ Stats data cleaned successfully. Total views: ${stats.totalViews}`);
+
     return stats;
   } catch (error) {
     console.error('Error cleaning stats data:', error);
@@ -1115,33 +1141,33 @@ const validateStatsData = async () => {
   try {
     const stats = await readStatsFile();
     const posts = await readPostsFile();
-    
+
     // Get valid post slugs
     const validPostSlugs = posts
       .filter(post => post.status !== 'deleted')
       .map(post => post.slug);
-    
+
     // Check for orphaned stats
     const orphanedStats = Object.keys(stats.postViews).filter(slug => !validPostSlugs.includes(slug));
-    
+
     if (orphanedStats.length > 0) {
-      console.log(`⚠️  Found orphaned stats for deleted posts: ${orphanedStats.join(', ')}`);
+      logger.log(`⚠️  Found orphaned stats for deleted posts: ${orphanedStats.join(', ')}`);
       return false;
     }
-    
+
     // Check for missing stats
     const missingStats = validPostSlugs.filter(slug => !stats.postViews[slug]);
-    
+
     if (missingStats.length > 0) {
-      console.log(`⚠️  Found posts without stats: ${missingStats.join(', ')}`);
+      logger.log(`⚠️  Found posts without stats: ${missingStats.join(', ')}`);
       // Initialize missing stats with 0
       missingStats.forEach(slug => {
         stats.postViews[slug] = 0;
       });
       await writeStatsFile(stats);
     }
-    
-    console.log('✅ Stats data validation completed successfully');
+
+    logger.log('✅ Stats data validation completed successfully');
     return true;
   } catch (error) {
     console.error('Error validating stats data:', error);
@@ -1151,13 +1177,13 @@ const validateStatsData = async () => {
 
 const incrementPageView = async (page) => {
   const stats = await readStatsFile();
-  
+
   // Increment total views
   stats.totalViews = (stats.totalViews || 0) + 1;
-  
+
   // Increment page views
   stats.pageViews[page] = (stats.pageViews[page] || 0) + 1;
-  
+
   // Increment daily stats
   const today = new Date().toISOString().split('T')[0];
   if (!stats.dailyStats[today]) {
@@ -1168,20 +1194,20 @@ const incrementPageView = async (page) => {
   }
   stats.dailyStats[today].totalViews++;
   stats.dailyStats[today].pageViews[page] = (stats.dailyStats[today].pageViews[page] || 0) + 1;
-  
+
   await writeStatsFile(stats);
   return stats;
 };
 
 const incrementPostView = async (slug) => {
   const stats = await readStatsFile();
-  
+
   // Increment total views
   stats.totalViews = (stats.totalViews || 0) + 1;
-  
+
   // Increment post views
   stats.postViews[slug] = (stats.postViews[slug] || 0) + 1;
-  
+
   // Increment daily stats
   const today = new Date().toISOString().split('T')[0];
   if (!stats.dailyStats[today]) {
@@ -1192,14 +1218,14 @@ const incrementPostView = async (slug) => {
     };
   }
   stats.dailyStats[today].totalViews++;
-  
+
   // YENİ: Günlük yazı görüntüleme tracking
   if (!stats.dailyStats[today].postViews) {
     stats.dailyStats[today].postViews = {};
   }
-  stats.dailyStats[today].postViews[slug] = 
+  stats.dailyStats[today].postViews[slug] =
     (stats.dailyStats[today].postViews[slug] || 0) + 1;
-  
+
   await writeStatsFile(stats);
   return stats;
 };
@@ -1209,7 +1235,7 @@ const readCommentsFile = async () => {
   try {
     const data = await fs.readFile(COMMENTS_FILE, 'utf8');
     const commentsData = JSON.parse(data);
-    
+
     // Migrate old comments to new structure
     Object.keys(commentsData.comments).forEach(slug => {
       commentsData.comments[slug] = commentsData.comments[slug].map(comment => {
@@ -1223,7 +1249,7 @@ const readCommentsFile = async () => {
         return comment;
       });
     });
-    
+
     return commentsData;
   } catch (error) {
     // Return default comments structure if file doesn't exist
@@ -1253,7 +1279,7 @@ const generateCommentId = () => {
 const generateRSS = async () => {
   try {
     const posts = await readPostsFile();
-    
+
     // Filter only published posts and sort by date (newest first)
     const publishedPosts = posts
       .filter(post => post.status !== 'deleted' && post.status !== 'draft')
@@ -1269,11 +1295,12 @@ const generateRSS = async () => {
     <atom:link href="https://cihanenesdurgun.com/rss.xml" rel="self" type="application/rss+xml" />
     <language>tr</language>
     <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
+    <generator>Cihan Enes Durgun Blog System ${APP_VERSION}</generator>
     
     ${publishedPosts.map(post => {
       const pubDate = new Date(post.date).toUTCString();
       const categories = post.tags ? post.tags.map(tag => `<category>${tag}</category>`).join('\n      ') : '';
-      
+
       return `    <item>
       <title>${post.title}</title>
       <description>${post.excerpt}</description>
@@ -1287,10 +1314,63 @@ const generateRSS = async () => {
 </rss>`;
 
     await fs.writeFile('rss.xml', rssContent, 'utf8');
-    console.log('RSS feed updated successfully');
+    logger.log('RSS feed updated successfully');
     return true;
   } catch (error) {
     console.error('Error generating RSS feed:', error);
+    return false;
+  }
+};
+
+// ====== Sitemap Generation Function ======
+const generateSitemap = async () => {
+  try {
+    const posts = await readPostsFile();
+
+    // Filter only published posts
+    const publishedPosts = posts
+      .filter(post => post.status !== 'deleted' && post.status !== 'draft')
+      .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    // Base URLs
+    const baseUrl = 'https://cihanenesdurgun.com';
+    const currentDate = new Date().toISOString().split('T')[0];
+
+    let sitemapContent = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>${baseUrl}/</loc>
+    <lastmod>${currentDate}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/blog.html</loc>
+    <lastmod>${currentDate}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>`;
+
+    // Add posts to sitemap
+    publishedPosts.forEach(post => {
+      const postDate = new Date(post.updatedAt || post.date).toISOString().split('T')[0];
+      sitemapContent += `
+  <url>
+    <loc>${baseUrl}/post.html?slug=${post.slug}</loc>
+    <lastmod>${postDate}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>`;
+    });
+
+    sitemapContent += `
+</urlset>`;
+
+    await fs.writeFile('sitemap.xml', sitemapContent, 'utf8');
+    logger.log('Sitemap updated successfully');
+    return true;
+  } catch (error) {
+    console.error('Error generating Sitemap:', error);
     return false;
   }
 };
@@ -1300,25 +1380,25 @@ const generateRSS = async () => {
 // Login endpoint with strict rate limiting
 app.post('/api/login', loginLimiter, async (req, res) => {
   try {
-    console.log('🔐 Login request received');
+    logger.log('🔐 Login request received');
     const { username, password } = req.body;
-    
+
     if (!username || !password) {
       return res.status(400).json({ error: 'Kullanıcı adı ve şifre gereklidir.' });
     }
-    
+
     const users = await readUsersFile();
-    
+
     const user = users[username];
-    
+
     if (!user) {
       await logFailedLogin(username, req, 'User not found');
       return res.status(401).json({ error: 'Kullanıcı adı veya şifre hatalı.' });
     }
-    
+
     // Check if password is hashed or plain text (for migration)
     let isPasswordValid = false;
-    
+
     if (user.isHashed) {
       // Password is already hashed, compare with bcrypt
       isPasswordValid = await bcrypt.compare(password, user.password);
@@ -1332,23 +1412,23 @@ app.post('/api/login', loginLimiter, async (req, res) => {
         users[username].isHashed = true;
         users[username].lastUpdated = new Date().toISOString();
         await writeUsersFile(users);
-        console.log(`Password migrated to hashed format for user: ${username}`);
+        logger.log(`Password migrated to hashed format for user: ${username}`);
       }
     }
-    
+
     if (isPasswordValid) {
       const ip = req.ip || req.connection.remoteAddress;
       const userAgent = req.headers['user-agent'];
-      
+
       // Create session if session manager is available
       if (sessionManager) {
         try {
           const session = await sessionManager.createSession(username, ip, userAgent);
-          
-          res.json({ 
-            success: true, 
+
+          res.json({
+            success: true,
             token: session.token,
-            user: { 
+            user: {
               username,
               loginTime: session.loginTime,
               sessionId: session.id
@@ -1358,48 +1438,48 @@ app.post('/api/login', loginLimiter, async (req, res) => {
               lastActivity: session.lastActivity
             }
           });
-          
-          console.log(`✅ Successful login with session: ${username} from ${ip}`);
+
+          logger.log(`✅ Successful login with session: ${username} from ${ip}`);
         } catch (sessionError) {
           console.warn('⚠️  Session creation failed, using basic JWT:', sessionError.message);
           // Fallback to basic JWT with consistent payload
           const fallbackSessionId = 'fallback_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-          const token = jwt.sign({ 
-            username, 
+          const token = jwt.sign({
+            username,
             sessionId: fallbackSessionId,
             iat: Math.floor(Date.now() / 1000)
           }, JWT_SECRET, { expiresIn: '24h' });
-          
-          res.json({ 
-            success: true, 
+
+          res.json({
+            success: true,
             token,
-            user: { 
+            user: {
               username,
               sessionId: fallbackSessionId
             }
           });
-          
-          console.log(`✅ Successful login (JWT fallback): ${username}`);
+
+          logger.log(`✅ Successful login (JWT fallback): ${username}`);
         }
       } else {
         // Basic JWT authentication with consistent payload
         const fallbackSessionId = 'fallback_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        const token = jwt.sign({ 
-          username, 
+        const token = jwt.sign({
+          username,
           sessionId: fallbackSessionId,
           iat: Math.floor(Date.now() / 1000)
         }, JWT_SECRET, { expiresIn: '24h' });
-        
-        res.json({ 
-          success: true, 
+
+        res.json({
+          success: true,
           token,
-          user: { 
+          user: {
             username,
             sessionId: fallbackSessionId
           }
         });
-        
-        console.log(`✅ Successful login (JWT only): ${username}`);
+
+        logger.log(`✅ Successful login (JWT only): ${username}`);
       }
     } else {
       // Log failed login attempt
@@ -1418,7 +1498,7 @@ app.post('/api/login', loginLimiter, async (req, res) => {
       code: error.code,
       name: error.name
     });
-    
+
     // Provide more specific error messages
     let errorMessage = 'Giriş yapılırken bir hata oluştu.';
     if (error.message.includes('users file') || error.message.includes('readUsersFile')) {
@@ -1428,8 +1508,8 @@ app.post('/api/login', loginLimiter, async (req, res) => {
     } else if (error.message.includes('session')) {
       errorMessage = 'Oturum oluşturulamadı.';
     }
-    
-    res.status(500).json({ 
+
+    res.status(500).json({
       error: errorMessage,
       message: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
       code: 'LOGIN_ERROR'
@@ -1442,16 +1522,16 @@ app.post('/api/logout', authenticateToken, async (req, res) => {
   try {
     if (sessionManager && req.user.sessionId) {
       await sessionManager.invalidateSession(req.user.sessionId);
-      console.log(`✅ User logged out: ${req.user.username} (${req.user.sessionId})`);
+      logger.log(`✅ User logged out: ${req.user.username} (${req.user.sessionId})`);
     }
-    
-    res.json({ 
-      success: true, 
-      message: 'Logged out successfully' 
+
+    res.json({
+      success: true,
+      message: 'Logged out successfully'
     });
   } catch (error) {
     console.error('❌ Logout error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Çıkış yapılamadı',
       code: 'LOGOUT_ERROR'
     });
@@ -1488,7 +1568,7 @@ app.get('/api/session', authenticateToken, async (req, res) => {
     }
   } catch (error) {
     console.error('❌ Session info error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Oturum bilgisi alınamadı',
       code: 'SESSION_INFO_ERROR'
     });
@@ -1500,7 +1580,7 @@ app.get('/api/sessions/stats', authenticateToken, async (req, res) => {
   try {
     if (sessionManager) {
       const stats = await sessionManager.getSessionStats();
-      
+
       res.json({
         success: true,
         stats
@@ -1520,7 +1600,7 @@ app.get('/api/sessions/stats', authenticateToken, async (req, res) => {
     }
   } catch (error) {
     console.error('❌ Session stats error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Oturum istatistikleri alınamadı',
       code: 'SESSION_STATS_ERROR'
     });
@@ -1532,13 +1612,13 @@ app.get('/api/posts', authenticateToken, async (req, res) => {
   try {
     const posts = await readPostsFile();
     const stats = await readStatsFile();
-    
+
     // Add view counts to posts
     const postsWithViews = posts.map(post => ({
       ...post,
       views: stats.postViews[post.slug] || 0
     }));
-    
+
     res.json(postsWithViews);
   } catch (error) {
     res.status(500).json({ error: 'Blog yazıları yüklenirken hata oluştu' });
@@ -1550,7 +1630,7 @@ app.get('/api/posts/:slug', authenticateToken, async (req, res) => {
   try {
     const posts = await readPostsFile();
     const post = posts.find(p => p.slug === req.params.slug);
-    
+
     if (!post) {
       return res.status(404).json({ error: 'Blog yazısı bulunamadı' });
     }
@@ -1558,11 +1638,11 @@ app.get('/api/posts/:slug', authenticateToken, async (req, res) => {
     // Read markdown content
     const markdownPath = path.join(CONTENT_DIR, `${post.slug}.md`);
     let content = '';
-    
+
     try {
       content = await fs.readFile(markdownPath, 'utf8');
     } catch (error) {
-      console.log('Markdown file not found, using empty content');
+      logger.log('Markdown file not found, using empty content');
     }
 
     res.json({ ...post, content });
@@ -1575,14 +1655,14 @@ app.get('/api/posts/:slug', authenticateToken, async (req, res) => {
 app.post('/api/posts', authenticateToken, async (req, res) => {
   try {
     const { title, excerpt, date, cover, coverCaption, tags, content, featured, status, publishDate } = req.body;
-    
+
     // Enhanced input validation
     validateRequired(req.body, ['title', 'excerpt', 'content'], {
       endpoint: '/api/posts',
       method: 'POST',
       user: req.user?.username
     });
-    
+
     // Additional validation
     if (title.length < 3) {
       const error = new Error('Başlık en az 3 karakter olmalıdır');
@@ -1590,14 +1670,14 @@ app.post('/api/posts', authenticateToken, async (req, res) => {
       error.details = { field: 'title', minLength: 3 };
       throw error;
     }
-    
+
     if (excerpt.length < 10) {
       const error = new Error('Özet en az 10 karakter olmalıdır');
       error.code = 'VALIDATION_ERROR';
       error.details = { field: 'excerpt', minLength: 10 };
       throw error;
     }
-    
+
     if (content.length < 50) {
       const error = new Error('İçerik en az 50 karakter olmalıdır');
       error.code = 'VALIDATION_ERROR';
@@ -1630,7 +1710,7 @@ app.post('/api/posts', authenticateToken, async (req, res) => {
 
     // Add to posts array
     posts.unshift(newPost);
-    
+
     // Save posts.json
     const saved = await writePostsFile(posts);
     if (!saved) {
@@ -1649,18 +1729,18 @@ app.post('/api/posts', authenticateToken, async (req, res) => {
     console.error('Error creating post:', error);
     console.error('Error details:', error.message);
     console.error('Request body:', req.body);
-    
+
     // Send more detailed error message to client
     if (error.code === 'VALIDATION_ERROR') {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: error.message,
-        details: error.details 
+        details: error.details
       });
     }
-    
-    res.status(500).json({ 
+
+    res.status(500).json({
       error: 'Blog yazısı oluşturulurken hata oluştu',
-      message: error.message 
+      message: error.message
     });
   }
 });
@@ -1670,14 +1750,14 @@ app.put('/api/posts/:slug', authenticateToken, async (req, res) => {
   try {
     const { title, excerpt, date, cover, coverCaption, tags, content, featured, status, publishDate } = req.body;
     const originalSlug = req.params.slug;
-    
+
     if (!title || !excerpt || !content) {
       return res.status(400).json({ error: 'Eksik gerekli alanlar' });
     }
 
     const newSlug = generateSlug(title);
     const posts = await readPostsFile();
-    
+
     const postIndex = posts.findIndex(p => p.slug === originalSlug);
     if (postIndex === -1) {
       return res.status(404).json({ error: 'Blog yazısı bulunamadı' });
@@ -1705,7 +1785,7 @@ app.put('/api/posts/:slug', authenticateToken, async (req, res) => {
 
     // Update posts array
     posts[postIndex] = updatedPost;
-    
+
     // Save posts.json
     const saved = await writePostsFile(posts);
     if (!saved) {
@@ -1722,7 +1802,7 @@ app.put('/api/posts/:slug', authenticateToken, async (req, res) => {
       try {
         await fs.remove(oldMarkdownPath);
       } catch (error) {
-        console.log('Old markdown file not found');
+        logger.log('Old markdown file not found');
       }
     }
 
@@ -1741,14 +1821,14 @@ app.patch('/api/posts/:slug/featured', authenticateToken, async (req, res) => {
   try {
     const slug = req.params.slug;
     const { featured } = req.body;
-    
+
     if (typeof featured !== 'boolean') {
       return res.status(400).json({ error: 'Öne çıkarılan durumu boolean olmalıdır' });
     }
 
     const posts = await readPostsFile();
     const postIndex = posts.findIndex(p => p.slug === slug);
-    
+
     if (postIndex === -1) {
       return res.status(404).json({ error: 'Blog yazısı bulunamadı' });
     }
@@ -1759,7 +1839,7 @@ app.patch('/api/posts/:slug/featured', authenticateToken, async (req, res) => {
       featured,
       updatedAt: new Date().toISOString()
     };
-    
+
     // Save posts.json
     const saved = await writePostsFile(posts);
     if (!saved) {
@@ -1769,8 +1849,8 @@ app.patch('/api/posts/:slug/featured', authenticateToken, async (req, res) => {
     // Generate RSS feed after featured status update
     await generateRSS();
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: `Post ${featured ? 'featured' : 'unfeatured'} successfully`,
       post: posts[postIndex]
     });
@@ -1785,7 +1865,7 @@ app.delete('/api/posts/:slug', authenticateToken, async (req, res) => {
   try {
     const slug = req.params.slug;
     const posts = await readPostsFile();
-    
+
     const postIndex = posts.findIndex(p => p.slug === slug);
     if (postIndex === -1) {
       return res.status(404).json({ error: 'Blog yazısı bulunamadı' });
@@ -1798,7 +1878,7 @@ app.delete('/api/posts/:slug', authenticateToken, async (req, res) => {
       deletedAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
-    
+
     // Save posts.json
     const saved = await writePostsFile(posts);
     if (!saved) {
@@ -1807,13 +1887,13 @@ app.delete('/api/posts/:slug', authenticateToken, async (req, res) => {
 
     // Clean up stats data for deleted post
     await cleanupStatsData();
-    
+
     // Generate RSS feed after post deletion
     await generateRSS();
 
-    res.json({ 
-      success: true, 
-      message: 'Post moved to trash successfully' 
+    res.json({
+      success: true,
+      message: 'Post moved to trash successfully'
     });
   } catch (error) {
     console.error('Error deleting post:', error);
@@ -1826,7 +1906,7 @@ app.post('/api/posts/:slug/publish', authenticateToken, async (req, res) => {
   try {
     const slug = req.params.slug;
     const { status, publishDate } = req.body;
-    
+
     if (!status || !['published', 'scheduled'].includes(status)) {
       return res.status(400).json({ error: 'Geçersiz durum' });
     }
@@ -1837,7 +1917,7 @@ app.post('/api/posts/:slug/publish', authenticateToken, async (req, res) => {
 
     const posts = await readPostsFile();
     const postIndex = posts.findIndex(p => p.slug === slug);
-    
+
     if (postIndex === -1) {
       return res.status(404).json({ error: 'Blog yazısı bulunamadı' });
     }
@@ -1859,8 +1939,8 @@ app.post('/api/posts/:slug/publish', authenticateToken, async (req, res) => {
     // Generate RSS feed after post publishing
     await generateRSS();
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: status === 'published' ? 'Post published successfully' : 'Post scheduled successfully',
       post: posts[postIndex]
     });
@@ -1875,7 +1955,7 @@ app.post('/api/posts/:slug/restore', authenticateToken, async (req, res) => {
   try {
     const slug = req.params.slug;
     const posts = await readPostsFile();
-    
+
     const postIndex = posts.findIndex(p => p.slug === slug);
     if (postIndex === -1) {
       return res.status(404).json({ error: 'Blog yazısı bulunamadı' });
@@ -1898,8 +1978,8 @@ app.post('/api/posts/:slug/restore', authenticateToken, async (req, res) => {
     // Generate RSS feed after post restoration
     await generateRSS();
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: 'Post restored successfully',
       post: posts[postIndex]
     });
@@ -1914,14 +1994,14 @@ app.put('/api/posts/:slug/restore', authenticateToken, async (req, res) => {
   try {
     const slug = req.params.slug;
     const posts = await readPostsFile();
-    
+
     const postIndex = posts.findIndex(p => p.slug === slug);
     if (postIndex === -1) {
       return res.status(404).json({ error: 'Blog yazısı bulunamadı' });
     }
 
     const post = posts[postIndex];
-    
+
     // Check if post is actually deleted
     if (post.status !== 'deleted') {
       console.error(`Attempted to restore post ${slug} with status: ${post.status}`);
@@ -1929,17 +2009,17 @@ app.put('/api/posts/:slug/restore', authenticateToken, async (req, res) => {
     }
 
     // Log what we're about to restore
-    console.log(`Restoring post: ${slug} (${post.title}) from status: ${post.status}`);
+    logger.log(`Restoring post: ${slug} (${post.title}) from status: ${post.status}`);
 
     // Restore post to published status
     posts[postIndex].status = 'published';
     posts[postIndex].updatedAt = new Date().toISOString();
-    
+
     // Remove deletedAt field if it exists
     if (posts[postIndex].deletedAt) {
       delete posts[postIndex].deletedAt;
     }
-    
+
     // Save posts.json
     const saved = await writePostsFile(posts);
     if (!saved) {
@@ -1948,14 +2028,14 @@ app.put('/api/posts/:slug/restore', authenticateToken, async (req, res) => {
 
     // Validate stats data after post restoration
     await validateStatsData();
-    
+
     // Generate RSS feed after post restoration
     await generateRSS();
 
-    console.log(`Post ${slug} restored successfully`);
+    logger.log(`Post ${slug} restored successfully`);
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: 'Post restored successfully',
       post: posts[postIndex]
     });
@@ -1970,14 +2050,14 @@ app.delete('/api/posts/:slug/permanent', authenticateToken, async (req, res) => 
   try {
     const slug = req.params.slug;
     const posts = await readPostsFile();
-    
+
     const postIndex = posts.findIndex(p => p.slug === slug);
     if (postIndex === -1) {
       return res.status(404).json({ error: 'Blog yazısı bulunamadı' });
     }
 
     const post = posts[postIndex];
-    
+
     // Check if post is actually deleted
     if (post.status !== 'deleted') {
       console.error(`Attempted to permanently delete post ${slug} with status: ${post.status}`);
@@ -1985,11 +2065,11 @@ app.delete('/api/posts/:slug/permanent', authenticateToken, async (req, res) => 
     }
 
     // Log what we're about to delete
-    console.log(`Permanently deleting post: ${slug} (post.title}) with status: ${post.status}`);
+    logger.log(`Permanently deleting post: ${slug} (${post.title}) with status: ${post.status}`);
 
     // Remove from posts array permanently
     posts.splice(postIndex, 1);
-    
+
     // Save posts.json
     const saved = await writePostsFile(posts);
     if (!saved) {
@@ -2000,22 +2080,22 @@ app.delete('/api/posts/:slug/permanent', authenticateToken, async (req, res) => 
     const markdownPath = path.join(CONTENT_DIR, `${slug}.md`);
     try {
       await fs.remove(markdownPath);
-      console.log(`Markdown file deleted: ${markdownPath}`);
+      logger.log(`Markdown file deleted: ${markdownPath}`);
     } catch (error) {
-      console.log(`Markdown file not found or already deleted: ${markdownPath}`);
+      logger.log(`Markdown file not found or already deleted: ${markdownPath}`);
     }
 
     // Clean up stats data for permanently deleted post
     await cleanupStatsData();
-    
+
     // Generate RSS feed after permanent post deletion
     await generateRSS();
 
-    console.log(`Post ${slug} permanently deleted successfully`);
+    logger.log(`Post ${slug} permanently deleted successfully`);
 
-    res.json({ 
-      success: true, 
-      message: 'Post permanently deleted' 
+    res.json({
+      success: true,
+      message: 'Post permanently deleted'
     });
   } catch (error) {
     console.error('Error permanently deleting post:', error);
@@ -2031,39 +2111,39 @@ app.post('/api/upload', authenticateToken, (req, res) => {
       if (err) {
         // Handle multer errors
         if (err.code === 'LIMIT_FILE_SIZE') {
-          return res.status(400).json({ 
-            error: 'Dosya çok büyük', 
+          return res.status(400).json({
+            error: 'Dosya çok büyük',
             details: `Maksimum dosya boyutu: ${MAX_FILE_SIZE / (1024 * 1024)}MB`,
             code: 'FILE_SIZE_LIMIT'
           });
         }
-        
+
         if (err.message && err.message.includes('File type not allowed')) {
-          return res.status(400).json({ 
-            error: 'Dosya tipi izin verilmiyor', 
+          return res.status(400).json({
+            error: 'Dosya tipi izin verilmiyor',
             details: `İzin verilen tipler: ${ALLOWED_FILE_TYPES.join(', ')}`,
             code: 'FILE_TYPE_NOT_ALLOWED'
           });
         }
-        
+
         if (err.message && err.message.includes('File extension not allowed')) {
-          return res.status(400).json({ 
-            error: 'Dosya uzantısı izin verilmiyor', 
+          return res.status(400).json({
+            error: 'Dosya uzantısı izin verilmiyor',
             details: `İzin verilen uzantılar: ${ALLOWED_EXTENSIONS.join(', ')}`,
             code: 'FILE_EXTENSION_NOT_ALLOWED'
           });
         }
-        
+
         console.error('File upload error:', err);
-        return res.status(400).json({ 
-          error: 'Dosya yükleme başarısız', 
+        return res.status(400).json({
+          error: 'Dosya yükleme başarısız',
           details: err.message,
           code: 'UPLOAD_ERROR'
         });
       }
-      
+
       if (!req.file) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           error: 'Dosya yüklenmedi',
           details: 'Lütfen yüklenecek bir görsel dosyası seçin',
           code: 'NO_FILE'
@@ -2073,11 +2153,11 @@ app.post('/api/upload', authenticateToken, (req, res) => {
       // Get target folder from request
       const targetFolder = req.body.folder || 'blog-content';
       const validFolders = ['system', 'profile', 'blog-covers', 'blog-content'];
-      
+
       if (!validFolders.includes(targetFolder)) {
         return res.status(400).json({
           error: 'Geçersiz klasör',
-            details: `Geçerli klasörler: ${validFolders.join(', ')}`,
+          details: `Geçerli klasörler: ${validFolders.join(', ')}`,
           code: 'INVALID_FOLDER'
         });
       }
@@ -2085,17 +2165,17 @@ app.post('/api/upload', authenticateToken, (req, res) => {
       // Move file to target folder
       const targetPath = path.join(__dirname, 'images', targetFolder, req.file.filename);
       const sourcePath = req.file.path;
-      
+
       try {
         await fs.move(sourcePath, targetPath, { overwrite: true });
-        console.log(`✅ File moved to ${targetFolder}: ${req.file.originalname} -> ${req.file.filename}`);
+        logger.log(`✅ File moved to ${targetFolder}: ${req.file.originalname} -> ${req.file.filename}`);
       } catch (moveError) {
         console.error('Error moving file to target folder:', moveError);
         // If move fails, try to copy instead
         try {
           await fs.copy(sourcePath, targetPath);
           await fs.remove(sourcePath);
-          console.log(`✅ File copied to ${targetFolder}: ${req.file.originalname} -> ${req.file.filename}`);
+          logger.log(`✅ File copied to ${targetFolder}: ${req.file.originalname} -> ${req.file.filename}`);
         } catch (copyError) {
           console.error('Error copying file to target folder:', copyError);
           return res.status(500).json({
@@ -2107,11 +2187,11 @@ app.post('/api/upload', authenticateToken, (req, res) => {
       }
 
       // Log successful upload
-      console.log(`✅ File uploaded successfully to ${targetFolder}: ${req.file.originalname} -> ${req.file.filename}`);
-      
+      logger.log(`✅ File uploaded successfully to ${targetFolder}: ${req.file.originalname} -> ${req.file.filename}`);
+
       const imageUrl = `images/${targetFolder}/${req.file.filename}`;
-      res.json({ 
-        success: true, 
+      res.json({
+        success: true,
         url: imageUrl,
         filename: req.file.filename,
         originalName: req.file.originalname,
@@ -2119,12 +2199,12 @@ app.post('/api/upload', authenticateToken, (req, res) => {
         mimetype: req.file.mimetype,
         folder: targetFolder
       });
-      
+
     } catch (error) {
       console.error('Error processing uploaded file:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: 'Yüklenen dosya işlenirken hata oluştu',
-          details: 'Dosya işleme sırasında sunucu hatası',
+        details: 'Dosya işleme sırasında sunucu hatası',
         code: 'PROCESSING_ERROR'
       });
     }
@@ -2134,30 +2214,30 @@ app.post('/api/upload', authenticateToken, (req, res) => {
 // Get deleted images (must be before /api/gallery/:folder)
 app.get('/api/gallery/deleted', authenticateToken, async (req, res) => {
   try {
-    console.log('Getting deleted images...');
+    logger.log('Getting deleted images...');
     const deletedDir = path.join(__dirname, 'images', 'deleted');
     const deletedImagesPath = path.join(__dirname, 'data', 'deleted-images.json');
-    
+
     let deletedImages = [];
     let metadata = [];
-    
+
     // Get metadata
     try {
       if (await fs.pathExists(deletedImagesPath)) {
         metadata = await fs.readJson(deletedImagesPath);
       }
     } catch (error) {
-      console.log('No deleted images metadata found');
+      logger.log('No deleted images metadata found');
     }
-    
+
     // Check if deleted directory exists
     if (await fs.pathExists(deletedDir)) {
       const files = await fs.readdir(deletedDir);
-      
+
       for (const file of files) {
         const filePath = path.join(deletedDir, file);
         const stats = await fs.stat(filePath);
-        
+
         if (stats.isFile()) {
           const ext = path.extname(file).toLowerCase();
           if (['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext)) {
@@ -2178,7 +2258,7 @@ app.get('/api/gallery/deleted', authenticateToken, async (req, res) => {
     }
 
     res.json({ images: deletedImages });
-    
+
   } catch (error) {
     console.error('Error getting deleted images:', error);
     res.status(500).json({
@@ -2194,17 +2274,17 @@ app.get('/api/gallery/:folder', authenticateToken, async (req, res) => {
   try {
     const { folder } = req.params;
     const validFolders = ['system', 'profile', 'blog-covers', 'blog-content'];
-    
+
     if (!validFolders.includes(folder)) {
       return res.status(400).json({
         error: 'Invalid folder',
-            details: `Geçerli klasörler: ${validFolders.join(', ')}`,
+        details: `Geçerli klasörler: ${validFolders.join(', ')}`,
         code: 'INVALID_FOLDER'
       });
     }
 
     const folderPath = path.join(__dirname, 'images', folder);
-    
+
     // Check if folder exists
     if (!await fs.pathExists(folderPath)) {
       return res.json({ images: [] });
@@ -2217,7 +2297,7 @@ app.get('/api/gallery/:folder', authenticateToken, async (req, res) => {
     for (const file of files) {
       const filePath = path.join(folderPath, file);
       const stats = await fs.stat(filePath);
-      
+
       if (stats.isFile()) {
         const ext = path.extname(file).toLowerCase();
         if (['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext)) {
@@ -2234,7 +2314,7 @@ app.get('/api/gallery/:folder', authenticateToken, async (req, res) => {
     }
 
     res.json({ images });
-    
+
   } catch (error) {
     console.error('Error getting gallery images:', error);
     res.status(500).json({
@@ -2251,7 +2331,7 @@ app.post('/api/gallery/deleted/:filename/restore', authenticateToken, async (req
     const { filename } = req.params;
     const deletedPath = path.join(__dirname, 'images', 'deleted', filename);
     const deletedImagesPath = path.join(__dirname, 'data', 'deleted-images.json');
-    
+
     // Check if file exists in deleted folder
     if (!await fs.pathExists(deletedPath)) {
       return res.status(404).json({
@@ -2267,7 +2347,7 @@ app.post('/api/gallery/deleted/:filename/restore', authenticateToken, async (req
         deletedImages = await fs.readJson(deletedImagesPath);
       }
     } catch (error) {
-      console.log('No deleted images metadata found');
+      logger.log('No deleted images metadata found');
     }
 
     const meta = deletedImages.find(m => m.filename === filename);
@@ -2279,7 +2359,7 @@ app.post('/api/gallery/deleted/:filename/restore', authenticateToken, async (req
     }
 
     const originalPath = path.join(__dirname, 'images', meta.originalFolder, filename);
-    
+
     // Check if file already exists in original location
     if (await fs.pathExists(originalPath)) {
       return res.status(400).json({
@@ -2290,18 +2370,18 @@ app.post('/api/gallery/deleted/:filename/restore', authenticateToken, async (req
 
     // Move file back to original location
     await fs.move(deletedPath, originalPath);
-    
+
     // Remove from deleted images metadata
     deletedImages = deletedImages.filter(m => m.filename !== filename);
     await fs.writeJson(deletedImagesPath, deletedImages, { spaces: 2 });
-    
-    console.log(`✅ Image restored: ${filename} to ${meta.originalFolder}`);
 
-    res.json({ 
-      success: true, 
-      message: 'Image restored successfully' 
+    logger.log(`✅ Image restored: ${filename} to ${meta.originalFolder}`);
+
+    res.json({
+      success: true,
+      message: 'Image restored successfully'
     });
-    
+
   } catch (error) {
     console.error('Error restoring image:', error);
     res.status(500).json({
@@ -2318,7 +2398,7 @@ app.delete('/api/gallery/deleted/:filename', authenticateToken, async (req, res)
     const { filename } = req.params;
     const deletedPath = path.join(__dirname, 'images', 'deleted', filename);
     const deletedImagesPath = path.join(__dirname, 'data', 'deleted-images.json');
-    
+
     // Check if file exists in deleted folder
     if (!await fs.pathExists(deletedPath)) {
       return res.status(404).json({
@@ -2329,7 +2409,7 @@ app.delete('/api/gallery/deleted/:filename', authenticateToken, async (req, res)
 
     // Delete file permanently
     await fs.remove(deletedPath);
-    
+
     // Remove from deleted images metadata
     let deletedImages = [];
     try {
@@ -2337,19 +2417,19 @@ app.delete('/api/gallery/deleted/:filename', authenticateToken, async (req, res)
         deletedImages = await fs.readJson(deletedImagesPath);
       }
     } catch (error) {
-      console.log('No deleted images metadata found');
+      logger.log('No deleted images metadata found');
     }
 
     deletedImages = deletedImages.filter(m => m.filename !== filename);
     await fs.writeJson(deletedImagesPath, deletedImages, { spaces: 2 });
-    
-    console.log(`✅ Image permanently deleted: ${filename}`);
 
-    res.json({ 
-      success: true, 
-      message: 'Image permanently deleted' 
+    logger.log(`✅ Image permanently deleted: ${filename}`);
+
+    res.json({
+      success: true,
+      message: 'Image permanently deleted'
     });
-    
+
   } catch (error) {
     console.error('Error permanently deleting image:', error);
     res.status(500).json({
@@ -2365,11 +2445,11 @@ app.delete('/api/gallery/:folder/:filename', authenticateToken, async (req, res)
   try {
     const { folder, filename } = req.params;
     const validFolders = ['system', 'profile', 'blog-covers', 'blog-content'];
-    
+
     if (!validFolders.includes(folder)) {
       return res.status(400).json({
         error: 'Invalid folder',
-            details: `Geçerli klasörler: ${validFolders.join(', ')}`,
+        details: `Geçerli klasörler: ${validFolders.join(', ')}`,
         code: 'INVALID_FOLDER'
       });
     }
@@ -2377,7 +2457,7 @@ app.delete('/api/gallery/:folder/:filename', authenticateToken, async (req, res)
     const sourcePath = path.join(__dirname, 'images', folder, filename);
     const deletedDir = path.join(__dirname, 'images', 'deleted');
     const deletedPath = path.join(deletedDir, filename);
-    
+
     // Check if file exists
     if (!await fs.pathExists(sourcePath)) {
       return res.status(404).json({
@@ -2392,17 +2472,17 @@ app.delete('/api/gallery/:folder/:filename', authenticateToken, async (req, res)
 
     // Move file to deleted folder instead of deleting
     await fs.move(sourcePath, deletedPath);
-    
+
     // Save deletion metadata
     const deletedImagesPath = path.join(__dirname, 'data', 'deleted-images.json');
     let deletedImages = [];
-    
+
     try {
       if (await fs.pathExists(deletedImagesPath)) {
         deletedImages = await fs.readJson(deletedImagesPath);
       }
     } catch (error) {
-      console.log('Creating new deleted images file');
+      logger.log('Creating new deleted images file');
     }
 
     // Add deletion record
@@ -2414,14 +2494,14 @@ app.delete('/api/gallery/:folder/:filename', authenticateToken, async (req, res)
     });
 
     await fs.writeJson(deletedImagesPath, deletedImages, { spaces: 2 });
-    
-    console.log(`✅ Image moved to deleted: ${folder}/${filename}`);
 
-    res.json({ 
-      success: true, 
-      message: 'Image moved to deleted folder' 
+    logger.log(`✅ Image moved to deleted: ${folder}/${filename}`);
+
+    res.json({
+      success: true,
+      message: 'Image moved to deleted folder'
     });
-    
+
   } catch (error) {
     console.error('Error moving image to deleted:', error);
     res.status(500).json({
@@ -2437,14 +2517,14 @@ app.delete('/api/gallery/:folder/:filename', authenticateToken, async (req, res)
 app.get('/api/stats', authenticateToken, async (req, res) => {
   try {
     const posts = await readPostsFile();
-    
+
     const totalPosts = posts.length;
     const featuredPosts = posts.filter(post => post.featured).length;
-    
+
     const now = new Date();
     const oneMonthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
     const recentPosts = posts.filter(post => new Date(post.date) >= oneMonthAgo).length;
-    
+
     const allTags = new Set();
     posts.forEach(post => {
       if (post.tags) {
@@ -2467,8 +2547,8 @@ app.get('/api/stats', authenticateToken, async (req, res) => {
 // Simple test endpoint (before any middleware)
 app.get('/api/test', (req, res) => {
   try {
-    res.json({ 
-      status: 'OK', 
+    res.json({
+      status: 'OK',
       message: 'Server is running',
       timestamp: new Date().toISOString(),
       nodeEnv: process.env.NODE_ENV,
@@ -2484,12 +2564,17 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
+// Version endpoint - merkezi versiyon bilgisi
+app.get('/api/version', (req, res) => {
+  res.json({ version: APP_VERSION });
+});
+
 // Debug endpoint to check CSP settings
 app.get('/api/debug/csp', (req, res) => {
-  const cspHeader = process.env.NODE_ENV === 'production' 
+  const cspHeader = process.env.NODE_ENV === 'production'
     ? "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://cihanenesdurgun.com; frame-ancestors 'none'"
     : "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:*; frame-ancestors 'none'";
-  
+
   res.json({
     nodeEnv: process.env.NODE_ENV,
     expectedCSP: cspHeader,
@@ -2507,7 +2592,7 @@ app.post('/api/analytics/track-page', async (req, res) => {
     if (!page) {
       return res.status(400).json({ error: 'Sayfa parametresi gereklidir' });
     }
-    
+
     const stats = await incrementPageView(page);
     res.json({ success: true, stats });
   } catch (error) {
@@ -2523,7 +2608,7 @@ app.post('/api/analytics/track-post', async (req, res) => {
     if (!slug) {
       return res.status(400).json({ error: 'Slug parametresi gereklidir' });
     }
-    
+
     const stats = await incrementPostView(slug);
     res.json({ success: true, stats });
   } catch (error) {
@@ -2537,47 +2622,47 @@ app.get('/api/stats/analytics', authenticateToken, async (req, res) => {
   try {
     const stats = await readStatsFile();
     const commentsData = await readCommentsFile();
-    
+
     // Get time range from query parameter (default: 30 days)
     const timeRange = req.query.days;
     let days;
-    
+
     if (timeRange === 'all') {
       days = null; // null means all time
-      console.log(`📊 Analytics requested for ALL TIME`);
+      logger.log(`📊 Analytics requested for ALL TIME`);
     } else {
       days = parseInt(timeRange) || 30;
-      console.log(`📊 Analytics requested for last ${days} days`);
+      logger.log(`📊 Analytics requested for last ${days} days`);
     }
-    
+
     // Get popular posts (only active/published posts)
     const posts = await readPostsFile();
     const activePosts = posts.filter(post => post.status === 'published');
     const activePostSlugs = new Set(activePosts.map(post => post.slug));
-    
+
     const popularPosts = activePosts.map(post => ({
       ...post,
       views: stats.postViews[post.slug] || 0
     })).sort((a, b) => b.views - a.views).slice(0, 3);
-    
+
     // Get active post views for calculations
     const activePostViews = Object.entries(stats.postViews)
       .filter(([slug]) => activePostSlugs.has(slug));
-    
+
     // Calculate total blog views (only from active posts)
     const totalBlogViews = activePostViews
       .reduce((total, [, views]) => total + views, 0);
-    
+
     // Get popular blog post (only from active posts)
     const popularBlogPost = activePostViews
-      .sort(([,a], [,b]) => b - a)[0];
-    
+      .sort(([, a], [, b]) => b - a)[0];
+
     // Get total comments count
     const totalComments = Object.values(commentsData.comments || {})
       .flat()
       .filter(comment => comment.approved !== false) // Only count approved and pending comments
       .length;
-    
+
     // Get popular tags
     const tagCounts = {};
     posts.forEach(post => {
@@ -2590,16 +2675,16 @@ app.get('/api/stats/analytics', authenticateToken, async (req, res) => {
         });
       }
     });
-    
+
     // Sort tags by usage count and get top 3
     const popularTags = Object.entries(tagCounts)
-      .sort(([,a], [,b]) => b - a)
+      .sort(([, a], [, b]) => b - a)
       .slice(0, 3)
       .map(([tag, count]) => ({ tag, count }));
-    
+
     // Get daily stats for specified time range
     let dailyStats;
-    
+
     if (days === null) {
       // All time - no filtering
       dailyStats = Object.entries(stats.dailyStats)
@@ -2607,11 +2692,11 @@ app.get('/api/stats/analytics', authenticateToken, async (req, res) => {
       // Specific time range
       const daysAgo = new Date();
       daysAgo.setDate(daysAgo.getDate() - days);
-      
+
       dailyStats = Object.entries(stats.dailyStats)
         .filter(([date]) => new Date(date) >= daysAgo)
     }
-    
+
     dailyStats = dailyStats
       .sort(([a], [b]) => new Date(a) - new Date(b))
       .map(([date, data]) => {
@@ -2624,7 +2709,7 @@ app.get('/api/stats/analytics', authenticateToken, async (req, res) => {
             }
           });
         }
-        
+
         return {
           date,
           totalViews: data.totalViews,
@@ -2632,7 +2717,7 @@ app.get('/api/stats/analytics', authenticateToken, async (req, res) => {
           postViews: filteredPostViews  // Sadece aktif yazılar
         };
       });
-    
+
     res.json({
       totalViews: totalBlogViews, // Only blog post views
       pageViews: stats.pageViews,
@@ -2653,11 +2738,11 @@ app.get('/api/stats/analytics', authenticateToken, async (req, res) => {
 // Manual stats cleanup (admin only)
 app.post('/api/stats/cleanup', authenticateToken, async (req, res) => {
   try {
-    console.log('🧹 Manual stats cleanup requested by admin');
-    
+    logger.log('🧹 Manual stats cleanup requested by admin');
+
     // Clean up stats data
     const cleanedStats = await cleanupStatsData();
-    
+
     if (cleanedStats) {
       res.json({
         success: true,
@@ -2676,18 +2761,18 @@ app.post('/api/stats/cleanup', authenticateToken, async (req, res) => {
 // Manual stats validation (admin only)
 app.post('/api/stats/validate', authenticateToken, async (req, res) => {
   try {
-    console.log('🔍 Manual stats validation requested by admin');
-    
+    logger.log('🔍 Manual stats validation requested by admin');
+
     // Validate stats data
     const isValid = await validateStatsData();
-    
+
     if (isValid) {
       res.json({
         success: true,
         message: 'Stats data validation completed successfully'
       });
     } else {
-      res.status(400).json({ 
+      res.status(400).json({
         error: 'İstatistik verisi doğrulaması başarısız',
         message: 'Found orphaned stats data that needs cleanup'
       });
@@ -2702,7 +2787,7 @@ app.post('/api/stats/validate', authenticateToken, async (req, res) => {
 app.get('/api/cache/stats', authenticateToken, async (req, res) => {
   try {
     const cacheStats = fileCache.getStats();
-    
+
     res.json({
       success: true,
       cache: cacheStats,
@@ -2717,10 +2802,10 @@ app.get('/api/cache/stats', authenticateToken, async (req, res) => {
 // Clear cache (admin only)
 app.post('/api/cache/clear', authenticateToken, async (req, res) => {
   try {
-    console.log('🧹 Manual cache clear requested by admin');
-    
+    logger.log('🧹 Manual cache clear requested by admin');
+
     fileCache.clear();
-    
+
     res.json({
       success: true,
       message: 'Cache cleared successfully'
@@ -2738,13 +2823,13 @@ app.get('/api/comments/:slug', async (req, res) => {
     const { slug } = req.params;
     const commentsData = await readCommentsFile();
     const postComments = commentsData.comments[slug] || [];
-    
+
     // Return all comments (both approved and pending)
     const allComments = postComments.filter(comment => comment.approved !== false); // Show approved and pending, hide rejected
-    
+
     // Organize comments hierarchically
     const organizedComments = organizeCommentsHierarchically(allComments);
-    
+
     res.json({
       success: true,
       comments: organizedComments
@@ -2760,35 +2845,35 @@ function organizeCommentsHierarchically(comments) {
   // Separate main comments and replies
   const mainComments = comments.filter(comment => !comment.parent_id);
   const replies = comments.filter(comment => comment.parent_id);
-  
+
   // Sort main comments by date (newest first)
   mainComments.sort((a, b) => new Date(b.date) - new Date(a.date));
-  
+
   // For each main comment, find and attach its replies
   const organizedComments = mainComments.map(mainComment => {
     // Find direct replies to this main comment
     const directReplies = replies
       .filter(reply => reply.parent_id === mainComment.id)
       .sort((a, b) => new Date(a.date) - new Date(b.date)); // Replies in chronological order
-    
+
     // For each direct reply, find its sub-replies
     const repliesWithSubReplies = directReplies.map(reply => {
       const subReplies = replies
         .filter(subReply => subReply.parent_id === reply.id)
         .sort((a, b) => new Date(a.date) - new Date(b.date));
-      
+
       return {
         ...reply,
         replies: subReplies
       };
     });
-    
+
     return {
       ...mainComment,
       replies: repliesWithSubReplies
     };
   });
-  
+
   return organizedComments;
 }
 
@@ -2797,60 +2882,60 @@ app.post('/api/comments/:slug', async (req, res) => {
   try {
     const { slug } = req.params;
     const { name, email, content, parent_id, reply_to_name } = req.body;
-    
+
     // Basic validation
     if (!name || !email || !content) {
       return res.status(400).json({ error: 'İsim, e-posta ve içerik gereklidir' });
     }
-    
+
     if (content.length < 3) {
       return res.status(400).json({ error: 'Yorum en az 3 karakter olmalıdır' });
     }
-    
+
     if (content.length > 1000) {
       return res.status(400).json({ error: 'Yorum 1000 karakterden az olmalıdır' });
     }
-    
+
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return res.status(400).json({ error: 'Geçersiz e-posta formatı' });
     }
-    
+
     const commentsData = await readCommentsFile();
-    
+
     // Initialize post comments array if it doesn't exist
     if (!commentsData.comments[slug]) {
       commentsData.comments[slug] = [];
     }
-    
+
     // Generate new comment ID
     const newCommentId = generateCommentId();
-    
+
     // Determine if this is a reply or main comment
     let parentId = null;
     let threadId = newCommentId;
     let depth = 0;
     let replyToName = null;
-    
+
     if (parent_id) {
       // This is a reply - find the parent comment
       const parentComment = commentsData.comments[slug].find(c => c.id === parent_id);
       if (!parentComment) {
         return res.status(400).json({ error: 'Üst yorum bulunamadı' });
       }
-      
+
       parentId = parent_id;
       threadId = parentComment.thread_id || parent_id;
       depth = (parentComment.depth || 0) + 1;
       replyToName = parentComment.name;
-      
+
       // Limit reply depth to 2 levels (main comment -> reply -> sub-reply)
       if (depth > 2) {
         return res.status(400).json({ error: 'Maksimum yanıt derinliğine ulaşıldı' });
       }
     }
-    
+
     // Create new comment
     const newComment = {
       id: newCommentId,
@@ -2865,13 +2950,13 @@ app.post('/api/comments/:slug', async (req, res) => {
       depth: depth,
       reply_to_name: replyToName
     };
-    
+
     // Add comment to post
     commentsData.comments[slug].push(newComment);
-    
+
     // Save to file
     await writeCommentsFile(commentsData);
-    
+
     res.json({
       success: true,
       message: 'Comment submitted successfully. It will be visible after approval.',
@@ -2888,7 +2973,7 @@ app.get('/api/admin/comments', authenticateToken, async (req, res) => {
   try {
     const commentsData = await readCommentsFile();
     const posts = await readPostsFile();
-    
+
     // Get all comments with post titles
     const allComments = [];
     Object.entries(commentsData.comments).forEach(([slug, comments]) => {
@@ -2901,10 +2986,10 @@ app.get('/api/admin/comments', authenticateToken, async (req, res) => {
         });
       });
     });
-    
+
     // Sort by date (newest first)
     allComments.sort((a, b) => new Date(b.date) - new Date(a.date));
-    
+
     res.json({
       success: true,
       comments: allComments
@@ -2920,10 +3005,10 @@ app.put('/api/admin/comments/:commentId', authenticateToken, async (req, res) =>
   try {
     const { commentId } = req.params;
     const { approved } = req.body;
-    
+
     const commentsData = await readCommentsFile();
     let commentFound = false;
-    
+
     // Find and update comment
     Object.keys(commentsData.comments).forEach(slug => {
       const commentIndex = commentsData.comments[slug].findIndex(c => c.id === commentId);
@@ -2932,13 +3017,13 @@ app.put('/api/admin/comments/:commentId', authenticateToken, async (req, res) =>
         commentFound = true;
       }
     });
-    
+
     if (!commentFound) {
       return res.status(404).json({ error: 'Yorum bulunamadı' });
     }
-    
+
     await writeCommentsFile(commentsData);
-    
+
     res.json({
       success: true,
       message: `Comment ${approved ? 'approved' : 'rejected'} successfully`
@@ -2953,10 +3038,10 @@ app.put('/api/admin/comments/:commentId', authenticateToken, async (req, res) =>
 app.delete('/api/admin/comments/:commentId', authenticateToken, async (req, res) => {
   try {
     const { commentId } = req.params;
-    
+
     const commentsData = await readCommentsFile();
     let commentFound = false;
-    
+
     // Find and delete comment
     Object.keys(commentsData.comments).forEach(slug => {
       const commentIndex = commentsData.comments[slug].findIndex(c => c.id === commentId);
@@ -2965,13 +3050,13 @@ app.delete('/api/admin/comments/:commentId', authenticateToken, async (req, res)
         commentFound = true;
       }
     });
-    
+
     if (!commentFound) {
       return res.status(404).json({ error: 'Yorum bulunamadı' });
     }
-    
+
     await writeCommentsFile(commentsData);
-    
+
     res.json({
       success: true,
       message: 'Comment deleted successfully'
@@ -2988,10 +3073,10 @@ app.delete('/api/admin/comments/:commentId', authenticateToken, async (req, res)
 app.get('/api/site-config', authenticateToken, async (req, res) => {
   try {
     const siteConfigPath = path.join(__dirname, 'content', 'site.json');
-    
+
     // Check if file exists and has content
     if (!await fs.pathExists(siteConfigPath)) {
-      console.log('Site config file not found, creating default configuration');
+      logger.log('Site config file not found, creating default configuration');
       const defaultConfig = {
         hero: {
           name: "Cihan Enes Durgun",
@@ -3019,17 +3104,17 @@ app.get('/api/site-config', authenticateToken, async (req, res) => {
         },
         lastUpdated: new Date().toISOString()
       };
-      
+
       // Create the file with default configuration
       await fs.writeFile(siteConfigPath, JSON.stringify(defaultConfig, null, 2));
       return res.json(defaultConfig);
     }
-    
+
     const siteConfig = await fs.readFile(siteConfigPath, 'utf8');
-    
+
     // Check if file is empty
     if (!siteConfig.trim()) {
-      console.log('Site config file is empty, using default configuration');
+      logger.log('Site config file is empty, using default configuration');
       const defaultConfig = {
         hero: {
           name: "Cihan Enes Durgun",
@@ -3057,12 +3142,12 @@ app.get('/api/site-config', authenticateToken, async (req, res) => {
         },
         lastUpdated: new Date().toISOString()
       };
-      
+
       // Write default configuration to file
       await fs.writeFile(siteConfigPath, JSON.stringify(defaultConfig, null, 2));
       return res.json(defaultConfig);
     }
-    
+
     const config = JSON.parse(siteConfig);
     res.json(config);
   } catch (error) {
@@ -3076,19 +3161,19 @@ app.put('/api/site-config', authenticateToken, async (req, res) => {
   try {
     const siteConfigPath = path.join(__dirname, 'content', 'site.json');
     const updatedConfig = req.body;
-    
+
     // Validate required fields
     if (!updatedConfig.hero || !updatedConfig.hero.name || !updatedConfig.hero.headline || !updatedConfig.hero.bio) {
       return res.status(400).json({ error: 'Eksik gerekli hero alanları' });
     }
-    
+
     if (!updatedConfig.site || !updatedConfig.site.title || !updatedConfig.site.description) {
       return res.status(400).json({ error: 'Eksik gerekli site alanları' });
     }
-    
+
     // Write updated configuration
     await fs.writeFile(siteConfigPath, JSON.stringify(updatedConfig, null, 2));
-    
+
     res.json({
       success: true,
       message: 'Site configuration updated successfully'
@@ -3105,34 +3190,34 @@ app.put('/api/site-config', authenticateToken, async (req, res) => {
 app.post('/api/admin/set-icon', authenticateToken, async (req, res) => {
   try {
     const { filename } = req.body;
-    
+
     if (!filename) {
       return res.status(400).json({ error: 'Dosya adı gereklidir' });
     }
-    
+
     // Check if file exists in system folder
     const iconPath = path.join(__dirname, 'images', 'system', filename);
     if (!await fs.pathExists(iconPath)) {
       return res.status(404).json({ error: 'İkon dosyası bulunamadı' });
     }
-    
+
     // HTML dosyaları listesi
     const htmlFiles = [
       'index.html',
-      'blog.html', 
+      'blog.html',
       'post.html',
       'admin/index.html',
       'admin/login.html',
       'markdown-editor/index.html'
     ];
-    
+
     // Her HTML dosyasını güncelle
     for (const htmlFile of htmlFiles) {
       const filePath = path.join(__dirname, htmlFile);
-      
+
       if (await fs.pathExists(filePath)) {
         let content = await fs.readFile(filePath, 'utf8');
-        
+
         // Favicon referanslarını güncelle
         if (htmlFile.startsWith('admin/') || htmlFile.startsWith('markdown-editor/')) {
           // Admin ve markdown-editor dosyaları için ../images/system/ path
@@ -3151,17 +3236,17 @@ app.post('/api/admin/set-icon', authenticateToken, async (req, res) => {
             `<link rel="apple-touch-icon" href="images/system/${filename}"`
           );
         }
-        
+
         await fs.writeFile(filePath, content, 'utf8');
       }
     }
-    
+
     res.json({
       success: true,
       message: 'System icon updated successfully',
       filename: filename
     });
-    
+
   } catch (error) {
     console.error('Error setting icon:', error);
     res.status(500).json({ error: 'Sistem ikonu ayarlanırken hata oluştu' });
@@ -3175,13 +3260,13 @@ app.put('/api/account/update', authenticateToken, async (req, res) => {
   try {
     const { newUsername, currentPassword, newPassword } = req.body;
     const users = await readUsersFile();
-    
+
     // Get current user
     const currentUser = users[req.user.username];
     if (!currentUser) {
       return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
     }
-    
+
     // Validate current password (with bcrypt support)
     let isPasswordValid = false;
     if (currentUser.isHashed) {
@@ -3191,24 +3276,24 @@ app.put('/api/account/update', authenticateToken, async (req, res) => {
       // Legacy plain text password (for migration)
       isPasswordValid = currentUser.password === currentPassword;
     }
-    
+
     if (!isPasswordValid) {
       return res.status(401).json({ error: 'Mevcut şifre yanlış' });
     }
-    
+
     // Validate new username
     if (!newUsername || newUsername.length < 3) {
       return res.status(400).json({ error: 'Kullanıcı adı en az 3 karakter olmalıdır' });
     }
-    
+
     // Validate new password
     if (!newPassword || newPassword.length < 6) {
       return res.status(400).json({ error: 'Yeni şifre en az 6 karakter olmalıdır' });
     }
-    
+
     // Hash new password
     const hashedNewPassword = await bcrypt.hash(newPassword, BCRYPT_SALT_ROUNDS);
-    
+
     // Update user credentials
     const updatedUser = {
       username: newUsername,
@@ -3216,25 +3301,25 @@ app.put('/api/account/update', authenticateToken, async (req, res) => {
       lastUpdated: new Date().toISOString(),
       isHashed: true
     };
-    
+
     // Remove old user entry and add new one
     delete users[req.user.username];
     users[newUsername] = updatedUser;
-    
+
     // Save updated users
     const saved = await writeUsersFile(users);
     if (!saved) {
       return res.status(500).json({ error: 'Kullanıcı bilgileri kaydedilemedi' });
     }
-    
-    console.log(`Account update successful: ${req.user.username} -> ${newUsername}`);
-    
+
+    logger.log(`Account update successful: ${req.user.username} -> ${newUsername}`);
+
     res.json({
       success: true,
       message: 'Hesap ayarları başarıyla güncellendi',
       username: newUsername
     });
-    
+
   } catch (error) {
     console.error('Error updating account:', error);
     res.status(500).json({ error: 'Hesap güncellenirken hata oluştu' });
@@ -3246,11 +3331,11 @@ app.get('/api/user/info', authenticateToken, async (req, res) => {
   try {
     const users = await readUsersFile();
     const user = users[req.user.username];
-    
+
     if (!user) {
       return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
     }
-    
+
     res.json({
       username: user.username,
       lastUpdated: user.lastUpdated
@@ -3267,7 +3352,7 @@ app.get('/api/user/info', authenticateToken, async (req, res) => {
 app.get('/api/security/data', authenticateToken, async (req, res) => {
   try {
     const sessions = await readSessionsFile();
-    
+
     // Get IP analysis
     const ipAnalysis = {};
     sessions.failedLogins.forEach(login => {
@@ -3283,12 +3368,12 @@ app.get('/api/security/data', authenticateToken, async (req, res) => {
       ipAnalysis[login.ip].lastAttempt = login.timestamp;
       ipAnalysis[login.ip].usernames.add(login.username);
     });
-    
+
     // Convert Set to Array for JSON serialization
     Object.values(ipAnalysis).forEach(analysis => {
       analysis.usernames = Array.from(analysis.usernames);
     });
-    
+
     res.json({
       activeSessions: sessions.activeSessions,
       loginHistory: sessions.loginHistory.slice(0, 5), // Last 5 successful logins
@@ -3306,15 +3391,15 @@ app.delete('/api/security/sessions/:sessionId', authenticateToken, async (req, r
   try {
     const { sessionId } = req.params;
     const sessions = await readSessionsFile();
-    
+
     const sessionIndex = sessions.activeSessions.findIndex(s => s.id === sessionId);
     if (sessionIndex === -1) {
       return res.status(404).json({ error: 'Oturum bulunamadı' });
     }
-    
+
     const removedSession = sessions.activeSessions.splice(sessionIndex, 1)[0];
     await writeSessionsFile(sessions);
-    
+
     res.json({
       success: true,
       message: 'Oturum başarıyla sonlandırıldı',
@@ -3331,11 +3416,11 @@ app.delete('/api/security/sessions', authenticateToken, async (req, res) => {
   try {
     const sessions = await readSessionsFile();
     const currentSession = sessions.activeSessions.find(s => s.username === req.user.username);
-    
+
     // Keep only current user's session
     sessions.activeSessions = currentSession ? [currentSession] : [];
     await writeSessionsFile(sessions);
-    
+
     res.json({
       success: true,
       message: 'Tüm diğer oturumlar sonlandırıldı'
@@ -3350,15 +3435,15 @@ app.delete('/api/security/sessions', authenticateToken, async (req, res) => {
 app.post('/api/security/block-ip', authenticateToken, async (req, res) => {
   try {
     const { ip, reason } = req.body;
-    
+
     if (!ip) {
       return res.status(400).json({ error: 'IP adresi gerekli' });
     }
-    
+
     // For now, we'll just log the blocked IP
     // In a real application, you'd want to implement actual IP blocking
-    console.log(`IP ${ip} blocked by admin. Reason: ${reason || 'Suspicious activity'}`);
-    
+    logger.log(`IP ${ip} blocked by admin. Reason: ${reason || 'Suspicious activity'}`);
+
     res.json({
       success: true,
       message: `IP adresi ${ip} engellendi`,
@@ -3377,7 +3462,7 @@ app.delete('/api/security/failed-logins', authenticateToken, async (req, res) =>
     const sessions = await readSessionsFile();
     sessions.failedLogins = [];
     await writeSessionsFile(sessions);
-    
+
     res.json({
       success: true,
       message: 'Hatalı giriş logları temizlendi'
@@ -3392,18 +3477,18 @@ app.delete('/api/security/failed-logins', authenticateToken, async (req, res) =>
 
 // Test endpoint to verify server is working
 app.get('/api/theme/test', (req, res) => {
-  console.log('✅ Test endpoint reached');
+  logger.log('✅ Test endpoint reached');
   res.json({ success: true, message: 'Server is working' });
 });
 
 // Get theme settings
 app.get('/api/theme', async (req, res) => {
   // Immediate logging to ensure endpoint is reached
-  console.log('📊 Theme request received at:', new Date().toISOString());
-  console.log('📁 THEME_FILE path:', THEME_FILE);
-  console.log('📁 Request IP:', req.ip);
-  console.log('📁 Request origin:', req.headers.origin);
-  
+  logger.log('📊 Theme request received at:', new Date().toISOString());
+  logger.log('📁 THEME_FILE path:', THEME_FILE);
+  logger.log('📁 Request IP:', req.ip);
+  logger.log('📁 Request origin:', req.headers.origin);
+
   // Default theme - always available
   const defaultTheme = {
     light: {
@@ -3426,39 +3511,39 @@ app.get('/api/theme', async (req, res) => {
     shadowIntensity: 60,
     fontFamily: 'Inter'
   };
-  
+
   try {
     // Try to load theme from file
     let theme = null;
     try {
       theme = await readThemeFile();
-      console.log('✅ Theme loaded from readThemeFile');
+      logger.log('✅ Theme loaded from readThemeFile');
     } catch (readError) {
       console.error('❌ Error in readThemeFile:', readError.message);
       console.error('Error stack:', readError.stack);
       theme = null;
     }
-    
+
     // Use loaded theme or fallback to default
-    const finalTheme = (theme && typeof theme === 'object' && theme.light && theme.dark) 
-      ? theme 
+    const finalTheme = (theme && typeof theme === 'object' && theme.light && theme.dark)
+      ? theme
       : defaultTheme;
-    
-    console.log('✅ Sending theme response');
-    
+
+    logger.log('✅ Sending theme response');
+
     // Send response with proper headers
     res.setHeader('Content-Type', 'application/json');
     res.status(200).json({
       success: true,
       theme: finalTheme
     });
-    
-    console.log('✅ Theme response sent successfully');
+
+    logger.log('✅ Theme response sent successfully');
   } catch (error) {
     console.error('❌ CRITICAL ERROR in /api/theme endpoint:', error);
     console.error('Error message:', error.message);
     console.error('Error stack:', error.stack);
-    
+
     // Last resort - always send default theme
     try {
       res.setHeader('Content-Type', 'application/json');
@@ -3466,7 +3551,7 @@ app.get('/api/theme', async (req, res) => {
         success: true,
         theme: defaultTheme
       });
-      console.log('✅ Fallback theme response sent');
+      logger.log('✅ Fallback theme response sent');
     } catch (sendError) {
       console.error('❌ CRITICAL: Failed to send ANY response:', sendError);
       // If we can't send JSON, try plain text
@@ -3486,15 +3571,15 @@ app.get('/api/theme', async (req, res) => {
 app.put('/api/theme', authenticateToken, async (req, res) => {
   try {
     const themeData = req.body;
-    
+
     // Validate theme data
     if (!themeData.light || !themeData.dark) {
       return res.status(400).json({ error: 'Geçersiz tema verisi' });
     }
-    
+
     // Save theme to file
     const success = await writeThemeFile(themeData);
-    
+
     if (success) {
       res.json({
         success: true,
@@ -3534,9 +3619,9 @@ app.delete('/api/theme', authenticateToken, async (req, res) => {
       shadowIntensity: 60,
       fontFamily: 'Inter'
     };
-    
+
     const success = await writeThemeFile(defaultTheme);
-    
+
     if (success) {
       res.json({
         success: true,
@@ -3555,14 +3640,36 @@ app.delete('/api/theme', authenticateToken, async (req, res) => {
 // RSS endpoint
 app.get('/rss.xml', async (req, res) => {
   try {
-    await generateRSS();
+    // Check if file exists, if not generate it
+    if (!await fs.pathExists('rss.xml')) {
+      await generateRSS();
+    }
+
     res.setHeader('Content-Type', 'application/rss+xml; charset=utf-8');
     res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
     const rssContent = await fs.readFile('rss.xml', 'utf8');
     res.send(rssContent);
   } catch (error) {
     console.error('Error serving RSS feed:', error);
-    res.status(500).send('RSS feed oluşturulurken hata oluştu');
+    res.status(500).send('RSS feed yüklenirken hata oluştu');
+  }
+});
+
+// Sitemap endpoint
+app.get('/sitemap.xml', async (req, res) => {
+  try {
+    // Check if file exists, if not generate it
+    if (!await fs.pathExists('sitemap.xml')) {
+      await generateSitemap();
+    }
+
+    res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+    const sitemapContent = await fs.readFile('sitemap.xml', 'utf8');
+    res.send(sitemapContent);
+  } catch (error) {
+    console.error('Error serving Sitemap:', error);
+    res.status(500).send('Sitemap yüklenirken hata oluştu');
   }
 });
 
@@ -3590,7 +3697,7 @@ app.post('/api/webhook/deploy', async (req, res) => {
       // Verify signature using raw body
       const hmac = crypto.createHmac('sha256', webhookSecret);
       const digest = 'sha256=' + hmac.update(req.body).digest('hex');
-      
+
       if (signature !== digest) {
         console.warn('⚠️  Webhook signature verification failed');
         return res.status(401).json({ error: 'Unauthorized: Invalid signature' });
@@ -3601,26 +3708,26 @@ app.post('/api/webhook/deploy', async (req, res) => {
     const event = req.headers['x-github-event'];
 
     if (event === 'push' && payload.ref === 'refs/heads/main') {
-      console.log('🚀 Deployment webhook triggered');
-      console.log(`📦 Commit: ${payload.head_commit?.id?.substring(0, 7)} - ${payload.head_commit?.message}`);
-      console.log(`👤 Author: ${payload.head_commit?.author?.name}`);
+      logger.log('🚀 Deployment webhook triggered');
+      logger.log(`📦 Commit: ${payload.head_commit?.id?.substring(0, 7)} - ${payload.head_commit?.message}`);
+      logger.log(`👤 Author: ${payload.head_commit?.author?.name}`);
 
       // Get the deployment script path
-      const deployScriptPath = path.join(__dirname, 'deploy.sh');
+      const deployScriptPath = path.join(__dirname, 'scripts', 'deploy.sh');
       const projectPath = process.env.DEPLOY_PATH || __dirname;
 
       // Check if deploy.sh exists
       if (await fs.pathExists(deployScriptPath)) {
-        console.log('📜 Running deployment script...');
-        
+        logger.log('📜 Running deployment script...');
+
         // Execute deployment script asynchronously
         execAsync(`bash ${deployScriptPath}`, {
           cwd: projectPath,
           env: { ...process.env, PATH: process.env.PATH }
         }).then(({ stdout, stderr }) => {
-          if (stdout) console.log('✅ Deployment output:', stdout);
+          if (stdout) logger.log('✅ Deployment output:', stdout);
           if (stderr) console.warn('⚠️  Deployment warnings:', stderr);
-          console.log('✅ Deployment completed successfully');
+          logger.log('✅ Deployment completed successfully');
         }).catch((error) => {
           console.error('❌ Deployment error:', error.message);
         });
@@ -3635,15 +3742,15 @@ app.post('/api/webhook/deploy', async (req, res) => {
         });
       } else {
         // If deploy.sh doesn't exist, try direct git pull
-        console.log('📜 deploy.sh not found, attempting direct git pull...');
-        
+        logger.log('📜 deploy.sh not found, attempting direct git pull...');
+
         execAsync('git pull origin main', {
           cwd: projectPath,
           env: { ...process.env, PATH: process.env.PATH }
         }).then(({ stdout, stderr }) => {
-          if (stdout) console.log('✅ Git pull output:', stdout);
+          if (stdout) logger.log('✅ Git pull output:', stdout);
           if (stderr) console.warn('⚠️  Git pull warnings:', stderr);
-          console.log('✅ Git pull completed successfully');
+          logger.log('✅ Git pull completed successfully');
         }).catch((error) => {
           console.error('❌ Git pull error:', error.message);
         });
@@ -3658,7 +3765,7 @@ app.post('/api/webhook/deploy', async (req, res) => {
       }
     } else {
       // Not a push to main branch, ignore
-      console.log(`ℹ️  Webhook event ignored: ${event} to ${payload.ref}`);
+      logger.log(`ℹ️  Webhook event ignored: ${event} to ${payload.ref}`);
       res.status(200).json({
         success: true,
         message: 'Event ignored (not a push to main branch)',
@@ -3682,60 +3789,76 @@ app.use(express.static('.'));
 app.listen(PORT, async () => {
   try {
     // Validate and clean up stats data on startup
-    console.log('🔍 Validating stats data on startup...');
+    logger.log('🔍 Validating stats data on startup...');
     await validateStatsData();
   } catch (error) {
     console.error('❌ Error validating stats data:', error.message);
   }
-  
+
   try {
     // Clean up session data on startup
-    console.log('🧹 Cleaning up session data on startup...');
-    await cleanupSessionData();
+    logger.log('🧹 Cleaning up session data on startup...');
+    try {
+      if (typeof cleanupSessionData === 'function') {
+        await cleanupSessionData();
+      } else {
+        console.error('❌ cleanupSessionData is not a function');
+        console.trace('Trace for cleanupSessionData:');
+      }
+    } catch (innerError) {
+      console.error('❌ Inner error running cleanupSessionData:', innerError);
+      console.trace('Trace for inner error:');
+    }
   } catch (error) {
     console.error('❌ Error cleaning up session data:', error.message);
   }
-  
+
   try {
     // Generate initial RSS feed
     await generateRSS();
   } catch (error) {
     console.error('❌ Error generating RSS feed:', error.message);
   }
-  
+
   // Set up automatic session cleanup scheduler
   setInterval(async () => {
-    console.log('🕐 Running scheduled session cleanup...');
-    await cleanupSessionData();
+    logger.log('🕐 Running scheduled session cleanup...');
+    try {
+      if (typeof cleanupSessionData === 'function') {
+        await cleanupSessionData();
+      }
+    } catch (e) {
+      console.error('Interval session cleanup error', e);
+    }
   }, SESSION_LIMITS.CLEANUP_INTERVAL);
-  
-  console.log(`🚀 Personal Site v0.1.0 - Admin API Server running on port ${PORT}`);
-  console.log(`🔐 Security & Session Management System Active`);
-  console.log(`📊 Stats Data Cleanup & Validation System Active`);
-  console.log(`🧹 Session Data Cleanup System Active (every ${SESSION_LIMITS.CLEANUP_INTERVAL / (60 * 1000)} minutes)`);
-  console.log(`📝 API Documentation:`);
-  console.log(`   POST /api/login - Login`);
-  console.log(`   GET  /api/posts - Get all posts`);
-  console.log(`   POST /api/posts - Create new post`);
-  console.log(`   PUT  /api/posts/:slug - Update post`);
-  console.log(`   DELETE /api/posts/:slug - Delete post`);
-  console.log(`   POST /api/upload - Upload image`);
-  console.log(`   GET  /api/stats - Get dashboard stats`);
-  console.log(`   GET  /api/comments/:slug - Get post comments`);
-  console.log(`   POST /api/comments/:slug - Add comment`);
-  console.log(`   GET  /api/admin/comments - Get all comments (admin)`);
-  console.log(`   PUT  /api/admin/comments/:id - Approve/reject comment (admin)`);
-  console.log(`   DELETE /api/admin/comments/:id - Delete comment (admin)`);
-  console.log(`   POST /api/admin/set-icon - Set new system icon (admin)`);
-  console.log(`   GET  /api/site-config - Get site configuration (admin)`);
-  console.log(`   PUT  /api/site-config - Update site configuration (admin)`);
-  console.log(`   PUT  /api/account/update - Update account settings (admin)`);
-  console.log(`   GET  /api/user/info - Get user info (admin)`);
-  console.log(`   GET  /api/theme - Get theme settings`);
-  console.log(`   PUT  /api/theme - Update theme settings (admin)`);
-  console.log(`   DELETE /api/theme - Reset theme to defaults (admin)`);
-  console.log(`   POST /api/admin/logs - Save console logs (admin)`);
-  console.log(`   GET  /api/admin/logs - Get console logs (admin)`);
+
+  logger.log(`🚀 Personal Site ${APP_VERSION} - Admin API Server running on port ${PORT}`);
+  logger.log(`🔐 Security & Session Management System Active`);
+  logger.log(`📊 Stats Data Cleanup & Validation System Active`);
+  logger.log(`🧹 Session Data Cleanup System Active (every ${SESSION_LIMITS.CLEANUP_INTERVAL / (60 * 1000)} minutes)`);
+  logger.log(`📝 API Documentation:`);
+  logger.log(`   POST /api/login - Login`);
+  logger.log(`   GET  /api/posts - Get all posts`);
+  logger.log(`   POST /api/posts - Create new post`);
+  logger.log(`   PUT  /api/posts/:slug - Update post`);
+  logger.log(`   DELETE /api/posts/:slug - Delete post`);
+  logger.log(`   POST /api/upload - Upload image`);
+  logger.log(`   GET  /api/stats - Get dashboard stats`);
+  logger.log(`   GET  /api/comments/:slug - Get post comments`);
+  logger.log(`   POST /api/comments/:slug - Add comment`);
+  logger.log(`   GET  /api/admin/comments - Get all comments (admin)`);
+  logger.log(`   PUT  /api/admin/comments/:id - Approve/reject comment (admin)`);
+  logger.log(`   DELETE /api/admin/comments/:id - Delete comment (admin)`);
+  logger.log(`   POST /api/admin/set-icon - Set new system icon (admin)`);
+  logger.log(`   GET  /api/site-config - Get site configuration (admin)`);
+  logger.log(`   PUT  /api/site-config - Update site configuration (admin)`);
+  logger.log(`   PUT  /api/account/update - Update account settings (admin)`);
+  logger.log(`   GET  /api/user/info - Get user info (admin)`);
+  logger.log(`   GET  /api/theme - Get theme settings`);
+  logger.log(`   PUT  /api/theme - Update theme settings (admin)`);
+  logger.log(`   DELETE /api/theme - Reset theme to defaults (admin)`);
+  logger.log(`   POST /api/admin/logs - Save console logs (admin)`);
+  logger.log(`   GET  /api/admin/logs - Get console logs (admin)`);
 });
 
 // ====== Console Log Management ======
@@ -3743,7 +3866,7 @@ app.listen(PORT, async () => {
 app.post('/api/admin/logs', authenticateToken, async (req, res) => {
   try {
     const { logs, timestamp, userAgent, url, sessionId } = req.body;
-    
+
     if (!logs || !Array.isArray(logs)) {
       return res.status(400).json({ error: 'Geçersiz log verisi' });
     }
@@ -3765,7 +3888,7 @@ app.post('/api/admin/logs', authenticateToken, async (req, res) => {
     const now = new Date();
     const date = now.toISOString().split('T')[0];
     const logFile = path.join(logsDir, `console-${date}.json`);
-    
+
     let logData = {
       metadata: {
         date: date,
@@ -3810,7 +3933,7 @@ app.post('/api/admin/logs', authenticateToken, async (req, res) => {
       // Keep only last 1000 entries if file is too large
       logData.entries = logData.entries.slice(-1000);
       logData.metadata.totalEntries = logData.entries.length;
-      
+
       // Recalculate levels
       logData.metadata.levels = { error: 0, warn: 0, info: 0, log: 0, debug: 0 };
       logData.entries.forEach(entry => {
@@ -3840,18 +3963,18 @@ app.post('/api/admin/logs', authenticateToken, async (req, res) => {
 // Get console logs with filtering and pagination (admin only)
 app.get('/api/admin/logs', authenticateToken, async (req, res) => {
   try {
-    const { 
-      date, 
-      level, 
-      startDate, 
-      endDate, 
-      search, 
-      page = 1, 
-      limit = 50 
+    const {
+      date,
+      level,
+      startDate,
+      endDate,
+      search,
+      page = 1,
+      limit = 50
     } = req.query;
-    
+
     const logsDir = path.join(__dirname, 'logs');
-    
+
     if (!fs.existsSync(logsDir)) {
       return res.json({
         success: true,
@@ -3884,7 +4007,7 @@ app.get('/api/admin/logs', authenticateToken, async (req, res) => {
       targetFiles = logFiles.filter(file => {
         const fileDate = file.match(/console-(\d{4}-\d{2}-\d{2})\.json/);
         if (!fileDate) return false;
-        
+
         const fileDateStr = fileDate[1];
         if (startDate && fileDateStr < startDate) return false;
         if (endDate && fileDateStr > endDate) return false;
@@ -3897,7 +4020,7 @@ app.get('/api/admin/logs', authenticateToken, async (req, res) => {
     for (const file of targetFiles) {
       try {
         const logData = JSON.parse(fs.readFileSync(path.join(logsDir, file), 'utf8'));
-        
+
         if (logData.metadata && logData.entries) {
           // New format
           allLogs.push({
@@ -3926,17 +4049,17 @@ app.get('/api/admin/logs', authenticateToken, async (req, res) => {
 
     // Apply filters
     let filteredLogs = allLogs;
-    
+
     if (level) {
-      filteredLogs = filteredLogs.filter(log => 
+      filteredLogs = filteredLogs.filter(log =>
         log.levels && log.levels[level] > 0
       );
     }
-    
+
     if (search) {
       const searchLower = search.toLowerCase();
-      filteredLogs = filteredLogs.filter(log => 
-        log.logs.some(entry => 
+      filteredLogs = filteredLogs.filter(log =>
+        log.logs.some(entry =>
           entry.message.toLowerCase().includes(searchLower) ||
           entry.level.toLowerCase().includes(searchLower)
         )
@@ -3985,7 +4108,7 @@ function calculateLevels(logs) {
 app.delete('/api/admin/logs/cleanup', authenticateToken, async (req, res) => {
   try {
     const { retentionDays = 30 } = req.body;
-    
+
     if (typeof retentionDays !== 'number' || retentionDays < 1) {
       return res.status(400).json({ error: 'Geçersiz saklama günü değeri' });
     }
@@ -4002,7 +4125,7 @@ app.delete('/api/admin/logs/cleanup', authenticateToken, async (req, res) => {
 
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
-    
+
     const logFiles = fs.readdirSync(logsDir)
       .filter(file => file.startsWith('console-') && file.endsWith('.json'))
       .map(file => {
@@ -4024,7 +4147,7 @@ app.delete('/api/admin/logs/cleanup', authenticateToken, async (req, res) => {
       const dateMatch = file.name.match(/console-(\d{4}-\d{2}-\d{2})\.json/);
       if (dateMatch) {
         const fileDate = new Date(dateMatch[1]);
-        
+
         if (fileDate < cutoffDate) {
           fs.unlinkSync(file.path);
           deletedCount++;

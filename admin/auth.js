@@ -8,22 +8,22 @@ class SessionManager {
     this.heartbeatInterval = null;
     this.heartbeatFrequency = 5 * 60 * 1000; // 5 minutes
   }
-  
+
   // Check if user is authenticated
   async isAuthenticated() {
     const token = this.getToken();
     if (!token) return false;
-    
+
     try {
       // Decode JWT token to check expiration
       const payload = JSON.parse(atob(token.split('.')[1]));
       const now = Date.now() / 1000;
-      
+
       if (payload.exp < now) {
         await this.clearSession();
         return false;
       }
-      
+
       // Try to validate with server if available (disabled for now)
       // try {
       //   const isValid = await this.validateSessionWithServer();
@@ -33,7 +33,7 @@ class SessionManager {
       // } catch (error) {
       //   console.warn('Server validation not available, using JWT only:', error.message);
       // }
-      
+
       return true;
     } catch (error) {
       console.error('Error parsing token:', error);
@@ -41,7 +41,7 @@ class SessionManager {
       return false;
     }
   }
-  
+
   // Validate session with server
   async validateSessionWithServer() {
     try {
@@ -57,13 +57,13 @@ class SessionManager {
           'Content-Type': 'application/json'
         }
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         this.saveSessionInfo(data.session);
         return true;
       }
-      
+
       console.warn('Session validation failed:', response.status, response.statusText);
       return false;
     } catch (error) {
@@ -71,17 +71,17 @@ class SessionManager {
       return false;
     }
   }
-  
+
   // Get current token
   getToken() {
     return localStorage.getItem(this.tokenKey);
   }
-  
+
   // Save session info
   saveSessionInfo(sessionInfo) {
     localStorage.setItem(this.sessionKey, JSON.stringify(sessionInfo));
   }
-  
+
   // Get session info
   getSessionInfo() {
     const sessionData = localStorage.getItem(this.sessionKey);
@@ -92,16 +92,16 @@ class SessionManager {
         console.error('Error parsing session data:', error);
       }
     }
-    
+
     // Fallback to token-based info
     const token = this.getToken();
     if (!token) return null;
-    
+
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
       const now = Date.now() / 1000;
       const timeLeft = (payload.exp - now) * 1000;
-      
+
       return {
         username: payload.username,
         timeLeft: timeLeft,
@@ -112,7 +112,7 @@ class SessionManager {
       return null;
     }
   }
-  
+
   // Clear session
   async clearSession() {
     try {
@@ -135,11 +135,11 @@ class SessionManager {
       this.stopHeartbeat();
     }
   }
-  
+
   // Start heartbeat to keep session alive
   startHeartbeat() {
     this.stopHeartbeat(); // Clear existing heartbeat
-    
+
     this.heartbeatInterval = setInterval(async () => {
       try {
         const response = await fetch('/api/session', {
@@ -149,7 +149,7 @@ class SessionManager {
             'Content-Type': 'application/json'
           }
         });
-        
+
         if (response.ok) {
           const data = await response.json();
           this.saveSessionInfo(data.session);
@@ -163,7 +163,7 @@ class SessionManager {
       }
     }, this.heartbeatFrequency);
   }
-  
+
   // Stop heartbeat
   stopHeartbeat() {
     if (this.heartbeatInterval) {
@@ -178,12 +178,12 @@ class AuthManager {
   constructor() {
     this.sessionManager = new SessionManager();
   }
-  
+
   logout() {
     this.sessionManager.clearSession();
     window.location.href = 'login.html';
   }
-  
+
   async checkAuth() {
     const isAuth = await this.sessionManager.isAuthenticated();
     if (!isAuth) {
@@ -192,7 +192,7 @@ class AuthManager {
     }
     return true;
   }
-  
+
   getSessionInfo() {
     return this.sessionManager.getSessionInfo();
   }
@@ -204,7 +204,7 @@ class AdminSecurity {
     this.authManager = new AuthManager();
     // Don't call init() in constructor, wait for DOMContentLoaded
   }
-  
+
   async init() {
     try {
       // Check authentication on page load
@@ -212,23 +212,23 @@ class AdminSecurity {
       if (!isAuth) {
         return;
       }
-      
+
       // Start heartbeat to keep session alive
       this.authManager.sessionManager.startHeartbeat();
-      
+
       // Add logout functionality to header
       this.addLogoutButton();
-      
+
       // Add session timeout warning
       this.setupSessionTimeout();
-      
+
       // Prevent access to login page if already authenticated
       this.preventLoginPageAccess();
     } catch (error) {
       console.error('❌ AdminSecurity init error:', error);
     }
   }
-  
+
   addLogoutButton() {
     const headerRight = document.querySelector('.header-right');
     if (headerRight) {
@@ -242,35 +242,35 @@ class AdminSecurity {
       `;
       logoutBtn.setAttribute('aria-label', 'Çıkış yap');
       logoutBtn.setAttribute('title', 'Çıkış yap');
-      
+
       logoutBtn.addEventListener('click', () => {
         this.authManager.logout();
       });
-      
+
       headerRight.appendChild(logoutBtn);
     }
   }
-  
+
   setupSessionTimeout() {
     const sessionInfo = this.authManager.getSessionInfo();
     if (!sessionInfo) return;
-    
+
     // Show warning 5 minutes before session expires
     const warningTime = 5 * 60 * 1000; // 5 minutes
     const timeUntilWarning = sessionInfo.timeLeft - warningTime;
-    
+
     if (timeUntilWarning > 0) {
       setTimeout(() => {
         this.showSessionWarning();
       }, timeUntilWarning);
     }
-    
+
     // Auto logout when session expires
     setTimeout(() => {
       this.authManager.logout();
     }, sessionInfo.timeLeft);
   }
-  
+
   showSessionWarning() {
     const warning = document.createElement('div');
     warning.className = 'session-warning';
@@ -290,7 +290,7 @@ class AdminSecurity {
         <button class="btn btn-secondary" onclick="adminSecurity.authManager.logout()">Çıkış Yap</button>
       </div>
     `;
-    
+
     // Add styles
     warning.style.cssText = `
       position: fixed;
@@ -305,15 +305,15 @@ class AdminSecurity {
       max-width: 400px;
       animation: slideIn 0.3s ease;
     `;
-    
+
     document.body.appendChild(warning);
-    
+
     // Close button functionality
     const closeBtn = warning.querySelector('.warning-close');
     closeBtn.addEventListener('click', () => {
       warning.remove();
     });
-    
+
     // Auto remove after 30 seconds
     setTimeout(() => {
       if (warning.parentNode) {
@@ -321,19 +321,21 @@ class AdminSecurity {
       }
     }, 30000);
   }
-  
+
   extendSession() {
     // In a real application, this would make an API call to extend the session
     // For now, we'll just refresh the page to simulate session extension
     window.location.reload();
   }
-  
+
   preventLoginPageAccess() {
     // If we're on the login page and already authenticated, redirect to admin
     if (window.location.pathname.includes('login.html')) {
-      if (this.authManager.sessionManager.isAuthenticated()) {
-        window.location.href = 'index.html';
-      }
+      this.authManager.sessionManager.isAuthenticated().then(isAuth => {
+        if (isAuth) {
+          window.location.href = 'index.html';
+        }
+      });
     }
   }
 }

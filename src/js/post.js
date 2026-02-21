@@ -1,13 +1,13 @@
 // post.js
 
-function q(s, r=document){ return r.querySelector(s); }
-function param(n){ return new URL(location.href).searchParams.get(n); }
-async function getJSON(url){ try{ const r=await fetch(url); return r.ok? r.json():null; }catch(e){ console.error(e); return null; } }
-async function getText(url){ try{ const r=await fetch(url); return r.ok? r.text():null; }catch(e){ console.error(e); return null; } }
+function q(s, r = document) { return r.querySelector(s); }
+function param(n) { return new URL(location.href).searchParams.get(n); }
+async function getJSON(url) { try { const r = await fetch(url); return r.ok ? r.json() : null; } catch (e) { console.error(e); return null; } }
+async function getText(url) { try { const r = await fetch(url); return r.ok ? r.text() : null; } catch (e) { console.error(e); return null; } }
 
-function formatTR(d){
-  try{ return new Date(d).toLocaleDateString('tr-TR',{year:'numeric',month:'2-digit',day:'2-digit'}); }
-  catch{ return d||''; }
+function formatTR(d) {
+  try { return new Date(d).toLocaleDateString('tr-TR', { year: 'numeric', month: '2-digit', day: '2-digit' }); }
+  catch { return d || ''; }
 }
 
 function calculateReadingTime(content) {
@@ -18,15 +18,15 @@ function calculateReadingTime(content) {
     .replace(/!\[[^\]]*]\([^)]+\)/g, " ") // Resim linklerini kaldır
     .replace(/\[[^\]]*]\([^)]+\)/g, " ") // Linkleri kaldır
     .replace(/[\*_>#~\-]/g, " "); // Markdown işaretlerini kaldır
-  
+
   // Kelime sayısını hesapla
   const words = text.trim().split(/\s+/).filter(Boolean).length;
   const readingTime = Math.max(1, Math.ceil(words / 300)); // En az 1 dakika
-  
+
   return readingTime;
 }
 
-function renderError(msg){
+function renderError(msg) {
   q('#postContent').innerHTML = `<p class="muted">${msg}</p>`;
 }
 
@@ -37,7 +37,7 @@ let themeManager;
 function initProgressBar() {
   const progressBar = document.getElementById('progressBar');
   if (!progressBar) return;
-  
+
   window.addEventListener('scroll', () => {
     const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
     const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
@@ -48,15 +48,15 @@ function initProgressBar() {
 
 function initShareButtons(post) {
   const shareButtons = document.querySelectorAll('.share-btn');
-  
+
   shareButtons.forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
-      
+
       const url = window.location.href;
       const title = post.title;
       const text = post.excerpt || '';
-      
+
       if (btn.classList.contains('facebook')) {
         const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
         window.open(facebookUrl, '_blank', 'width=600,height=400');
@@ -102,7 +102,7 @@ function waitForMarked() {
       resolve();
       return;
     }
-    
+
     // Check every 100ms if marked is loaded
     const checkInterval = setInterval(() => {
       if (typeof marked !== 'undefined') {
@@ -110,7 +110,7 @@ function waitForMarked() {
         resolve();
       }
     }, 100);
-    
+
     // Timeout after 5 seconds
     setTimeout(() => {
       clearInterval(checkInterval);
@@ -123,10 +123,10 @@ function waitForMarked() {
   });
 }
 
-async function boot(){
+async function boot() {
   // Wait for marked.js to be loaded
   await waitForMarked();
-  
+
   if (typeof marked === 'undefined') {
     renderError('Markdown kütüphanesi yüklenemedi. Lütfen sayfayı yenileyin.');
     return;
@@ -135,7 +135,7 @@ async function boot(){
   const urlParams = new URLSearchParams(window.location.search);
   const slug = urlParams.get('slug');
   const isPreview = urlParams.get('preview') === 'true';
-  
+
   if (!slug) {
     q('#postContent').innerHTML = '<p class="muted">Yazı bulunamadı.</p>';
     return;
@@ -144,7 +144,7 @@ async function boot(){
   // Preview modu için banner ve filigran ekle
   if (isPreview) {
     document.body.classList.add('preview-mode');
-    
+
     // Preview banner
     const previewBanner = document.createElement('div');
     previewBanner.className = 'preview-banner';
@@ -158,7 +158,7 @@ async function boot(){
       </div>
     `;
     document.body.insertBefore(previewBanner, document.body.firstChild);
-    
+
     // Draft watermark
     const draftWatermark = document.createElement('div');
     draftWatermark.className = 'draft-watermark';
@@ -170,12 +170,12 @@ async function boot(){
       fetch('content/posts.json'),
       fetch('content/site.json')
     ]);
-    
+
     const posts = await postsResponse.json();
     const site = await siteResponse.json();
-    
+
     const post = posts.find(p => p.slug === slug);
-    
+
     if (!post) {
       q('#postContent').innerHTML = '<p class="muted">Yazı bulunamamadı.</p>';
       return;
@@ -184,18 +184,21 @@ async function boot(){
     // Markdown dosyasını yükle
     const mdResponse = await fetch(`content/posts/${post.slug}.md`);
     const md = await mdResponse.text();
-    
+
     // Markdown'ı HTML'e çevir (önce normal, sonra özel image işleme)
-    let html = marked.parse(md, {
+    let rawHtml = marked.parse(md, {
       sanitize: false,
       gfm: true,
       breaks: true
     });
-    
+
+    // Güvenlik: XSS koruması için DOMPurify ile temizle
+    let html = DOMPurify.sanitize(rawHtml);
+
     // Sonradan image'ları özel şekilde işle
-    html = html.replace(/<img src="([^"]*)" alt="([^"]*)"[^>]*>/g, function(match, src, alt) {
+    html = html.replace(/<img src="([^"]*)" alt="([^"]*)"[^>]*>/g, function (match, src, alt) {
       const filename = src.split('/').pop().split('.')[0];
-      
+
       // Her zaman figure yapısı kullan, alt'ta açıklama varsa göster
       if (alt && alt.trim() && alt !== filename) {
         // Açıklamalı görsel - figure yapısı
@@ -210,36 +213,36 @@ async function boot(){
         </figure>`;
       }
     });
-    
+
     // İçeriği güncelle
     q('#postContent').innerHTML = html;
-    
+
     // Markdown render sonrası stil düzeltmeleri
     applyMarkdownStyles();
-    
+
     // HERO
     const heroImg = q('#heroImg');
     const heroCap = q('#heroCaption');
-    
+
     if (post.cover) {
       heroImg.src = post.cover;
       heroImg.alt = post.title;
     }
-    
+
     if (post.coverCaption) {
       heroCap.textContent = post.coverCaption;
     } else if (post.caption) {
       heroCap.textContent = post.caption;
     }
-    
+
     // Post Header
     q('#postTitle').textContent = post.title || '';
-    
+
     // Tarih
     if (post.date) {
       q('#postDate').textContent = formatTR(post.date);
     }
-    
+
     // Etiketler
     const tagsContainer = q('#postTags');
     if (post.tags && post.tags.length > 0) {
@@ -247,27 +250,27 @@ async function boot(){
         `<a href="blog.html" class="tag">${tag}</a>`
       ).join('');
     }
-    
+
     // Okuma süresini hesapla
     const readingTime = calculateReadingTime(md);
     q('#readingTime').textContent = `${readingTime} dakika`;
-    
+
     // Paylaşım butonlarını başlat
     initShareButtons(post);
-    
+
     // Blog butonunu aktif yap
     const blogLink = q('a[href="blog.html"]');
     if (blogLink) {
       blogLink.classList.add('active');
     }
-    
+
     // Track post view (preview modunda değil)
     if (!isPreview) {
       trackPostView(slug);
       // Load comments (preview modunda değil)
       loadComments(slug);
     }
-    
+
   } catch (error) {
     console.error('Yazı yüklenirken hata:', error);
     q('#postContent').innerHTML = '<p class="muted">Yazı yüklenirken bir hata oluştu.</p>';
@@ -299,21 +302,21 @@ async function loadComments(slug) {
   const commentsList = q('#commentsList');
   const commentsLoading = q('#commentsLoading');
   const commentCount = q('#commentCount');
-  
+
   if (!commentsList || !commentsLoading || !commentCount) return;
-  
+
   try {
     // Show loading
     commentsLoading.style.display = 'flex';
     commentsList.innerHTML = '';
-    
+
     // Fetch comments
     const response = await fetch(`${API_BASE_URL}/api/comments/${slug}`);
     const data = await response.json();
-    
+
     if (data.success) {
       const comments = data.comments;
-      
+
       // Update comment count (count all comments including replies and sub-replies)
       const totalComments = comments.reduce((total, comment) => {
         let count = 1; // Main comment
@@ -329,7 +332,7 @@ async function loadComments(slug) {
         return total + count;
       }, 0);
       commentCount.textContent = `${totalComments} yorum`;
-      
+
       // Render comments
       if (comments.length === 0) {
         commentsList.innerHTML = `
@@ -358,26 +361,26 @@ async function loadComments(slug) {
 function initCommentForm(slug) {
   const commentForm = q('#commentForm');
   if (!commentForm) return;
-  
+
   commentForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    
+
     const formData = new FormData(commentForm);
     const name = formData.get('name').trim();
     const email = formData.get('email').trim();
     const content = formData.get('content').trim();
-    
+
     // Basic validation
     if (!name || !email || !content) {
       showCommentMessage('Lütfen tüm alanları doldurun.', 'error');
       return;
     }
-    
+
     if (content.length < 3) {
       showCommentMessage('Yorum en az 3 karakter olmalıdır.', 'error');
       return;
     }
-    
+
     try {
       // Disable form
       const submitBtn = commentForm.querySelector('button[type="submit"]');
@@ -389,7 +392,7 @@ function initCommentForm(slug) {
         </svg>
         Gönderiliyor...
       `;
-      
+
       // Submit comment
       const response = await fetch(`${API_BASE_URL}/api/comments/${slug}`, {
         method: 'POST',
@@ -398,13 +401,13 @@ function initCommentForm(slug) {
         },
         body: JSON.stringify({ name, email, content })
       });
-      
+
       const data = await response.json();
-      
+
       if (data.success) {
         showCommentMessage('Yorumunuz başarıyla gönderildi! Yorumunuz hemen görünecek ve onaylandıktan sonra "Onay Bekliyor" etiketi kalkacak.', 'success');
         commentForm.reset();
-        
+
         // Reload comments to show the new comment immediately
         loadComments(slug);
       } else {
@@ -431,18 +434,18 @@ function showCommentMessage(message, type) {
   // Remove existing messages
   const existingMessages = document.querySelectorAll('.comment-success, .comment-error');
   existingMessages.forEach(msg => msg.remove());
-  
+
   // Create new message
   const messageDiv = document.createElement('div');
   messageDiv.className = `comment-${type}`;
   messageDiv.textContent = message;
-  
+
   // Insert before form
   const commentFormContainer = q('.comment-form-container');
   if (commentFormContainer) {
     commentFormContainer.parentNode.insertBefore(messageDiv, commentFormContainer);
   }
-  
+
   // Auto remove after 5 seconds
   setTimeout(() => {
     if (messageDiv.parentNode) {
@@ -455,7 +458,7 @@ function formatCommentDate(dateString) {
   const date = new Date(dateString);
   const now = new Date();
   const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
-  
+
   if (diffInHours < 1) {
     return 'Az önce';
   } else if (diffInHours < 24) {
@@ -480,7 +483,7 @@ function escapeHtml(text) {
 // Render comment with replies
 function renderCommentWithReplies(comment, slug) {
   const repliesHtml = comment.replies ? comment.replies.map(reply => renderReply(reply, slug)).join('') : '';
-  
+
   return `
     <div class="comment-item ${comment.approved === false ? 'comment-pending' : ''}" data-comment-id="${comment.id}">
       <div class="comment-header">
@@ -507,7 +510,7 @@ function renderCommentWithReplies(comment, slug) {
 // Render reply
 function renderReply(reply, slug) {
   const subRepliesHtml = reply.replies ? reply.replies.map(subReply => renderReply(subReply, slug)).join('') : '';
-  
+
   return `
     <div class="comment-reply ${reply.approved === false ? 'comment-pending' : ''}" data-comment-id="${reply.id}">
       <div class="comment-header">
@@ -538,11 +541,11 @@ function showReplyForm(parentId, parentName, slug) {
   // Remove any existing reply forms
   const existingForms = document.querySelectorAll('.reply-form');
   existingForms.forEach(form => form.remove());
-  
+
   // Find the comment element
   const commentElement = document.querySelector(`[data-comment-id="${parentId}"]`);
   if (!commentElement) return;
-  
+
   // Create reply form
   const replyForm = document.createElement('div');
   replyForm.className = 'reply-form';
@@ -579,11 +582,11 @@ function showReplyForm(parentId, parentName, slug) {
       </form>
     </div>
   `;
-  
+
   // Insert after the comment actions
   const commentActions = commentElement.querySelector('.comment-actions');
   commentActions.parentNode.insertBefore(replyForm, commentActions.nextSibling);
-  
+
   // Initialize reply form
   initReplyForm(parentId, slug);
 }
@@ -592,26 +595,26 @@ function showReplyForm(parentId, parentName, slug) {
 function initReplyForm(parentId, slug) {
   const replyForm = document.querySelector('.reply-comment-form');
   if (!replyForm) return;
-  
+
   replyForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    
+
     const formData = new FormData(replyForm);
     const name = formData.get('name').trim();
     const email = formData.get('email').trim();
     const content = formData.get('content').trim();
-    
+
     // Basic validation
     if (!name || !email || !content) {
       showCommentMessage('Lütfen tüm alanları doldurun.', 'error');
       return;
     }
-    
+
     if (content.length < 3) {
       showCommentMessage('Yanıt en az 3 karakter olmalıdır.', 'error');
       return;
     }
-    
+
     try {
       // Disable form
       const submitBtn = replyForm.querySelector('button[type="submit"]');
@@ -623,30 +626,30 @@ function initReplyForm(parentId, slug) {
         </svg>
         Gönderiliyor...
       `;
-      
+
       // Submit reply
       const response = await fetch(`${API_BASE_URL}/api/comments/${slug}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          name, 
-          email, 
-          content, 
-          parent_id: parentId 
+        body: JSON.stringify({
+          name,
+          email,
+          content,
+          parent_id: parentId
         })
       });
-      
+
       const data = await response.json();
-      
+
       if (data.success) {
         showCommentMessage('Yanıtınız başarıyla gönderildi! Yanıtınız onaylandıktan sonra görünecek.', 'success');
         replyForm.reset();
-        
+
         // Remove reply form
         replyForm.closest('.reply-form').remove();
-        
+
         // Reload comments to show the new reply
         loadComments(slug);
       } else {
@@ -673,79 +676,79 @@ function initReplyForm(parentId, slug) {
 function applyMarkdownStyles() {
   const postContent = q('#postContent');
   if (!postContent) return;
-  
+
   // Başlıklara blog-content sınıfı ekle
   const headings = postContent.querySelectorAll('h1, h2, h3, h4, h5, h6');
   headings.forEach(heading => {
     heading.classList.add('blog-content');
   });
-  
+
   // Paragraflara blog-content sınıfı ekle
   const paragraphs = postContent.querySelectorAll('p');
   paragraphs.forEach(p => {
     p.classList.add('blog-content');
   });
-  
+
   // Listelere blog-content sınıfı ekle
   const lists = postContent.querySelectorAll('ul, ol');
   lists.forEach(list => {
     list.classList.add('blog-content');
   });
-  
+
   // List item'lara blog-content sınıfı ekle
   const listItems = postContent.querySelectorAll('li');
   listItems.forEach(li => {
     li.classList.add('blog-content');
   });
-  
+
   // Blockquote'lara blog-content sınıfı ekle
   const blockquotes = postContent.querySelectorAll('blockquote');
   blockquotes.forEach(blockquote => {
     blockquote.classList.add('blog-content');
   });
-  
+
   // Code bloklarına blog-content sınıfı ekle
   const codeBlocks = postContent.querySelectorAll('pre');
   codeBlocks.forEach(pre => {
     pre.classList.add('blog-content');
   });
-  
+
   // Inline code'lara blog-content sınıfı ekle
   const inlineCodes = postContent.querySelectorAll('code');
   inlineCodes.forEach(code => {
     code.classList.add('blog-content');
   });
-  
+
   // Linklere blog-content sınıfı ekle
   const links = postContent.querySelectorAll('a');
   links.forEach(link => {
     link.classList.add('blog-content');
   });
-  
+
   // Resimlere blog-content sınıfı ekle
   const images = postContent.querySelectorAll('img');
   images.forEach(img => {
     img.classList.add('blog-content');
   });
-  
+
   // Tablolara blog-content sınıfı ekle
   const tables = postContent.querySelectorAll('table');
   tables.forEach(table => {
     table.classList.add('blog-content');
   });
-  
+
   // Tablo hücrelerine blog-content sınıfı ekle
   const tableCells = postContent.querySelectorAll('th, td');
   tableCells.forEach(cell => {
     cell.classList.add('blog-content');
   });
-  
+
   // HR'lara blog-content sınıfı ekle
   const hrElements = postContent.querySelectorAll('hr');
   hrElements.forEach(hr => {
     hr.classList.add('blog-content');
   });
-  
+
   // Tüm içeriği blog-content container'ına sar
   if (!postContent.classList.contains('blog-content')) {
     postContent.classList.add('blog-content');
@@ -766,22 +769,22 @@ function formatTR(dateStr) {
 document.addEventListener('DOMContentLoaded', async () => {
   // Load custom theme from server first (from theme-manager.js module)
   await loadCustomTheme();
-  
+
   // Initialize theme manager (from theme-manager.js module)
   themeManager = new ThemeManager();
-  
+
   // Okuma ilerleme çubuğu başlat
   initProgressBar();
-  
+
   // Yıl güncellemesi
   const yearElement = document.getElementById('year');
   if (yearElement) {
     yearElement.textContent = new Date().getFullYear();
   }
-  
+
   // Ana fonksiyonu çalıştır
   boot();
-  
+
   // Yorum formunu başlat
   const urlParams = new URLSearchParams(window.location.search);
   const slug = urlParams.get('slug');
