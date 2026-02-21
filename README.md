@@ -1,18 +1,14 @@
-# Personal Site - Version 0.1.0
+# Personal Site - v0.1.2.anti
 
-Modern blog yönetim sistemi ile kişisel web sitesi. Backend API ve admin panel entegrasyonu ile tam fonksiyonel blog yönetimi ve hesap yönetimi sistemi.
+Modern blog yönetim sistemi ile kişisel web sitesi. Backend API ve admin panel entegrasyonu ile tam fonksiyonel blog yönetimi ve hesap yönetimi sistemi, Node.js ile birlikte çalışmaktadır.
 
-**Durum:** Initial Development (v0.x.x = Unstable)
+**Durum:** Active Development
 
 ## 📚 Version Documentation
 
-Detaylı versiyon bilgisi ve özellik listesi için: [`version-notes/v0.1.0.md`](version-notes/v0.1.0.md)
+Detaylı versiyon bilgisi ve özellik listesi için projedeki `version-notes/` dizinini inceleyebilirsiniz.
 
-Bu sürüm (v0.1.0), Semantic Versioning standartlarına göre **ilk geliştirme aşamasındaki** bir sürümdür. Production-ready stabil sürüm v1.0.0 olarak yayınlanacaktır.
-
-## 🆕 Version 0.1.0 Özellikleri
-
-Initial development release ile gelen özellikler için detaylı bilgi: [`version-notes/v0.1.0.md`](version-notes/v0.1.0.md)
+Bu sürüm (v0.1.2.anti), Semantic Versioning standartlarına uygun geliştirme aşamasındaki sürümlerin bir parçasıdır. Production-ready stabil sürüm v1.0.0 olarak yayınlanacaktır.
 
 ## 🚀 Özellikler
 
@@ -20,7 +16,7 @@ Initial development release ile gelen özellikler için detaylı bilgi: [`versio
 - **Modern Tasarım**: Responsive ve kullanıcı dostu arayüz
 - **Dark/Light Tema**: Otomatik tema değiştirme
 - **Blog Sistemi**: Markdown destekli blog yazıları
-- **SEO Optimizasyonu**: Meta etiketleri ve sitemap
+- **SEO Optimizasyonu**: Dinamik ve otomatik güncellenen Sitemap ile RSS Feed
 
 ### 🔐 Admin Panel
 - **Güvenli Giriş**: JWT token tabanlı kimlik doğrulama
@@ -93,22 +89,17 @@ Güvenlik nedeniyle giriş bilgileri bu dokümanda paylaşılmamaktadır.
 
 ```
 personal-site/
-├── admin/                 # Admin panel dosyaları
-│   ├── index.html        # Ana admin sayfası
-│   ├── login.html        # Giriş sayfası
-│   ├── admin.css         # Admin stilleri
-│   ├── admin.js          # Admin JavaScript
-│   ├── auth.js           # Kimlik doğrulama
-│   ├── login.css         # Login stilleri
-│   └── login.js          # Login JavaScript
+├── admin/                 # Admin panel dosyaları (HTML, CSS, JS)
 ├── content/              # İçerik dosyaları
 │   ├── posts.json        # Blog yazıları metadata
 │   └── posts/            # Markdown dosyaları
 ├── docs/                 # Dokümantasyon
 │   ├── deployment/       # Deployment rehberleri
 │   ├── security/         # Güvenlik dokümantasyonu
-│   └── project/          # Proje bilgileri
-├── images/               # Görseller
+│   └── reports/          # Analiz ve denetim raporları
+├── images/               # Sistem ve blog görselleri
+├── scripts/              # Setup, deploy ve utility betikleri
+├── src/                  # Kaynak dosyaları (Genel css ve js)
 ├── server.js             # Backend API server
 ├── package.json          # Proje bağımlılıkları
 └── README.md             # Bu dosya
@@ -241,7 +232,7 @@ Herhangi bir sorun yaşarsanız veya öneriniz varsa, lütfen iletişime geçin.
 
 ---
 
-**Personal Site v0.1.0** - Initial Development Release  
+**Personal Site v0.1.2.anti** - Active Development Release  
 Cihan Enes Durgun
 
-*Status: Active Development | Production deployment planlanıyor* 
+*Status: Active Development | Dizin yapısı iyileştirildi, Sitemap/RSS otomatikleştirildi.* 
