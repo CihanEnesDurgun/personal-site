@@ -154,18 +154,29 @@ Tüm dokümantasyon dosyaları [`docs/`](./docs/) klasöründe organize edilmiş
 1. Yazı listesinde "Sil" butonuna tıklayın
 2. Onay dialogunda "Evet, Sil" butonuna tıklayın
 
-## 🔒 Güvenlik
+## 🔒 Güvenlik & Sistem Mimarisi
 
-### Kimlik Doğrulama
-- JWT token tabanlı sistem
-- 24 saat token geçerliliği
-- Otomatik oturum sonlandırma
+Uygulamanın güvenlik altyapısı "Defense in Depth" (Derinlemesine Savunma) prensipleriyle OWASP standartlarına uygun olarak tasarlanmıştır:
 
-### Güvenlik Önlemleri
-- CORS koruması
-- Input validation
-- XSS koruması
-- CSRF koruması (gelecek sürümde)
+### Kimlik Doğrulama ve Oturum (Authentication & Session)
+- **JWT & Session Guard:** Süreli (1 saat) ve `HS256` ile şifrelenmiş kriptografik token'lar.
+- **Brute-Force Koruması:** Giriş denemeleri için sıkı rate-limit ve başarısız giriş izleme.
+- **Bcrypt Hashing:** Güçlü tuzlama (salt) mekanizması ile tek yönlü parola şifreleme.
+- **Parola Politikası:** Kompleks karakter setlerini zorunlu kılan Regex tabanlı şifre doğrulama.
+
+### Ağ ve İstek (Network & Request)
+- **Dinamik IP Engelleme:** Zararlı trafiği tespit edip sistem genelinde (Middleware) IP banlama.
+- **Kademeli Rate Limiting:** DDoS ve Spam koruması için endpoint bazlı (API, Login, Yorum, Analytics) özel hız sınırlandırıcılar.
+- **HMAC Bütünlük Kontrolü:** CI/CD Webhook tetiklemelerinde `x-hub-signature-256` imzası doğrulama (RCE Önlemi).
+
+### Uygulama ve Veri (Application & Data Layer)
+- **XSS & AST Sanitization:** Kullanıcı yorumlarındaki zararlı script'lerin (XSS) `sanitize-html` ile AST tabanlı temizlenmesi.
+- **Data Anonymization:** Ziyaretçi/Yorumcu IP adreslerinin SHA-256 ile özetlenerek (hash) saklanması (KVKK/GDPR uyumu).
+- **Directory/Path Traversal Önlemi:** Güvenli statik dosya sunumu (`public` dizini kısıtlaması), `/images/../` zafiyetlerinin izolasyonu.
+- **Magic Bytes Validation:** Dosya yükleme (Upload) sırasında uzantıdan bağımsız gerçek dosya başlığı taraması ve Payload boyut (Limit) kısıtı.
+- **Güvenli Hata Yönetimi:** Üretim (Production) ortamında `stack trace` ve iç mimari detaylarının istemciden maskelenmesi.
+
+*(Detaylı mimari analizi için [docs/reports/GUVENLIK_DENETIM_RAPORU.md](./docs/reports/GUVENLIK_DENETIM_RAPORU.md) dokümanını ineyiniz.)*
 
 ## 🎨 Tema Sistemi
 
