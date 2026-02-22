@@ -1,249 +1,133 @@
-# Personal Site - v0.1.2.anti
+﻿<div align="center">
 
-Modern blog yönetim sistemi ile kişisel web sitesi. Backend API ve admin panel entegrasyonu ile tam fonksiyonel blog yönetimi ve hesap yönetimi sistemi, Node.js ile birlikte çalışmaktadır.
+# cihanenesdurgun.com - Blog & Yönetim Paneli
 
-**Durum:** Active Development
+**Bağımsız Arayüz Mimarisi • Derinlemesine Güvenlik • Taşınabilir JSON Altyapısı**
 
-## 📚 Version Documentation
+[![Status](https://img.shields.io/badge/Status-Active%20Development-success?style=for-the-badge)]()
+[![Version](https://img.shields.io/badge/Version-v0.1.3.anti-blue?style=for-the-badge)]()
+[![Node.js](https://img.shields.io/badge/Node.js-v14%2B-green?style=for-the-badge)]()
+[![License](https://img.shields.io/badge/License-MIT-purple?style=for-the-badge)]()
 
-Detaylı versiyon bilgisi ve özellik listesi için projedeki `version-notes/` dizinini inceleyebilirsiniz.
+*Modern, ultra-hızlı ve bütünüyle bağımsız bir kişisel blog yönetim sistemi.*  
+Ağır SPA framework'leri olmadan Vanilla JS ve Express ile %100 SEO uyumlu ve performans odaklı geliştirilmiştir.
 
-Bu sürüm (v0.1.2.anti), Semantic Versioning standartlarına uygun geliştirme aşamasındaki sürümlerin bir parçasıdır. Production-ready stabil sürüm v1.0.0 olarak yayınlanacaktır.
+<br>
 
-## 🚀 Özellikler
+![Ana Sayfa (Light)](./images/demo-homepage-light.png)
 
-### 🌐 Ana Site
-- **Modern Tasarım**: Responsive ve kullanıcı dostu arayüz
-- **Dark/Light Tema**: Otomatik tema değiştirme
-- **Blog Sistemi**: Markdown destekli blog yazıları
-- **SEO Optimizasyonu**: Dinamik ve otomatik güncellenen Sitemap ile RSS Feed
-
-### 🔐 Admin Panel
-- **Güvenli Giriş**: JWT token tabanlı kimlik doğrulama
-- **Blog Yönetimi**: CRUD işlemleri (Oluştur, Oku, Güncelle, Sil)
-- **Dashboard**: İstatistikler ve hızlı erişim
-- **Dosya Yükleme**: Görsel yükleme sistemi
-- **Gerçek Zamanlı**: API ile anlık güncellemeler
-
-## 🛠️ Teknolojiler
-
-### Frontend
-- **HTML5**: Semantik markup
-- **CSS3**: Modern stiller ve animasyonlar
-- **JavaScript (ES6+)**: Dinamik işlevsellik
-- **LocalStorage**: Oturum yönetimi
-
-### Backend
-- **Node.js**: Server-side JavaScript
-- **Express.js**: Web framework
-- **JWT**: Kimlik doğrulama
-- **Multer**: Dosya yükleme
-- **fs-extra**: Dosya sistemi işlemleri
-
-## 📦 Kurulum
-
-### Gereksinimler
-- Node.js (v14 veya üzeri)
-- npm veya yarn
-
-### Adımlar
-
-1. **Projeyi klonlayın**
-   ```bash
-   git clone <repository-url>
-   cd personal-site
-   ```
-
-2. **Bağımlılıkları yükleyin**
-   ```bash
-   npm install
-   ```
-
-3. **Backend server'ı başlatın**
-   ```bash
-   npm start
-   # veya geliştirme modu için
-   npm run dev
-   ```
-
-4. **Tarayıcıda açın**
-   - Ana site: `http://localhost:3000`
-   - Admin panel: `http://localhost:3000/admin/login.html`
-
-### Production Deployment
-Production deployment henüz tamamlanmamıştır. Geliştirme devam etmektedir.
-
-## 🔐 Admin Panel Giriş
-
-Admin panele erişmek için `/admin/login.html` adresinden giriş yapabilirsiniz.
-Güvenlik nedeniyle giriş bilgileri bu dokümanda paylaşılmamaktadır.
-
-### Özellikler
-- **Dashboard**: Blog istatistikleri
-- **Yeni Yazı**: Markdown editör ile yazı oluşturma
-- **Düzenleme**: Mevcut yazıları güncelleme
-- **Silme**: Yazıları güvenli şekilde silme
-- **Arama/Filtreleme**: Yazıları kolayca bulma
-
-## 📁 Proje Yapısı
-
-```
-personal-site/
-├── admin/                 # Admin panel dosyaları (HTML, CSS, JS)
-├── content/              # İçerik dosyaları
-│   ├── posts.json        # Blog yazıları metadata
-│   └── posts/            # Markdown dosyaları
-├── docs/                 # Dokümantasyon
-│   ├── deployment/       # Deployment rehberleri
-│   ├── security/         # Güvenlik dokümantasyonu
-│   └── reports/          # Analiz ve denetim raporları
-├── images/               # Sistem ve blog görselleri
-├── scripts/              # Setup, deploy ve utility betikleri
-├── src/                  # Kaynak dosyaları (Genel css ve js)
-├── server.js             # Backend API server
-├── package.json          # Proje bağımlılıkları
-└── README.md             # Bu dosya
-```
-
-## 📚 Dokümantasyon
-
-Tüm dokümantasyon dosyaları [`docs/`](./docs/) klasöründe organize edilmiştir:
-
-- **🔒 [Güvenlik Dokümantasyonu](./docs/security/)** - Environment variables, güvenlik kurulumu
-- **📋 [Proje Bilgileri](./docs/project/)** - Proje özeti, sistem analizi raporları
-- **📖 [Versiyon Notları](./version-notes/)** - Tüm versiyon dokümantasyonu
-
-## 🔧 API Endpoints
-
-### Kimlik Doğrulama
-- `POST /api/login` - Giriş yapma
-
-### Blog Yazıları
-- `GET /api/posts` - Tüm yazıları getir
-- `GET /api/posts/:slug` - Tek yazı getir
-- `POST /api/posts` - Yeni yazı oluştur
-- `PUT /api/posts/:slug` - Yazı güncelle
-- `DELETE /api/posts/:slug` - Yazı sil
-
-### Diğer
-- `POST /api/upload` - Görsel yükleme
-- `GET /api/stats` - Dashboard istatistikleri
-- `GET /api/health` - Sağlık kontrolü
-
-## 🚀 Kullanım
-
-### Blog Yazısı Oluşturma
-1. Admin paneline giriş yapın
-2. "Yeni Blog Yazısı" butonuna tıklayın
-3. Formu doldurun:
-   - **Başlık**: Yazının başlığı
-   - **Özet**: Kısa açıklama
-   - **Tarih**: Yayın tarihi
-   - **Etiketler**: Virgülle ayrılmış etiketler
-   - **İçerik**: Markdown formatında
-   - **Öne Çıkan**: Öne çıkan yazı olarak işaretleme
-4. "Yazıyı Kaydet" butonuna tıklayın
-
-### Yazı Düzenleme
-1. Yazı listesinde "Düzenle" butonuna tıklayın
-2. Form otomatik olarak doldurulur
-3. Değişiklikleri yapın
-4. "Değişiklikleri Kaydet" butonuna tıklayın
-
-### Yazı Silme
-1. Yazı listesinde "Sil" butonuna tıklayın
-2. Onay dialogunda "Evet, Sil" butonuna tıklayın
-
-## 🔒 Güvenlik & Sistem Mimarisi
-
-Uygulamanın güvenlik altyapısı "Defense in Depth" (Derinlemesine Savunma) prensipleriyle OWASP standartlarına uygun olarak tasarlanmıştır:
-
-### Kimlik Doğrulama ve Oturum (Authentication & Session)
-- **JWT & Session Guard:** Süreli (1 saat) ve `HS256` ile şifrelenmiş kriptografik token'lar.
-- **Brute-Force Koruması:** Giriş denemeleri için sıkı rate-limit ve başarısız giriş izleme.
-- **Bcrypt Hashing:** Güçlü tuzlama (salt) mekanizması ile tek yönlü parola şifreleme.
-- **Parola Politikası:** Kompleks karakter setlerini zorunlu kılan Regex tabanlı şifre doğrulama.
-
-### Ağ ve İstek (Network & Request)
-- **Dinamik IP Engelleme:** Zararlı trafiği tespit edip sistem genelinde (Middleware) IP banlama.
-- **Kademeli Rate Limiting:** DDoS ve Spam koruması için endpoint bazlı (API, Login, Yorum, Analytics) özel hız sınırlandırıcılar.
-- **HMAC Bütünlük Kontrolü:** CI/CD Webhook tetiklemelerinde `x-hub-signature-256` imzası doğrulama (RCE Önlemi).
-
-### Uygulama ve Veri (Application & Data Layer)
-- **XSS & AST Sanitization:** Kullanıcı yorumlarındaki zararlı script'lerin (XSS) `sanitize-html` ile AST tabanlı temizlenmesi.
-- **Data Anonymization:** Ziyaretçi/Yorumcu IP adreslerinin SHA-256 ile özetlenerek (hash) saklanması (KVKK/GDPR uyumu).
-- **Directory/Path Traversal Önlemi:** Güvenli statik dosya sunumu (`public` dizini kısıtlaması), `/images/../` zafiyetlerinin izolasyonu.
-- **Magic Bytes Validation:** Dosya yükleme (Upload) sırasında uzantıdan bağımsız gerçek dosya başlığı taraması ve Payload boyut (Limit) kısıtı.
-- **Güvenli Hata Yönetimi:** Üretim (Production) ortamında `stack trace` ve iç mimari detaylarının istemciden maskelenmesi.
-
-*(Detaylı mimari analizi için [docs/reports/GUVENLIK_DENETIM_RAPORU.md](./docs/reports/GUVENLIK_DENETIM_RAPORU.md) dokümanını ineyiniz.)*
-
-## 🎨 Tema Sistemi
-
-### Light Tema
-- Açık arka plan
-- Koyu metin
-- Yeşil accent rengi (#84CC16)
-
-### Dark Tema
-- Koyu arka plan
-- Açık metin
-- Aynı accent rengi
-
-## 📱 Responsive Tasarım
-
-### Desktop (1200px+)
-- Tam genişlik layout
-- Yan yana form alanları
-- Hover efektleri
-
-### Tablet (768px - 1199px)
-- Orta genişlik layout
-- Tek kolon form alanları
-- Touch-friendly butonlar
-
-### Mobil (320px - 767px)
-- Tam genişlik layout
-- Kompakt tasarım
-- Touch-optimized arayüz
-
-## 🚀 Gelecek Geliştirmeler
-
-- [ ] **Çoklu Kullanıcı**: Birden fazla admin kullanıcısı
-- [ ] **Rol Sistemi**: Farklı yetki seviyeleri
-- [ ] **Medya Kütüphanesi**: Gelişmiş dosya yönetimi
-- [ ] **Yorum Sistemi**: Blog yorumları
-- [ ] **Analytics**: Detaylı istatistikler
-- [ ] **Backup**: Otomatik yedekleme
-- [ ] **Email Bildirimleri**: Yeni yazı bildirimleri
-
-## 🐛 Sorun Giderme
-
-### Server Başlatılamıyor
-```bash
-# Port kontrolü
-netstat -ano | findstr :3000
-
-# Node.js versiyonu kontrolü
-node --version
-```
-
-### Admin Panel Erişim Sorunu
-- Backend server'ın çalıştığından emin olun
-- Tarayıcı konsolunda hata mesajlarını kontrol edin
-- CORS ayarlarını kontrol edin
-
-### Dosya Yazma Hatası
-- `content/` klasörünün yazma izinlerini kontrol edin
-- Disk alanını kontrol edin
-
-## 📞 Destek
-
-Herhangi bir sorun yaşarsanız veya öneriniz varsa, lütfen iletişime geçin.
+</div>
 
 ---
 
-**Personal Site v0.1.2.anti** - Active Development Release  
-Cihan Enes Durgun
+## ⚡ Neden Bu Mimari? (Executive Summary)
 
-*Status: Active Development | Dizin yapısı iyileştirildi, Sitemap/RSS otomatikleştirildi.* 
+Bir Full Stack Developer olarak bu projede amacım; bir blog sisteminin ne kadar hafif, güvenli ve taşınabilir olabileceğini kanıtlamaktır. Sistemin mimarisinde **RDBMS (SQL) veritabanı kasıtlı olarak kullanılmamıştır**. Tüm veriler lokal JSON dosyaları ve Markdown (`.md`) üzerinde tutularak, projenin en ucuz paylaşımlı sunuculardan (cPanel) en profesyonel VPS'lere kadar **kurulum gereksinimi duymadan** direkt taşınabilmesi hedeflenmiştir (Portability).
+
+Sistem, arkasında çalıştırdığı gelişmiş algoritmalar sayesinde ağır paketlere mecbur kalmadan bir CMS'in sunduğu tüm olanakları güvenlikten ödün vermeden sunar.
+
+---
+
+## 🛠️ Tech Stack & İskelet
+
+Uygulamanın teknoloji yığını tamamen sadelik ve tam kontrol (Vanilla) üzerine kurulmuştur:
+
+- **Frontend:** HTML5, CSS3 (Variables & Glassmorphism), Vanilla JavaScript (ES6+ Modüler)
+- **Backend Sunucusu:** Node.js, Express.js (REST API mimarisi)
+- **Veri & Asset Yönetimi:** `fs-extra` ile Dosya tabanlı (JSON + MD) kalıcı mimari, Multer
+- **Kimlik Doğrulama:** JWT (JSON Web Tokens) tabanlı Session Guarding, `bcryptjs`
+- **Siber Güvenlik:** `express-rate-limit` (DDoS), `DOMpurify` & `sanitize-html` (XSS), Magic-Bytes validation (Reverse Shell koruması)
+
+---
+
+## ✨ Yetenekler & Özellikler
+
+### 🌐 İstemci Yüzü (Frontend)
+- **Zero-Dependency UI:** React, Vue veya jQuery olmadan sıfırdan yazılmış akıcı mikro-animasyonlar.
+- **Native Tema Motoru:** Sistem tercihini algılayabilen ve CSS değişkenlerini anında manipüle eden Dark/Light Mode.
+- **SEO Mükemmelliği:** Otomatik generate edilen ve pinglenen `sitemap.xml` ile `RSS Feed` (Podcast/RSS Okuyucuları için tam uyum).
+- **Responsive Grid:** Mobil, tablet ve 4K ekranlara kadar esneyebilen kusursuz duyarlı tasarım.
+
+### 🔐 Yönetim Merkezi (Admin Control Center)
+- **Canlı (Live) Markdown Editör:** Senkronize scroll (kaydırma) özellikli, anında native olarak ayrıştırılabilen çift yönlü Markdown editör.
+- **Zayıflıksız Asset Kütüphanesi:** Sürükle-bırak fotoğraf yükleme desteği ve yüklenen `.jpg/png` dosyalarının sadece uzantısında (extension) değil, **Buffer seviyesinde İLK 4 BYTE (Magic Signature)** okumasıyla doğrulanması.
+- **Grafiksel İstatistikler:** Makale bazlı anlık tıklanma ve etkileşim analizleri.
+
+---
+
+## 🛡️ "Defense in Depth" (Derinlemesine Savunma)
+
+Bu proje sıradan bir web sitesi değil, aynı zamanda siber güvenliğe (SecOps) duyulan saygının bir ürünüdür. OWASP standartlarına sıkı sıkıya bağlı kalınmıştır:
+
+1. **Agresif Rate-Limiting:** Brute-force denemelerinde saldırganın IP'si cache üzerinden geçici olarak düşürülür (Reject). Admin paneli rotaları için çok daha hassas sınırlandırıcılar mevcuttur.
+2. **XSS / AST Sanitization:** Veriler API'ye ulaştığında ve DOM'a (innerHTML) basılmadan hemen önce mutasyon korumasından geçirilir. Injection yolları tamamen sterilize edilmiştir.
+3. **Session Revocation System:** Token (JWT) tabanlı sistemlerdeki "kapatılamayan oturum (stateless)" zaafiyetini gidermek adına, server-side memory tabanlı bir Session Guardian devrededir.
+4. **Stack Trace Masking:** Sistem hataları (HTTP 500) patladığında, üretim modunda (Production) saldırganlara sistem mimarisini belli edebilecek "Hata Yolu (Stack Trace)" sızdırılmaz.
+
+>> *Detaylı Security Audit raporunu okumak için [docs/reports/GUVENLIK_DENETIM_RAPORU.md](./docs/reports/GUVENLIK_DENETIM_RAPORU.md) dosyasına bakabilirsiniz.*
+
+---
+
+## 📦 Local'de Başlangıç (Quick Start)
+
+Geliştirme ortamına (Dev Environment) kurmak sadece birkaç saniyenizi alır.
+
+**1. Repoyu lokal makinenize çekin:**
+```bash
+git clone https://github.com/cihanenes/personal-site.git
+cd personal-site
+```
+
+**2. Bağımlılıkları derleyin:**
+```bash
+npm install
+```
+
+**3. Çevresel (Environment) Kurulumu:**
+Proje kök dizininde bir `.env` dosyası yaratın (veya varolan `env.example` dosyasının ismini değiştirin) ve secret anahtarlarınızı girin:
+```env
+JWT_SECRET=süper_gizli_random_uzun_şifre_buraya
+NODE_ENV=development
+```
+
+**4. Sunucuyu Ateşleyin:**
+```bash
+npm run dev
+```
+
+Erişim linkleri:
+- **Site:** `http://localhost:3000`
+- **Yönetim:** `http://localhost:3000/admin/login.html`
+
+*(Not: Ortam değişkenleri ve cPanel gibi sunuculara yükleme rehberi için [Deployment Docs](./docs/deployment/) dizinini okuyabilirsiniz.)*
+
+---
+
+## 📁 Dosya ve Mimari Ağacı
+
+Ölçeklenebilirlik (Scalability) açısından proje sınırları mutlak çizgilerle çekilmiştir:
+
+```text
+personal-site/
+├── admin/                 # Yetki (Token) gerektiren, kapalı SPA Yönetim Arayüzü
+├── content/               # No-SQL Data: .md dosyaları ve metadata map'i (posts.json)
+├── data/                  # Auth, Session logları ve Theme konfigürasyon dosyaları
+├── docs/                  # Diagnostic raporları, analizler ve DevOps rehberleri
+├── images/                # Statik medya (Upload edilen cover resimleri vb.)
+├── markdown-editor/       # Markdown'ı parse edip editleyen core logic UI
+├── src/                   # Halka açık arayüzün (Frontend) JS/CSS statikleri
+└── server.js              # Express Backend Kernel'i
+```
+
+---
+
+## 🤝 Katkıda Bulunma (Contributing) & Lisans
+
+Bu proje bir gösterim (Showcase) projesidir ve açık kaynak (MIT License) topluluk ruhuna uygun olarak dağıtılmaktadır. Herhangi bir güvenlik açığı veya Bug (hata) bulursanız `Pull Request` veya `Issue` açmaktan çekinmeyin!
+
+<div align="center">
+  <b>Cihan Enes Durgun</b>
+  <br>
+  <a href="cihanenesdurgun@hotmail.com">E-Posta</a> |
+  <a href="https://www.linkedin.com/in/cihanenesdurgun/">LinkedIn</a>
+</div>

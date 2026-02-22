@@ -1,27 +1,54 @@
-# Sistem Güvenlik Mimarisi ve Altyapı Raporu
+# 🛡️ Sistem Güvenlik Mimarisi ve Altyapı Raporu
 
-## 1. Yönetici Özeti
-Sistemimiz, modern siber tehditlere karşı çok katmanlı bir güvenlik yaklaşımı (Defense in Depth) ile tasarlanmış ve sıkılaştırılmıştır. Bu rapor, uygulamanın temel güvenlik bileşenlerini ve alınan proaktif koruma önlemlerini özetlemektedir. Kötü niyetli aktörlerin istismar edebileceği yapılandırma detayları, algoritmaların spesifikasyonları ve sunucu içi dizin yolları sistem güvenliği gereği gizli tutulmuştur.
+**Tarih:** Şubat 2026  
+**Versiyon Uyum:** v0.1.3.anti  
+**Kapsam:** Ağ, Veri, İstemci ve Uygulama Güvenliği
 
-## 2. Ağ ve Erişim Güvenliği
-- **Gelişmiş İstek Sınırlandırma (DDoS ve Spam Koruması):** Uygulama geneline yayılan kademeli hız sınırlama (Rate Limiting) politikaları ile dağıtık hizmet aksatma (DDoS) ve kaba kuvvet (Brute-Force) saldırılarına karşı koruma sağlanmaktadır. Kimlik doğrulama, yorum gönderimi ve analitik veri toplama gibi kritik işlemler için izole ve daha katı limitler uygulanmaktadır.
-- **Dinamik IP Engelleme Sistemi:** Kötü niyetli etkinlik sergileyen IP adreslerini tespit edip sistem seviyesinde devre dışı bırakan proaktif bir savunma mekanizması aktiftir. Zararlı trafik, uygulama katmanına ulaşmadan önce engellenir.
-- **Yetkisiz Erişim Koruması:** Sistem yapılandırma dosyalarına ve dizin hiyerarşisine dışarıdan doğrudan veya dolaylı erişim engellenmiştir (Path/Directory Traversal Koruması). İstemcilere yalnızca izin verilen genel kaynaklara (Public Assets) güvenli yollardan erişim izni verilir.
+---
 
-## 3. Veri ve Kimlik Doğrulama Güvenliği
-- **Kriptografik Bütünlük ve Doğrulama:** Dış sistem entegrasyonlarında (örn. CI/CD Webhook tetikleyicileri), veri bütünlüğünü ve isteğin güvenilir bir kaynaktan geldiğini doğrulamak için endüstri standardı kriptografik imza algoritmaları (HMAC) kullanılmaktadır. İmzası geçersiz veya eksik olan tüm talepler reddedilmektedir.
-- **Modern Oturum Yönetimi:** Kimlik doğrulama süreçleri, kısa ömürlü ve güçlü şifreleme standartlarıyla korunan, geri alınabilir güvenlik belirteçleri ile sağlanmaktadır. Kullanıcı oturumları merkezi olarak yönetilir ve yetkisiz ele geçirmelere karşı korunur.
-- **Gelişmiş Parola Politikası:** Yönetim paneli ve yetkili erişimler için yüksek karmaşıklık gerektiren parola politikaları zorunlu kılınmıştır. Parolaların modern hashing mekanizmaları ile tek yönlü olarak şifrelenmesi garanti altına alınmıştır.
+## 1. Yönetici Özeti (Executive Summary)
 
-## 4. Uygulama ve Girdi Güvenliği (Input Security)
-- **Girdi Temizleme (Sanitization) ve XSS Koruması:** Kullanıcılar tarafından sağlanan her türlü veri, sisteme dahil edilmeden önce gelişmiş ayrıştırma araçları ile temizlenir. Zararlı betik (script) çalıştırma ve enjeksiyon girişimleri (Stored/Reflected XSS) bu katmanda bertaraf edilir. Ayrıca IP adresleri gibi hassas veriler maskelenerek (kriptografik özetleme ile) kaydedilir.
-- **Güvenli Dosya Yükleme Kontrolü:** İstemcilerden sunucuya aktarılan dosyalar sadece uzantılarına göre değil, dosyanın gerçek yapısını ve formatını (Magic Bytes) analiz eden güvenlik katmanlarından geçirilerek kabul edilmektedir. İzin verilmeyen dosya formatları anında reddedilir.
-- **Boyut Sınırlandırması (Payload Limits):** Sistem yükünü hafifletmek ve olası bellek taşması (Memory Exhaustion) saldırılarını engellemek amacıyla tüm veri çekme ve gönderme istekleri için katı HTTP gövdesi boyut sınırları uygulanmaktadır.
+Sistemimiz, modern siber tehditlere karşı çok katmanlı bir güvenlik yaklaşımı (**Defense in Depth**) ile tasarlanmış ve OWASP prensipleriyle sıkılaştırılmıştır. Bu rapor, uygulamanın temel güvenlik bileşenlerini ve alınan proaktif koruma önlemlerini özetlemektedir. 
 
-## 5. Çevresel Güvenlik ve Hataların Yönetimi
-- **Hata Yönetimi ve Bilgi Gizleme:** Üretim (Production) ortamında, sistem hataları veya istisnalar son kullanıcıya veya saldırganlara sunucu mimarisi hakkında bilgi verecek şekilde detaylı yansıtılmaz (Stack Trace Masking). Kritik hatalar sistem içinde filtrelenerek sadece teknik ekiplerin erişebileceği şekilde güvenli günlüklemeye (logging) tabi tutulur.
-- **İzole Geliştirme/Üretim Ortamları:** Geliştirme amaçlı açık bırakılan izleme veya hata ayıklama (Debug) noktalarına üretim ortamında erişim tamamen engellenmiştir. Güvenlik politikaları ortama bağlı olarak sıkılaştırılır.
-- **Hassas Veri Yönetimi:** Kritik yapılandırmalar (Environment Variables) ve şifreleme anahtarları, versiyon kontrol sistemlerinden (Git vb.) tamamen yalıtılmış olup, güvenli sunucu ortamında yönetilmektedir.
+> [!CAUTION]  
+> Kötü niyetli aktörlerin istismar edebileceği içsel algoritma detayları, secret seed'leri ve sunucu içi mutlak path'ler (dizin yolları) sistem güvenliği politikaları gereği bu rapora yansıtılmamış, gizli tutulmuştur.
 
-## 6. Sonuç
-Sistem altyapısı; veri giriş noktalarından dış entegrasyon servislere, kimlik doğrulama mekanizmasından uygulama güvenliğine kadar bütünüyle güncellenmiş ve detaylıca taranmıştır. Olası güvenlik zafiyetleri için sıfır tolerans prensibi izlenerek, yeni nesil tehditlere karşı maksimum dayanıklılık gösteren güçlü bir mimari elde edilmiştir.
+---
+
+## 2. Ağ ve Erişim Güvenliği (Network Security)
+
+- 🚦 **Gelişmiş İstek Sınırlandırma (DDoS ve Spam Koruması):** Uygulama geneline yayılan kademeli hız sınırlama (`express-rate-limit`) politikaları ile *Distributed Denial of Service (DDoS)* ve *Brute-Force* saldırılarına karşı koruma sağlanmaktadır. Kimlik doğrulama, yorum gönderimi gibi maliyetli işlemler için çok daha dar ve katı sınırlar belirlenmiştir.
+- 🚷 **Dinamik IP Engelleme:** Sık başarısız login girişimlerinde bulunan zararlı aktivite merkezli IP adresleri, memory üzerinde geçici ban yiyerek (`Rate Limiter Window`) devre dışı kalırlar. 
+- 🔒 **Yetkisiz Erişim (Path Traversal) Koruması:** Sistem konfigürasyon (`/data/`, `.env`) dizinlerine veya Express üzerinden root ötesi dizinlere erişim (Örn: `../../etc/passwd`) engellenmiştir. Statik asset'ler izole edilmiş `/images/` klasöründen okunur.
+
+---
+
+## 3. Veri ve Kimlik Doğrulama Katmanı (Data & Auth Layer)
+
+- 🔑 **Modern Oturum Yönetimi (JWT + Session Guard):** Stateful bir database olmamasına rağmen, Node.js memory üzerinden veya fiziki `sessions.json` üzerinden token'ların ömrü takip edilmektedir. Token ele geçirilse bile session revoke edilebilme (iptal edilme) özelliği getirilmiştir.
+- 🛡️ **Parola Hashing (Bcrypt):** Şifreler düz metin olarak değil, `bcryptjs` paketi kullanılarak en az **12 round** salt mekanizması ile tek yönlü (irreversible) olarak hash'lenip saklanır. Rainbow table tarzı çözme atakları teorik olarak engellenir.
+- 📦 **Bütünlük (HMAC) / Opsiyonel:** Sistem CI/CD webhook'larıyla harici dünyadan tetikleneceği senaryolarda `X-Hub-Signature-256` doğrulaması arayacak şekilde mimari planlanmıştır.
+
+---
+
+## 4. Uygulama ve Girdi Güvenliği (App & Input Protection)
+
+> [!IMPORTANT]  
+> Siber güvenlikteki en yaygın açıkların %90'ı kullanıcıdan alınan input'ların güvenilmesinden (Never Trust User Input) kaynaklanır.
+
+- 🧼 **XSS Koruması (Girdi Temizleme):** Front-end ve Back-end hatlarında, `.innerHTML` render edilen blog içerikleri potansiyel tehlike arz edebileceğinden, inputlar `DOMPurify` / `sanitize-html` standartlarına uygun şekilde AST tabanlı temizlemeye tabi tutulur.
+- 🖼️ **Güvenli Dosya (Medya) Yükleme Kontrolü:** İstemcilerden sunucuya gelen Multer FormData içerikleri (resimler) yalnızca dosya isminin `-*.jpg` olmasından ziyade, ilk byte imzalarına (**Magic Bytes**) bakılarak Buffer seviyesinde kontrol edilir. İçerisinde PHP veya Perl kodu barındıran sahte PNG'ler engellenir.
+- ⚖️ **Payload Body Limits:** Bellek taşması (*Memory Exhaustion*) veya *Slowloris* tipi saldırıları engellemek adına JSON Request / Form veri boyutları Node.js katmanında MB limitiyle sınırlandırılmıştır.
+
+---
+
+## 5. Çevresel Güvenlik ve Hataların Maskelenmesi
+
+- 🤐 **Stack Trace Masking:** Sistem hata (Exception/HTTP 500) verdiğinde, `error.stack` detaylı sunucu hatası (satır numaraları vb.) Response olarak döndürülmez. Üretim ortamında (`NODE_ENV=production`) sadece genel bir "Server Error" mesajı döndürülerek mimari haritası gizlenir.
+- 🧪 **İzole Geliştirme Ortamı:** Geliştiricilerin debug logları sadece `NODE_ENV=development` modunda aktiftir.
+
+---
+
+## 6. Özet Sonuç
+
+Sistem yapı taşları; Node.js v14+ mimarisi, Express middleware savunmaları ve dosya tabanlı kısıtlamalar birleştirilerek, veri sızıntılarına (data-leak) ve istismarlara (exploit) karşı **sıfır tolerans** odaklı inşa edilmiştir. Mevcut haliyle bir dış denetime (Penetration Test) hazır, Enterprise-grade seviyeye yakın bir altyapı sergilemektedir.

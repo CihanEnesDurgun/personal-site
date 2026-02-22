@@ -1,50 +1,52 @@
-# 📚 Dokümantasyon
+# 📚 DurgunTech Geliştirici Dokümantasyonu
 
-Bu klasör, projenin tüm dokümantasyon dosyalarını içerir.
+Bu klasör, projenin kurumsal düzeydeki tüm dokümantasyon dosyalarını, analizlerini ve sistem mimarisi raporlarını içerir.
 
-## 📁 Klasör Yapısı
+---
+
+## 📁 Klasör Hiyerarşisi (Index)
 
 ### 📦 [deployment/](./deployment/)
-Deployment ve yükleme rehberleri:
-- `cpanel-manual-upload-guide.md` - cPanel manuel upload rehberi
-- `cpanel-npm-install-fix.md` - cPanel npm kurulum sorunları çözümü
-- `deployment-checklist.md` - Deployment kontrol listesi
-- `deployment-security-guide.md` - Güvenli deployment rehberi
-- `quick-deployment-guide.md` - Hızlı deployment rehberi
-- `quick-start-cpanel.md` - cPanel hızlı başlangıç rehberi
+Sunucuya yükleme ve canlı ortama çıkış (DevOps) rehberleri:
+- `quick-start-cpanel.md` - Paylaşımlı hosting (cPanel) için pratik Node.js başlangıç rehberi
+- `cpanel-manual-upload-guide.md` - Git olmayan cPanel ortamları için manuel yükleme yönergeleri
+- `cpanel-npm-install-fix.md` - Sunucu taraflı paket kurulum (npm) sorunlarına çözüm
+- `deployment-checklist.md` - Canlıya çıkmadan önceki (Pre-flight) kontrol listesi
+- `deployment-security-guide.md` - Webhook ve production ortamına ait güvenli deployment esasları
 
 ### 🔒 [security/](./security/)
-Güvenlik konfigürasyon ve bilgilendirme dosyaları:
-- `env-information.md` - Environment variables detaylı açıklamaları
-- `security-setup.md` - Güvenlik kurulum rehberi
+Siber güvenlik ve ortam değişkenleri konfigürasyonları:
+- `security-setup.md` - Güvenlik kurulum, hardening (sıkılaştırma) ve SSL rehberi
+- `env-information.md` - `.env` dosyasındaki tüm degişkenlerin işlev ve yaşam döngüleri
 
 ### 📋 [project/](./project/)
-Proje bilgileri ve analiz raporları:
-- `personal-site.docx` - Proje dokümantasyonu (Word formatı)
-- `project-brief.md` - Proje özeti ve genel bakış
-- `sistem-analizi.md` - Kapsamlı sistem analizi raporu
+Projenin temel vizyonu, kapsamı ve makro seviyede sistem analizleri:
+- `project-brief.md` - **[Önemli]** Projenin teknik yığını ve mimari özeti
+- `personal-site.docx` - Projenin dökümantasyonunun raw (Word) hali
 
-## 🚀 Hızlı Başlangıç
+### 🛡️ [reports/](./reports/)
+- `GUVENLIK_DENETIM_RAPORU.md` - Sistemin *Defense in Depth* odaklı genel siber güvenlik denetim (audit) raporu
 
-### Deployment için:
-1. [Quick Start cPanel](./deployment/quick-start-cpanel.md) - 5 dakikada deployment
-2. [Deployment Checklist](./deployment/deployment-checklist.md) - Adım adım kontrol listesi
+---
 
-### Güvenlik için:
-1. [Security Setup](./security/security-setup.md) - Güvenlik kurulumu
-2. [Environment Variables](./security/env-information.md) - ENV değişkenleri açıklamaları
+## 🚀 Hızlandırılmış Yönlendirmeler
 
-### Proje Bilgileri için:
-1. [Project Brief](./project/project-brief.md) - Proje özeti
-2. [Sistem Analizi](./project/sistem-analizi.md) - Detaylı teknik analiz
+**1. Sunucuya Format Atıp Kurulum Yapıyorsanız:**
+İlk olarak [Project Brief](./project/project-brief.md) dosyasını okuyun. Teknoloji bağımlılıklarını anladıktan sonra doğrudan [Quick Start cPanel](./deployment/quick-start-cpanel.md) adımlarına geçin.
 
-## 📝 Versiyon Notları
+**2. Güvenlik Denetimi veya Zafiyet Testi Yapıyorsanız:**
+Lütfen kodları incelemeden önce doğrudan [Güvenlik Denetim Raporu](./reports/GUVENLIK_DENETIM_RAPORU.md) ve [Sistem Analizi](./project/sistem-analizi.md) makalelerini referans alın.
 
-Versiyon notları için root dizindeki [`version-notes/`](../version-notes/) klasörüne bakın.
+---
 
-## 🔗 İlgili Dosyalar
+## 📝 Versiyon Geçmişi (Changelog)
 
-- [Ana README](../README.md) - Proje genel bilgileri
-- [package.json](../package.json) - Proje bağımlılıkları
-- [config.json](../config.json) - Konfigürasyon dosyası
+Projenin semantik versiyonlama sürecindeki her patch/minor/major güncellemesi kök dizindeki [`../version-notes/`](../version-notes/) klasöründe tasnif edilmiştir.
 
+---
+
+## 🔗 Hızlı Linkler (Kök Dizin)
+
+- [Ana Proje (Root) README](../README.md)
+- [Node.js Package Registry](../package.json)
+- [Admin CMS](../admin/README.md)

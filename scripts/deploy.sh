@@ -20,7 +20,11 @@ fi
 # Set proper permissions
 # Set proper permissions
 find . -type d -exec chmod 755 {} +
-find . -type f -name "*.html" -o -name "*.css" -o -name "*.js" -o -name "*.json" -o -name "*.xml" -o -name "*.md" -exec chmod 644 {} +
+find . -type f -name "*.html" -o -name "*.css" -o -name "*.js" -o -name "*.xml" -o -name "*.md" -exec chmod 644 {} +
+# Secure sensitive files
+if [ -f ".env" ]; then chmod 600 .env; fi
+if [ -f "config.json" ]; then chmod 600 config.json; fi
+find ./data -name "*.json" -type f -exec chmod 600 {} +
 
 # Restart Node.js application if server.js exists
 if [ -f "server.js" ]; then

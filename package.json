@@ -1,6 +1,6 @@
 {
   "name": "personal-site-admin",
-  "version": "0.1.0-anti",
+  "version": "0.1.3-anti",
   "description": "Personal site admin panel with backend API, account management, and security features",
   "main": "server.js",
   "engines": {
