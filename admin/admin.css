@@ -1600,16 +1600,9 @@ input[type="datetime-local"]:focus {
 }
 
 .color-palette {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.5rem;
+  display: block;
+  width: 100%;
   margin-bottom: 1.5rem;
-}
-
-@media (min-width: 768px) {
-  .color-palette {
-    grid-template-columns: 1fr 1fr;
-  }
 }
 
 .palette-section h4 {
@@ -1626,8 +1619,9 @@ input[type="datetime-local"]:focus {
 
 .color-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  width: 100%;
 }
 
 .color-item {

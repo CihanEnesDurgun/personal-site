@@ -403,95 +403,29 @@
         <div class="theme-preview">
           <div class="preview-header">
             <h3>🎨 Mevcut Tema Önizlemesi</h3>
-            <p class="muted">Sitenizde kullanılan renk paleti ve tema ayarları</p>
+            <p class="muted">Sitenizde kullanılan ana renk paleti</p>
           </div>
 
           <div class="color-palette">
             <div class="palette-section">
-              <h4>🌞 Açık Tema</h4>
+              <h4>🎨 Tema Renkleri</h4>
               <div class="color-grid">
                 <div class="color-item">
-                  <div class="color-swatch" id="lightBgSwatch" title="Arka Plan"></div>
-                  <span class="color-name">Arka Plan</span>
+                  <div class="color-swatch" id="lightBgSwatch" title="Açık Arka Plan"></div>
+                  <span class="color-name">Açık Arka Plan</span>
                   <span class="color-value" id="lightBgPreview">#f8f8f6</span>
                 </div>
-                <div class="color-item">
-                  <div class="color-swatch" id="lightPanelSwatch" title="Panel"></div>
-                  <span class="color-name">Panel</span>
-                  <span class="color-value" id="lightPanelPreview">#fafaf8</span>
-                </div>
-                <div class="color-item">
-                  <div class="color-swatch" id="lightInkSwatch" title="Metin"></div>
-                  <span class="color-name">Metin</span>
-                  <span class="color-value" id="lightInkPreview">#0b0b0b</span>
-                </div>
-                <div class="color-item">
-                  <div class="color-swatch" id="lightMutedSwatch" title="İkincil Metin"></div>
-                  <span class="color-name">İkincil Metin</span>
-                  <span class="color-value" id="lightMutedPreview">#6b7280</span>
-                </div>
-                <div class="color-item">
-                  <div class="color-swatch" id="lightLineSwatch" title="Çizgiler"></div>
-                  <span class="color-name">Çizgiler</span>
-                  <span class="color-value" id="lightLinePreview">#e5e7eb</span>
-                </div>
                 <div class="color-item accent-color">
-                  <div class="color-swatch" id="lightAccentSwatch" title="Vurgu Rengi"></div>
-                  <span class="color-name">Vurgu Rengi</span>
-                  <span class="color-value" id="lightAccentPreview">#152bcb</span>
+                  <div class="color-swatch" id="lightAccentSwatch" title="Ortak Vurgu Rengi"></div>
+                  <span class="color-name">Ortak Vurgu</span>
+                  <span class="color-value" id="lightAccentPreview">#A67B5B</span>
                 </div>
-              </div>
-            </div>
-
-            <div class="palette-section">
-              <h4>🌙 Koyu Tema</h4>
-              <div class="color-grid">
                 <div class="color-item">
-                  <div class="color-swatch" id="darkBgSwatch" title="Arka Plan"></div>
-                  <span class="color-name">Arka Plan</span>
+                  <div class="color-swatch" id="darkBgSwatch" title="Koyu Arka Plan"></div>
+                  <span class="color-name">Koyu Arka Plan</span>
                   <span class="color-value" id="darkBgPreview">#0b0d0f</span>
                 </div>
-                <div class="color-item">
-                  <div class="color-swatch" id="darkPanelSwatch" title="Panel"></div>
-                  <span class="color-name">Panel</span>
-                  <span class="color-value" id="darkPanelPreview">#14171a</span>
-                </div>
-                <div class="color-item">
-                  <div class="color-swatch" id="darkInkSwatch" title="Metin"></div>
-                  <span class="color-name">Metin</span>
-                  <span class="color-value" id="darkInkPreview">#e8edf2</span>
-                </div>
-                <div class="color-item">
-                  <div class="color-swatch" id="darkMutedSwatch" title="İkincil Metin"></div>
-                  <span class="color-name">İkincil Metin</span>
-                  <span class="color-value" id="darkMutedPreview">#9aa4b2</span>
-                </div>
-                <div class="color-item">
-                  <div class="color-swatch" id="darkLineSwatch" title="Çizgiler"></div>
-                  <span class="color-name">Çizgiler</span>
-                  <span class="color-value" id="darkLinePreview">#2a2f35</span>
-                </div>
-                <div class="color-item accent-color">
-                  <div class="color-swatch" id="darkAccentSwatch" title="Vurgu Rengi"></div>
-                  <span class="color-name">Vurgu Rengi</span>
-                  <span class="color-value" id="darkAccentPreview">#153acb</span>
-                </div>
               </div>
-            </div>
-          </div>
-
-          <div class="theme-info">
-            <div class="info-item">
-              <span class="info-label">Border Radius:</span>
-              <span class="info-value" id="borderRadius">16px</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Gölge Yoğunluğu:</span>
-              <span class="info-value" id="shadowIntensity">60%</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Font Ailesi:</span>
-              <span class="info-value" id="fontFamily">Inter</span>
             </div>
           </div>
         </div>
@@ -1156,126 +1090,44 @@
           <div class="theme-editor-form">
             <form id="themeEditorForm">
               <div class="theme-section">
-                <h4>🌞 Açık Tema Renkleri</h4>
+                <h4>🎨 Tema Renkleri</h4>
                 <div class="color-group">
                   <div class="form-group">
-                    <label for="lightBg">Arka Plan Rengi</label>
+                    <label for="lightBg">Açık Tema Arka Plan</label>
                     <div class="color-input-group">
                       <input type="color" id="lightBg" name="light.bg" value="#f8f8f6">
                       <input type="text" id="lightBgText" placeholder="#f8f8f6" readonly>
                     </div>
                   </div>
                   <div class="form-group">
-                    <label for="lightPanel">Panel Rengi</label>
-                    <div class="color-input-group">
-                      <input type="color" id="lightPanel" name="light.panel" value="#fafaf8">
-                      <input type="text" id="lightPanelText" placeholder="#fafaf8" readonly>
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <label for="lightInk">Metin Rengi</label>
-                    <div class="color-input-group">
-                      <input type="color" id="lightInk" name="light.ink" value="#0b0b0b">
-                      <input type="text" id="lightInkText" placeholder="#0b0b0b" readonly>
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <label for="lightMuted">Soluk Metin</label>
-                    <div class="color-input-group">
-                      <input type="color" id="lightMuted" name="light.muted" value="#6b7280">
-                      <input type="text" id="lightMutedText" placeholder="#6b7280" readonly>
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <label for="lightLine">Çizgi Rengi</label>
-                    <div class="color-input-group">
-                      <input type="color" id="lightLine" name="light.line" value="#e5e7eb">
-                      <input type="text" id="lightLineText" placeholder="#e5e7eb" readonly>
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <label for="lightAccent">Vurgu Rengi</label>
+                    <label for="lightAccent">Ortak Vurgu Rengi</label>
                     <div class="color-input-group">
                       <input type="color" id="lightAccent" name="light.accent" value="#152bcb">
                       <input type="text" id="lightAccentText" placeholder="#152bcb" readonly>
                     </div>
                   </div>
-                </div>
-              </div>
-
-              <div class="theme-section">
-                <h4>🌙 Koyu Tema Renkleri</h4>
-                <div class="color-group">
                   <div class="form-group">
-                    <label for="darkBg">Arka Plan Rengi</label>
+                    <label for="darkBg">Koyu Tema Arka Plan</label>
                     <div class="color-input-group">
                       <input type="color" id="darkBg" name="dark.bg" value="#0b0d0f">
                       <input type="text" id="darkBgText" placeholder="#0b0d0f" readonly>
                     </div>
                   </div>
-                  <div class="form-group">
-                    <label for="darkPanel">Panel Rengi</label>
-                    <div class="color-input-group">
-                      <input type="color" id="darkPanel" name="dark.panel" value="#14171a">
-                      <input type="text" id="darkPanelText" placeholder="#14171a" readonly>
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <label for="darkInk">Metin Rengi</label>
-                    <div class="color-input-group">
-                      <input type="color" id="darkInk" name="dark.ink" value="#e8edf2">
-                      <input type="text" id="darkInkText" placeholder="#e8edf2" readonly>
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <label for="darkMuted">Soluk Metin</label>
-                    <div class="color-input-group">
-                      <input type="color" id="darkMuted" name="dark.muted" value="#9aa4b2">
-                      <input type="text" id="darkMutedText" placeholder="#9aa4b2" readonly>
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <label for="darkLine">Çizgi Rengi</label>
-                    <div class="color-input-group">
-                      <input type="color" id="darkLine" name="dark.line" value="#2a2f35">
-                      <input type="text" id="darkLineText" placeholder="#2a2f35" readonly>
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <label for="darkAccent">Vurgu Rengi</label>
-                    <div class="color-input-group">
-                      <input type="color" id="darkAccent" name="dark.accent" value="#153acb">
-                      <input type="text" id="darkAccentText" placeholder="#153acb" readonly>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                  <!-- Hidden inputs for legacy compatibility if needed or removed -->
+                  <input type="hidden" id="lightPanel" name="light.panel" value="#fafaf8">
+                  <input type="hidden" id="lightInk" name="light.ink" value="#0b0b0b">
+                  <input type="hidden" id="lightMuted" name="light.muted" value="#6b7280">
+                  <input type="hidden" id="lightLine" name="light.line" value="#e5e7eb">
 
-              <div class="theme-section">
-                <h4>🎯 Genel Ayarlar</h4>
-                <div class="form-group">
-                  <label for="borderRadius">Köşe Yuvarlaklığı</label>
-                  <input type="range" id="borderRadius" name="borderRadius" min="0" max="32" value="16" step="1">
-                  <div class="range-value">
-                    <span id="borderRadiusValue">16px</span>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label for="shadowIntensity">Gölge Yoğunluğu</label>
-                  <input type="range" id="shadowIntensity" name="shadowIntensity" min="0" max="100" value="60" step="5">
-                  <div class="range-value">
-                    <span id="shadowIntensityValue">60%</span>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label for="fontFamily">Yazı Tipi</label>
-                  <select id="fontFamily" name="fontFamily">
-                    <option value="Inter">Inter (Modern)</option>
-                    <option value="Roboto">Roboto (Temiz)</option>
-                    <option value="Open Sans">Open Sans (Okunabilir)</option>
-                    <option value="Poppins">Poppins (Şık)</option>
-                    <option value="Montserrat">Montserrat (Profesyonel)</option>
-                  </select>
+                  <input type="hidden" id="darkAccent" name="dark.accent" value="#153acb">
+                  <input type="hidden" id="darkPanel" name="dark.panel" value="#14171a">
+                  <input type="hidden" id="darkInk" name="dark.ink" value="#e8edf2">
+                  <input type="hidden" id="darkMuted" name="dark.muted" value="#9aa4b2">
+                  <input type="hidden" id="darkLine" name="dark.line" value="#2a2f35">
+
+                  <input type="hidden" id="borderRadius" name="borderRadius" value="16">
+                  <input type="hidden" id="shadowIntensity" name="shadowIntensity" value="60">
+                  <input type="hidden" id="fontFamily" name="fontFamily" value="Inter">
                 </div>
               </div>
             </form>

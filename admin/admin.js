@@ -29,7 +29,7 @@ class ApiService {
 
   async request(endpoint, options = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
-    
+
     const config = {
       headers: {
         'Content-Type': 'application/json',
@@ -44,7 +44,7 @@ class ApiService {
 
     try {
       const response = await fetch(url, config);
-      
+
       if (response.status === 401 || response.status === 403) {
         this.clearToken();
         window.location.href = 'login.html';
@@ -59,7 +59,7 @@ class ApiService {
       }
 
       const data = await response.json();
-      
+
       if (!response.ok) {
         // Create error with code information
         const apiError = new Error(data.error || `HTTP ${response.status}: API isteği başarısız`);
@@ -90,11 +90,11 @@ class ApiService {
       method: 'POST',
       body: JSON.stringify({ username, password })
     });
-    
+
     if (response.success) {
       this.setToken(response.token);
     }
-    
+
     return response;
   }
 
@@ -173,7 +173,7 @@ class ApiService {
       } catch (e) {
         // If parsing fails, use default error
       }
-      
+
       // Create error with code information
       const apiError = new Error(errorData?.error || 'Yükleme başarısız');
       if (errorData?.code) apiError.code = errorData.code;
@@ -218,7 +218,7 @@ class ApiService {
   }
 
   // ====== Security & Sessions API Endpoints ======
-  
+
   // Get security data (active sessions, login history, failed logins, IP analysis)
   async getSecurityData() {
     return await this.request('/security/data');
@@ -278,14 +278,14 @@ const generateSlug = (title) => {
     'Ş': 'S', 'ş': 's',
     'Ü': 'U', 'ü': 'u'
   };
-  
+
   let slug = title;
-  
+
   // Türkçe karakterleri değiştir
   Object.keys(turkishToEnglish).forEach(turkishChar => {
     slug = slug.replace(new RegExp(turkishChar, 'g'), turkishToEnglish[turkishChar]);
   });
-  
+
   return slug
     .toLowerCase()
     .replace(/[^a-z0-9\s-]/g, '')
@@ -302,69 +302,69 @@ const generateSlug = (title) => {
  * Save custom theme to server (Admin-only)
  */
 async function saveCustomThemeToServer(themeData) {
-    try {
-      // Get fresh token
-      const token = localStorage.getItem('admin_token');
-      if (!token) {
-        throw new Error('Admin token bulunamadı');
-      }
-      
-      // Save to server
-      const response = await fetch(`${API_BASE_URL}/theme`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(themeData)
-      });
-      
-      if (!response.ok) {
-        throw new Error('Tema sunucuya kaydedilemedi');
-      }
-      
+  try {
+    // Get fresh token
+    const token = localStorage.getItem('admin_token');
+    if (!token) {
+      throw new Error('Admin token bulunamadı');
+    }
+
+    // Save to server
+    const response = await fetch(`${API_BASE_URL}/theme`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(themeData)
+    });
+
+    if (!response.ok) {
+      throw new Error('Tema sunucuya kaydedilemedi');
+    }
+
     // Apply theme immediately
     applyThemeVariables(themeData);
     if (window.themeManager) {
       window.themeManager.setTheme(window.themeManager.getCurrentTheme());
     }
-    
+
     // Update admin preview
     updateThemePreview(themeData);
-    
+
     // Clear localStorage cache so main site will reload theme from server
     localStorage.removeItem('customTheme');
     console.log('✅ Cleared localStorage cache - main site will reload theme');
-      
-      return true;
-    } catch (error) {
-      console.error('Error saving theme to server:', error);
-      return false;
-    }
+
+    return true;
+  } catch (error) {
+    console.error('Error saving theme to server:', error);
+    return false;
   }
-  
+}
+
 /**
  * Reset theme to defaults (Admin-only)
  */
 async function resetThemeToDefaults() {
-    try {
-      const token = localStorage.getItem('admin_token');
-      if (!token) {
-        throw new Error('Admin token bulunamadı');
+  try {
+    const token = localStorage.getItem('admin_token');
+    if (!token) {
+      throw new Error('Admin token bulunamadı');
+    }
+
+    // Reset on server
+    const response = await fetch(`${API_BASE_URL}/theme`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
       }
-      
-      // Reset on server
-      const response = await fetch(`${API_BASE_URL}/theme`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error('Tema sunucuda sıfırlanamadı');
-      }
-    
+    });
+
+    if (!response.ok) {
+      throw new Error('Tema sunucuda sıfırlanamadı');
+    }
+
     const data = await response.json();
     if (data.success && data.theme) {
       // Apply default theme
@@ -374,9 +374,9 @@ async function resetThemeToDefaults() {
       }
       updateThemePreview(data.theme);
     }
-    
+
     return true;
-    } catch (error) {
+  } catch (error) {
     console.error('Error resetting theme:', error);
     return false;
   }
@@ -389,22 +389,10 @@ function updateThemePreview(themeData) {
   // Update color preview texts
   const textElements = {
     lightBgPreview: themeData.light.bg,
-    lightPanelPreview: themeData.light.panel,
-    lightInkPreview: themeData.light.ink,
-    lightMutedPreview: themeData.light.muted,
-    lightLinePreview: themeData.light.line,
     lightAccentPreview: themeData.light.accent,
-    darkBgPreview: themeData.dark.bg,
-    darkPanelPreview: themeData.dark.panel,
-    darkInkPreview: themeData.dark.ink,
-    darkMutedPreview: themeData.dark.muted,
-    darkLinePreview: themeData.dark.line,
-    darkAccentPreview: themeData.dark.accent,
-    borderRadius: `${themeData.borderRadius}px`,
-    shadowIntensity: `${themeData.shadowIntensity}%`,
-    fontFamily: themeData.fontFamily
+    darkBgPreview: themeData.dark.bg
   };
-  
+
   // Update text content
   Object.entries(textElements).forEach(([id, value]) => {
     const element = document.getElementById(id);
@@ -412,23 +400,14 @@ function updateThemePreview(themeData) {
       element.textContent = value;
     }
   });
-  
+
   // Update color swatch backgrounds
   const colorSwatches = {
     lightBgSwatch: themeData.light.bg,
-    lightPanelSwatch: themeData.light.panel,
-    lightInkSwatch: themeData.light.ink,
-    lightMutedSwatch: themeData.light.muted,
-    lightLineSwatch: themeData.light.line,
     lightAccentSwatch: themeData.light.accent,
-    darkBgSwatch: themeData.dark.bg,
-    darkPanelSwatch: themeData.dark.panel,
-    darkInkSwatch: themeData.dark.ink,
-    darkMutedSwatch: themeData.dark.muted,
-    darkLineSwatch: themeData.dark.line,
-    darkAccentSwatch: themeData.dark.accent
+    darkBgSwatch: themeData.dark.bg
   };
-  
+
   // Update swatch background colors
   Object.entries(colorSwatches).forEach(([id, color]) => {
     const element = document.getElementById(id);
@@ -447,7 +426,7 @@ class ModalManager {
     this.activeModal = null;
     this.init();
   }
-  
+
   init() {
     // Close modals when clicking outside
     document.addEventListener('click', (e) => {
@@ -455,7 +434,7 @@ class ModalManager {
         this.closeModal(e.target.id);
       }
     });
-    
+
     // Close modals with close button
     $$('.modal-close, .modal-cancel').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -463,7 +442,7 @@ class ModalManager {
         if (modal) this.closeModal(modal.id);
       });
     });
-    
+
     // Close modals with Escape key
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && this.activeModal) {
@@ -471,18 +450,18 @@ class ModalManager {
       }
     });
   }
-  
+
   openModal(modalId) {
     const modal = $(`#${modalId}`);
     if (modal) {
       // Store the element that had focus before opening modal
       this.previousFocus = document.activeElement;
-      
+
       modal.classList.add('show');
       modal.setAttribute('aria-hidden', 'false');
       this.activeModal = modalId;
       document.body.style.overflow = 'hidden';
-      
+
       // Focus the first focusable element in the modal
       const firstFocusable = modal.querySelector('button, input, select, textarea, [tabindex]:not([tabindex="-1"])');
       if (firstFocusable) {
@@ -490,7 +469,7 @@ class ModalManager {
       }
     }
   }
-  
+
   closeModal(modalId) {
     const modal = $(`#${modalId}`);
     if (modal) {
@@ -498,7 +477,7 @@ class ModalManager {
       modal.setAttribute('aria-hidden', 'true');
       this.activeModal = null;
       document.body.style.overflow = '';
-      
+
       // Return focus to the previous element
       if (this.previousFocus && this.previousFocus.focus) {
         this.previousFocus.focus();
@@ -526,7 +505,7 @@ class BlogManager {
   setGalleryManager(galleryManager) {
     this.galleryManager = galleryManager;
   }
-  
+
   async init() {
     // Check authentication first
     if (!this.apiService.token) {
@@ -542,7 +521,7 @@ class BlogManager {
       this.renderDashboard();
       this.renderPostsTable();
       this.initEventListeners();
-      
+
       // Load user info for account settings
       if (this.homepageEditor) {
         await this.homepageEditor.loadUserInfo();
@@ -559,24 +538,24 @@ class BlogManager {
       }
     }
   }
-  
+
   async loadPosts() {
     try {
       // Try API first
       this.posts = await this.apiService.getPosts();
       this.filteredPosts = [...this.posts];
       console.log(`Loaded ${this.posts.length} posts from API`);
-      
+
       // Log post statuses for debugging
       const statusCounts = {};
       this.posts.forEach(post => {
         statusCounts[post.status] = (statusCounts[post.status] || 0) + 1;
       });
       console.log('Post status counts:', statusCounts);
-      
+
     } catch (error) {
       console.error('API Error, trying fallback:', error);
-      
+
       // Fallback: Load from local file
       try {
         const response = await fetch('../content/posts.json');
@@ -584,7 +563,7 @@ class BlogManager {
           this.posts = await response.json();
           this.filteredPosts = [...this.posts];
           console.log('Loaded posts from fallback:', this.posts.length);
-          
+
           // Log post statuses for debugging
           const statusCounts = {};
           this.posts.forEach(post => {
@@ -603,11 +582,11 @@ class BlogManager {
   }
 
 
-  
+
   async renderDashboard() {
     try {
       const stats = await this.apiService.getStats();
-      
+
       $('#totalPosts').textContent = stats.totalPosts;
       $('#featuredPosts').textContent = stats.featuredPosts;
       $('#recentPosts').textContent = stats.recentPosts;
@@ -623,7 +602,7 @@ class BlogManager {
         const oneMonthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
         return postDate >= oneMonthAgo;
       }).length;
-      
+
       const allTags = new Set();
       this.posts.forEach(post => {
         if (post.tags) {
@@ -631,26 +610,26 @@ class BlogManager {
         }
       });
       const totalTags = allTags.size;
-      
+
       $('#totalPosts').textContent = totalPosts;
       $('#featuredPosts').textContent = featuredPosts;
       $('#recentPosts').textContent = recentPosts;
       $('#totalTags').textContent = totalTags;
     }
   }
-  
+
   renderPostsTable() {
     const tbody = $('#postsTableBody');
     tbody.innerHTML = '';
-    
+
     // Filter out deleted posts from main table
     const activePosts = this.filteredPosts.filter(post => post.status !== 'deleted');
-    
+
     activePosts.forEach(post => {
       const status = post.status || 'published';
       const publishDate = post.publishDate ? new Date(post.publishDate) : null;
       const isScheduled = status === 'scheduled' && publishDate && publishDate > new Date();
-      
+
       // Status gösterimi
       let statusDisplay = '';
       let statusClass = '';
@@ -667,7 +646,7 @@ class BlogManager {
         statusDisplay = '✅ Yayında';
         statusClass = 'status-published';
       }
-      
+
       const row = document.createElement('tr');
       row.innerHTML = `
         <td>
@@ -737,44 +716,44 @@ class BlogManager {
       `;
       tbody.appendChild(row);
     });
-    
+
     // Add event listeners to action buttons
     $$('.edit-post').forEach(btn => {
       btn.addEventListener('click', () => this.editPost(btn.dataset.slug));
     });
-    
+
     $$('.delete-post').forEach(btn => {
       btn.addEventListener('click', () => this.deletePost(btn.dataset.slug));
     });
-    
+
     $$('.publish-post').forEach(btn => {
       btn.addEventListener('click', () => this.publishPost(btn.dataset.slug));
     });
-    
+
     $$('.schedule-post').forEach(btn => {
       btn.addEventListener('click', () => this.schedulePost(btn.dataset.slug));
     });
-    
+
     $$('.toggle-featured').forEach(btn => {
       btn.addEventListener('click', () => this.toggleFeatured(btn.dataset.slug));
     });
-    
+
     $$('.preview-post').forEach(btn => {
       btn.addEventListener('click', () => this.previewPost(btn.dataset.slug));
     });
   }
-  
+
   initEventListeners() {
     // Search functionality
     $('#searchPosts').addEventListener('input', (e) => {
       this.filterPosts();
     });
-    
+
     // Filter functionality
     $('#filterStatus').addEventListener('change', (e) => {
       this.filterPosts();
     });
-    
+
     // New post button - now redirects to markdown editor
     // $('#newPostBtn').addEventListener('click', () => {
     //   modalManager.openModal('newPostModal');
@@ -782,23 +761,23 @@ class BlogManager {
     // });
 
 
-    
+
     // Form submissions
     $('#newPostForm').addEventListener('submit', (e) => {
       e.preventDefault();
       this.saveNewPost();
     });
-    
+
     $('#editPostForm').addEventListener('submit', (e) => {
       e.preventDefault();
       this.saveEditedPost();
     });
-    
+
     // Delete confirmation
     $('#confirmDelete').addEventListener('click', () => {
       this.confirmDelete();
     });
-    
+
     // Schedule confirmation
     $('#confirmSchedule').addEventListener('click', () => {
       this.confirmSchedule();
@@ -811,25 +790,25 @@ class BlogManager {
       });
     });
 
-      // Analytics time range
-  $('#timeRange').addEventListener('change', (e) => {
-    this.loadAnalytics();
-  });
+    // Analytics time range
+    $('#timeRange').addEventListener('change', (e) => {
+      this.loadAnalytics();
+    });
 
-  // Comments filter
-  $('#commentFilter').addEventListener('change', (e) => {
-    this.filterComments();
-  });
+    // Comments filter
+    $('#commentFilter').addEventListener('change', (e) => {
+      this.filterComments();
+    });
 
-  // Trash search
-  $('#searchTrash').addEventListener('input', (e) => {
-    this.filterTrash();
-  });
+    // Trash search
+    $('#searchTrash').addEventListener('input', (e) => {
+      this.filterTrash();
+    });
 
-  // Empty trash button
-  $('#emptyTrashBtn').addEventListener('click', () => {
-    this.emptyTrash();
-  });
+    // Empty trash button
+    $('#emptyTrashBtn').addEventListener('click', () => {
+      this.emptyTrash();
+    });
   }
 
   switchTab(tabName) {
@@ -866,25 +845,25 @@ class BlogManager {
       }
     } else if (tabName === 'security') {
       this.loadSecurityData();
-        // Console log dosyalarını yükle
-        if (typeof loadLogFiles === 'function') {
-          loadLogFiles();
-        }
-        // Log istatistiklerini yükle
-        if (typeof loadLogStatistics === 'function') {
-          loadLogStatistics();
-        }
+      // Console log dosyalarını yükle
+      if (typeof loadLogFiles === 'function') {
+        loadLogFiles();
+      }
+      // Log istatistiklerini yükle
+      if (typeof loadLogStatistics === 'function') {
+        loadLogStatistics();
+      }
     }
   }
 
   async loadAnalytics() {
     try {
       console.log('Loading analytics...'); // Debug log
-      
+
       // Get selected time range
       const timeRange = $('#timeRange').value || '30';
       console.log('Selected time range:', timeRange, 'days'); // Debug log
-      
+
       const analytics = await this.apiService.getAnalytics(timeRange);
       console.log('Analytics data received:', analytics); // Debug log
       this.renderAnalytics(analytics);
@@ -896,16 +875,16 @@ class BlogManager {
 
   renderAnalytics(analytics) {
     console.log('Rendering analytics:', analytics); // Debug log
-    
+
     // Update general stats
     $('#totalViews').textContent = analytics.totalViews.toLocaleString('tr-TR');
-    
+
     // Use backend calculated popular blog post
     $('#popularPage').textContent = analytics.popularPage || '-';
-    
+
     // Update total comments
     $('#totalComments').textContent = analytics.totalComments || 0;
-    
+
     // Update last updated
     const lastUpdated = new Date(analytics.lastUpdated);
     $('#lastUpdated').textContent = lastUpdated.toLocaleDateString('tr-TR');
@@ -931,17 +910,17 @@ class BlogManager {
     // Render daily chart
     console.log('Calling renderDailyChart with:', analytics.dailyStats); // Debug log
     this.renderDailyChart(analytics.dailyStats);
-    
+
     // Render post views chart
     this.renderPostViewsChart(analytics.dailyStats, this.posts);
   }
 
   renderDailyChart(dailyStats) {
     console.log('renderDailyChart called with:', dailyStats); // Debug log
-    
+
     const ctx = document.getElementById('dailyChart');
     console.log('Canvas element:', ctx); // Debug log
-    
+
     // Check if Chart.js is loaded
     if (typeof Chart === 'undefined') {
       console.error('Chart.js is not loaded!');
@@ -953,9 +932,9 @@ class BlogManager {
       `;
       return;
     }
-    
+
     console.log('Chart.js is loaded successfully'); // Debug log
-    
+
     // Destroy existing chart if it exists
     if (this.dailyChart) {
       this.dailyChart.destroy();
@@ -975,12 +954,12 @@ class BlogManager {
     // Prepare data for chart
     const labels = dailyStats.map(day => {
       const date = new Date(day.date);
-      return date.toLocaleDateString('tr-TR', { 
-        month: 'short', 
-        day: 'numeric' 
+      return date.toLocaleDateString('tr-TR', {
+        month: 'short',
+        day: 'numeric'
       });
     });
-    
+
     const data = dailyStats.map(day => day.totalViews);
 
     console.log('Chart data:', { labels, data }); // Debug log
@@ -1016,10 +995,10 @@ class BlogManager {
             cornerRadius: 8,
             displayColors: false,
             callbacks: {
-              title: function() {
+              title: function () {
                 return '';
               },
-              label: function(context) {
+              label: function (context) {
                 return `${context.parsed.y} görüntüleme`;
               }
             }
@@ -1047,7 +1026,7 @@ class BlogManager {
               font: {
                 size: 12
               },
-              callback: function(value) {
+              callback: function (value) {
                 return value + ' görüntüleme';
               }
             }
@@ -1060,31 +1039,31 @@ class BlogManager {
       }
     });
   }
-  
+
   renderPostViewsChart(dailyStats, posts) {
     const ctx = document.getElementById('postViewsChart');
-    
+
     if (typeof Chart === 'undefined' || !ctx) {
       console.error('Chart.js not loaded or canvas not found');
       return;
     }
-    
+
     // Destroy existing chart
     if (this.postViewsChart) {
       this.postViewsChart.destroy();
     }
-    
+
     if (!dailyStats || dailyStats.length === 0) {
       ctx.innerHTML = '<div style="text-align: center; color: var(--muted); padding: 2rem;"><p>Henüz veri yok</p></div>';
       return;
     }
-    
+
     // Prepare labels (dates)
     const labels = dailyStats.map(day => {
       const date = new Date(day.date);
       return date.toLocaleDateString('tr-TR', { month: 'short', day: 'numeric' });
     });
-    
+
     // Tüm yazıların slug'larını topla
     const allPostSlugs = new Set();
     dailyStats.forEach(day => {
@@ -1092,7 +1071,7 @@ class BlogManager {
         Object.keys(day.postViews).forEach(slug => allPostSlugs.add(slug));
       }
     });
-    
+
     // Her yazı için renk paleti
     const colors = [
       'rgba(34, 197, 94, 1)',   // Green
@@ -1102,17 +1081,17 @@ class BlogManager {
       'rgba(168, 85, 247, 1)',  // Purple
       'rgba(236, 72, 153, 1)',  // Pink
     ];
-    
+
     // Dataset'leri oluştur (her yazı için bir çizgi)
     const datasets = Array.from(allPostSlugs).map((slug, index) => {
       const post = posts.find(p => p.slug === slug);
       const postTitle = post ? post.title : slug;
       const color = colors[index % colors.length];
-      
+
       const data = dailyStats.map(day => {
         return day.postViews && day.postViews[slug] ? day.postViews[slug] : 0;
       });
-      
+
       return {
         label: postTitle,
         data: data,
@@ -1125,7 +1104,7 @@ class BlogManager {
         pointHoverRadius: 5
       };
     });
-    
+
     // Chart oluştur
     this.postViewsChart = new Chart(ctx, {
       type: 'line',
@@ -1155,7 +1134,7 @@ class BlogManager {
             cornerRadius: 8,
             displayColors: true,
             callbacks: {
-              label: function(context) {
+              label: function (context) {
                 return `${context.dataset.label}: ${context.parsed.y} görüntüleme`;
               }
             }
@@ -1175,7 +1154,7 @@ class BlogManager {
             ticks: {
               color: 'var(--text-color)',
               font: { size: 12 },
-              callback: function(value) {
+              callback: function (value) {
                 return value + ' görüntüleme';
               }
             }
@@ -1188,11 +1167,11 @@ class BlogManager {
       }
     });
   }
-  
+
   updateChartTheme() {
     const isDark = document.documentElement.classList.contains('dark');
     const textColor = isDark ? '#ffffff' : '#374151';
-    
+
     // Update daily chart
     if (this.dailyChart) {
       this.dailyChart.options.scales.x.ticks.color = textColor;
@@ -1201,7 +1180,7 @@ class BlogManager {
       this.dailyChart.options.scales.y.grid.color = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
       this.dailyChart.update();
     }
-    
+
     // YENİ: Update post views chart
     if (this.postViewsChart) {
       this.postViewsChart.options.scales.x.ticks.color = textColor;
@@ -1212,16 +1191,16 @@ class BlogManager {
       this.postViewsChart.update();
     }
   }
-  
+
   filterPosts() {
     const searchTerm = $('#searchPosts').value.toLowerCase();
     const filterValue = $('#filterStatus').value;
-    
+
     this.filteredPosts = this.posts.filter(post => {
       const matchesSearch = post.title.toLowerCase().includes(searchTerm) ||
-                           post.excerpt.toLowerCase().includes(searchTerm) ||
-                           (post.tags && post.tags.some(tag => tag.toLowerCase().includes(searchTerm)));
-      
+        post.excerpt.toLowerCase().includes(searchTerm) ||
+        (post.tags && post.tags.some(tag => tag.toLowerCase().includes(searchTerm)));
+
       let matchesFilter = true;
       if (filterValue === 'featured') {
         matchesFilter = post.featured;
@@ -1231,33 +1210,33 @@ class BlogManager {
         const oneMonthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
         matchesFilter = postDate >= oneMonthAgo;
       }
-      
+
       return matchesSearch && matchesFilter;
     });
-    
+
     this.renderPostsTable();
   }
-  
+
   setupNewPostForm() {
     const form = $('#newPostForm');
     form.reset();
-    
+
     // Set default date to today
     $('#postDate').value = new Date().toISOString().split('T')[0];
-    
+
     // Auto-generate slug from title
     $('#postTitle').addEventListener('input', (e) => {
       $('#postSlug').value = generateSlug(e.target.value);
     });
   }
-  
+
   async saveNewPost() {
     const formData = new FormData($('#newPostForm'));
-    
+
     // Get content from markdown editor
     const markdownEditor = document.getElementById('markdownEditor');
     const content = markdownEditor ? markdownEditor.innerText : formData.get('content');
-    
+
     const postData = {
       title: formData.get('title'),
       excerpt: formData.get('excerpt'),
@@ -1268,28 +1247,28 @@ class BlogManager {
       content: content,
       status: 'draft' // Yeni yazılar taslak olarak kaydedilecek
     };
-    
+
     try {
       // Create post via API
       const response = await this.apiService.createPost(postData);
-      
+
       // Reload posts
       await this.loadPosts();
-      
+
       // Update UI
       await this.renderDashboard();
       this.renderPostsTable();
       modalManager.closeModal('newPostModal');
-      
+
       this.showNotification('Blog yazısı taslak olarak kaydedildi! Yayınlamak için onaylayın.', 'success');
     } catch (error) {
       const errorCode = typeof window !== 'undefined' && window.getErrorCode ? window.getErrorCode(error) : null;
       console.error('Error saving post:', error);
-      if (errorCode) console.error(`Hata Kodu: ${errorCode} - Detaylar için docs/HATA_KODLARI_REHBERI.md dosyasına bakın`);
+      if (errorCode) console.error(`Hata Kodu: ${errorCode} - Detaylar için docs/ERROR_REGISTRY_TR.md dosyasına bakın`);
       this.showNotification(`Blog yazısı kaydedilirken hata oluştu: ${error.message}`, 'error', null, error);
     }
   }
-  
+
   async editPost(slug) {
     try {
       // Redirect to markdown editor with edit parameter
@@ -1299,15 +1278,15 @@ class BlogManager {
       this.showNotification('Editöre yönlendirilirken hata oluştu!', 'error');
     }
   }
-  
+
   async saveEditedPost() {
     const formData = new FormData($('#editPostForm'));
     const originalSlug = formData.get('originalSlug');
-    
+
     // Get content from markdown editor
     const markdownEditor = document.getElementById('editMarkdownEditor');
     const content = markdownEditor ? markdownEditor.innerText : formData.get('content');
-    
+
     const postData = {
       title: formData.get('title'),
       excerpt: formData.get('excerpt'),
@@ -1317,47 +1296,47 @@ class BlogManager {
       featured: false, // Düzenleme sırasında featured durumu korunmaz, toggle butonu ile yönetilir
       content: content
     };
-    
+
     try {
       // Update post via API
       await this.apiService.updatePost(originalSlug, postData);
-      
+
       // Reload posts
       await this.loadPosts();
-      
+
       // Update UI
       await this.renderDashboard();
       this.renderPostsTable();
       modalManager.closeModal('editPostModal');
-      
+
       this.showNotification('Blog yazısı başarıyla güncellendi!', 'success');
     } catch (error) {
       console.error('Error updating post:', error);
       this.showNotification(`Blog yazısı güncellenirken hata oluştu: ${error.message}`, 'error', null, error);
     }
   }
-  
+
   deletePost(slug) {
     this.postToDelete = slug;
     modalManager.openModal('deleteModal');
   }
-  
+
   async confirmDelete() {
     if (!this.postToDelete) return;
-    
+
     try {
       // Delete post via API
       await this.apiService.deletePost(this.postToDelete);
-      
+
       // Reload posts
       await this.loadPosts();
-      
+
       // Update UI
       await this.renderDashboard();
       this.renderPostsTable();
       this.updateTrashCount(); // Update trash count
       modalManager.closeModal('deleteModal');
-      
+
       this.showNotification('Blog yazısı geri dönüşüm kutusuna taşındı!', 'success');
       this.postToDelete = null;
     } catch (error) {
@@ -1365,63 +1344,63 @@ class BlogManager {
       this.showNotification(`Blog yazısı silinirken hata oluştu: ${error.message}`, 'error', null, error);
     }
   }
-  
+
   async publishPost(slug) {
     try {
       await this.apiService.publishPost(slug, { status: 'published' });
-      
+
       // Reload posts
       await this.loadPosts();
-      
+
       // Update UI
       await this.renderDashboard();
       this.renderPostsTable();
-      
+
       this.showNotification('Blog yazısı başarıyla yayınlandı!', 'success');
     } catch (error) {
       console.error('Error publishing post:', error);
       this.showNotification(`Blog yazısı yayınlanırken hata oluştu: ${error.message}`, 'error', null, error);
     }
   }
-  
+
   schedulePost(slug) {
     // Schedule modal açmak için
     this.postToSchedule = slug;
-    
+
     // Current date + 1 day as default
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     const defaultDateTime = tomorrow.toISOString().slice(0, 16);
-    
+
     // Set default value
     $('#scheduleDateTime').value = defaultDateTime;
-    
+
     modalManager.openModal('scheduleModal');
   }
-  
+
   async confirmSchedule() {
     if (!this.postToSchedule) return;
-    
+
     const publishDate = $('#scheduleDateTime').value;
     if (!publishDate) {
       this.showNotification('Lütfen yayın tarihini seçin!', 'error');
       return;
     }
-    
+
     try {
-      await this.apiService.publishPost(this.postToSchedule, { 
+      await this.apiService.publishPost(this.postToSchedule, {
         status: 'scheduled',
         publishDate: new Date(publishDate).toISOString()
       });
-      
+
       // Reload posts
       await this.loadPosts();
-      
+
       // Update UI
       await this.renderDashboard();
       this.renderPostsTable();
       modalManager.closeModal('scheduleModal');
-      
+
       this.showNotification('Blog yazısı başarıyla zamanlandı!', 'success');
       this.postToSchedule = null;
     } catch (error) {
@@ -1437,23 +1416,23 @@ class BlogManager {
         this.showNotification('Blog yazısı bulunamadı!', 'error');
         return;
       }
-      
+
       const newFeaturedStatus = !post.featured;
-      
+
       // Use the new dedicated featured endpoint
       await this.apiService.toggleFeatured(slug, newFeaturedStatus);
-      
+
       // Reload posts
       await this.loadPosts();
-      
+
       // Update UI
       await this.renderDashboard();
       this.renderPostsTable();
-      
+
       this.showNotification(
-        newFeaturedStatus 
-          ? 'Blog yazısı öne çıkarıldı! ✅' 
-          : 'Blog yazısı öne çıkarılmaktan çıkarıldı! ⭐', 
+        newFeaturedStatus
+          ? 'Blog yazısı öne çıkarıldı! ✅'
+          : 'Blog yazısı öne çıkarılmaktan çıkarıldı! ⭐',
         'success'
       );
     } catch (error) {
@@ -1476,15 +1455,15 @@ class BlogManager {
   async restorePost(slug) {
     try {
       await this.apiService.restorePost(slug);
-      
+
       // Reload posts
       await this.loadPosts();
-      
+
       // Update UI
       await this.renderDashboard();
       this.renderPostsTable();
       this.loadTrash(); // Refresh trash
-      
+
       this.showNotification('Blog yazısı başarıyla geri yüklendi!', 'success');
     } catch (error) {
       console.error('Error restoring post:', error);
@@ -1496,28 +1475,28 @@ class BlogManager {
     if (!confirm('Bu yazıyı kalıcı olarak silmek istediğinizden emin misiniz? Bu işlem geri alınamaz!')) {
       return;
     }
-    
+
     try {
       // Log what we're about to delete for debugging
       const postToDelete = this.posts.find(p => p.slug === slug);
       if (postToDelete) {
-        console.log('About to permanently delete post:', { 
-          slug: postToDelete.slug, 
-          title: postToDelete.title, 
-          status: postToDelete.status 
+        console.log('About to permanently delete post:', {
+          slug: postToDelete.slug,
+          title: postToDelete.title,
+          status: postToDelete.status
         });
       }
-      
+
       await this.apiService.permanentDeletePost(slug);
-      
+
       // Reload posts from server to get updated data
       await this.loadPosts();
-      
+
       // Update UI
       await this.renderDashboard();
       this.renderPostsTable();
       this.loadTrash(); // Refresh trash
-      
+
       this.showNotification('Blog yazısı kalıcı olarak silindi!', 'success');
     } catch (error) {
       console.error('Error permanently deleting post:', error);
@@ -1529,16 +1508,16 @@ class BlogManager {
   async restorePost(slug) {
     try {
       await this.apiService.restorePost(slug);
-      
+
       // Reload posts from server to get updated data
       await this.loadPosts();
-      
+
       // Update UI
       await this.renderDashboard();
       this.renderPostsTable();
       this.loadTrash(); // Refresh trash
       this.updateTrashCount(); // Update trash count
-      
+
       this.showNotification('Blog yazısı başarıyla geri yüklendi!', 'success');
     } catch (error) {
       console.error('Error restoring post:', error);
@@ -1550,19 +1529,19 @@ class BlogManager {
     if (!confirm('Geri dönüşüm kutusundaki tüm yazıları kalıcı olarak silmek istediğinizden emin misiniz? Bu işlem geri alınamaz!')) {
       return;
     }
-    
+
     try {
       // First, make sure we have the latest posts data from server
       await this.loadPosts();
-      
+
       // Get all deleted posts from the current posts list
       const deletedPosts = this.posts.filter(post => post.status === 'deleted');
-      
+
       if (deletedPosts.length === 0) {
         this.showNotification('Geri dönüşüm kutusunda silinecek yazı bulunamadı!', 'info');
         return;
       }
-      
+
       // Double-check: Only delete posts with 'deleted' status
       const validDeletedPosts = deletedPosts.filter(post => {
         if (post.status !== 'deleted') {
@@ -1571,20 +1550,20 @@ class BlogManager {
         }
         return true;
       });
-      
+
       if (validDeletedPosts.length === 0) {
         this.showNotification('Geri dönüşüm kutusunda geçerli silinmiş yazı bulunamadı!', 'info');
         return;
       }
-      
+
       // Log what we're about to delete for debugging
       console.log('About to permanently delete these posts:', validDeletedPosts.map(p => ({ slug: p.slug, title: p.title, status: p.status })));
-      
+
       // Delete all valid deleted posts permanently with error handling
       const deleteResults = [];
       let successCount = 0;
       let errorCount = 0;
-      
+
       for (const post of validDeletedPosts) {
         try {
           await this.apiService.permanentDeletePost(post.slug);
@@ -1596,16 +1575,16 @@ class BlogManager {
           errorCount++;
         }
       }
-      
+
       // Reload posts from server to get updated data
       await this.loadPosts();
-      
+
       // Update UI
       await this.renderDashboard();
       this.renderPostsTable();
       this.loadTrash(); // Refresh trash
       this.updateTrashCount(); // Update trash count
-      
+
       // Show appropriate notification based on results
       if (successCount > 0 && errorCount === 0) {
         this.showNotification(`Geri dönüşüm kutusu başarıyla boşaltıldı! ${successCount} yazı kalıcı olarak silindi.`, 'success');
@@ -1619,9 +1598,9 @@ class BlogManager {
       this.showNotification(`Geri dönüşüm kutusu boşaltılırken hata oluştu: ${error.message}`, 'error', null, error);
     }
   }
-  
 
-  
+
+
   showNotification(message, type = 'info', errorCode = null, error = null) {
     // Get error code from error object if provided
     if (!errorCode && error) {
@@ -1633,23 +1612,23 @@ class BlogManager {
         errorCode = window.getErrorCode(error);
       }
     }
-    
+
     // If still no code, try to get from message
     if (!errorCode && typeof window !== 'undefined' && window.getErrorCode) {
       errorCode = window.getErrorCode(message);
     }
-    
+
     // Format message with error code
     let displayMessage = message;
     if (errorCode && type === 'error') {
       displayMessage = `${message} [Hata Kodu: ${errorCode}]`;
     }
-    
+
     // Create notification element
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
     notification.textContent = displayMessage;
-    
+
     // Add styles
     notification.style.cssText = `
       position: fixed;
@@ -1663,7 +1642,7 @@ class BlogManager {
       transform: translateX(100%);
       transition: transform 0.3s ease;
     `;
-    
+
     if (type === 'success') {
       notification.style.background = '#10b981';
     } else if (type === 'error') {
@@ -1671,14 +1650,14 @@ class BlogManager {
     } else {
       notification.style.background = '#3b82f6';
     }
-    
+
     document.body.appendChild(notification);
-    
+
     // Animate in
     setTimeout(() => {
       notification.style.transform = 'translateX(0)';
     }, 100);
-    
+
     // Remove after 3 seconds
     setTimeout(() => {
       notification.style.transform = 'translateX(100%)';
@@ -1708,7 +1687,7 @@ class BlogManager {
       if (!this.posts || this.posts.length === 0) {
         await this.loadPosts();
       }
-      
+
       // Filter deleted posts from existing posts
       this.deletedPosts = this.posts.filter(post => post.status === 'deleted');
       this.filteredDeletedPosts = [...this.deletedPosts];
@@ -1730,7 +1709,7 @@ class BlogManager {
       // Hide count if 0
       trashCountElement.style.display = count > 0 ? 'inline-block' : 'none';
     }
-    
+
     // Also update the empty trash button state
     const emptyTrashBtn = $('#emptyTrashBtn');
     if (emptyTrashBtn) {
@@ -1755,12 +1734,12 @@ class BlogManager {
 
   calculateRemainingDays(deletedAt) {
     if (!deletedAt) return 30; // Default 30 days if no deletion date
-    
+
     const deletionDate = new Date(deletedAt);
     const now = new Date();
     const daysSinceDeletion = Math.floor((now - deletionDate) / (1000 * 60 * 60 * 24));
     const remainingDays = Math.max(0, 30 - daysSinceDeletion);
-    
+
     return remainingDays;
   }
 
@@ -1779,16 +1758,16 @@ class BlogManager {
   renderCommentsTable() {
     const tbody = $('#commentsTableBody');
     tbody.innerHTML = '';
-    
+
     this.filteredComments.forEach(comment => {
       const row = document.createElement('tr');
-      
+
       // Determine if this is a reply
       const isReply = comment.parent_id !== null && comment.parent_id !== undefined;
       const replyIndicator = isReply ? `<span class="reply-indicator">↳ Yanıt</span>` : '';
-      const replyToInfo = isReply && comment.reply_to_name ? 
+      const replyToInfo = isReply && comment.reply_to_name ?
         `<div class="reply-to-info">@${this.escapeHtml(comment.reply_to_name)} kullanıcısına yanıt</div>` : '';
-      
+
       row.innerHTML = `
         <td class="comment-author-cell">
           <div class="comment-author-name">
@@ -1840,13 +1819,13 @@ class BlogManager {
       `;
       tbody.appendChild(row);
     });
-    
+
     // Add event listeners to action buttons
     $$('.comment-action-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const commentId = btn.dataset.id;
-        const action = btn.classList.contains('approve') ? 'approve' : 
-                      btn.classList.contains('reject') ? 'reject' : 'delete';
+        const action = btn.classList.contains('approve') ? 'approve' :
+          btn.classList.contains('reject') ? 'reject' : 'delete';
         this.handleCommentAction(commentId, action);
       });
     });
@@ -1854,7 +1833,7 @@ class BlogManager {
 
   filterComments() {
     const filterValue = $('#commentFilter').value;
-    
+
     this.filteredComments = this.comments.filter(comment => {
       if (filterValue === 'pending') {
         return !comment.approved;
@@ -1865,14 +1844,14 @@ class BlogManager {
       }
       return true; // 'all'
     });
-    
+
     this.renderCommentsTable();
   }
 
   renderTrashTable() {
     const tbody = $('#trashTableBody');
     tbody.innerHTML = '';
-    
+
     if (this.filteredDeletedPosts.length === 0) {
       tbody.innerHTML = `
         <tr>
@@ -1889,11 +1868,11 @@ class BlogManager {
       `;
       return;
     }
-    
+
     this.filteredDeletedPosts.forEach(post => {
       const remainingDays = this.calculateRemainingDays(post.deletedAt);
       const remainingDaysFormatted = this.formatRemainingDays(remainingDays);
-      
+
       const row = document.createElement('tr');
       row.innerHTML = `
         <td>
@@ -1908,9 +1887,9 @@ class BlogManager {
         </td>
         <td>
           <span class="post-status status-${post.status || 'published'}">
-            ${post.status === 'draft' ? '📝 Taslak' : 
-              post.status === 'published' ? '✅ Yayında' : 
-              post.status === 'scheduled' ? '⏰ Zamanlanmış' : '✅ Yayında'}
+            ${post.status === 'draft' ? '📝 Taslak' :
+          post.status === 'published' ? '✅ Yayında' :
+            post.status === 'scheduled' ? '⏰ Zamanlanmış' : '✅ Yayında'}
           </span>
         </td>
         <td>
@@ -1937,12 +1916,12 @@ class BlogManager {
       `;
       tbody.appendChild(row);
     });
-    
+
     // Add event listeners to action buttons
     $$('.restore-post').forEach(btn => {
       btn.addEventListener('click', () => this.restorePost(btn.dataset.slug));
     });
-    
+
     $$('.permanent-delete').forEach(btn => {
       btn.addEventListener('click', () => this.permanentDeletePost(btn.dataset.slug));
     });
@@ -1950,12 +1929,12 @@ class BlogManager {
 
   filterTrash() {
     const searchTerm = $('#searchTrash').value.toLowerCase();
-    
+
     this.filteredDeletedPosts = this.deletedPosts.filter(post => {
       return post.title.toLowerCase().includes(searchTerm) ||
-             (post.tags && post.tags.some(tag => tag.toLowerCase().includes(searchTerm)));
+        (post.tags && post.tags.some(tag => tag.toLowerCase().includes(searchTerm)));
     });
-    
+
     this.renderTrashTable();
   }
 
@@ -1965,23 +1944,23 @@ class BlogManager {
         if (!confirm('Bu yorumu silmek istediğinizden emin misiniz?')) {
           return;
         }
-        
+
         await this.apiService.request(`/admin/comments/${commentId}`, {
           method: 'DELETE'
         });
-        
+
         this.showNotification('Yorum başarıyla silindi!', 'success');
       } else {
         const approved = action === 'approve';
-        
+
         await this.apiService.request(`/admin/comments/${commentId}`, {
           method: 'PUT',
           body: JSON.stringify({ approved })
         });
-        
+
         this.showNotification(`Yorum başarıyla ${approved ? 'onaylandı' : 'reddedildi'}!`, 'success');
       }
-      
+
       // Reload comments
       await this.loadComments();
     } catch (error) {
@@ -2008,7 +1987,7 @@ class BlogManager {
   }
 
   // ====== Security & Sessions Management ======
-  
+
   async loadSecurityData() {
     try {
       const securityData = await this.apiService.getSecurityData();
@@ -2038,7 +2017,7 @@ class BlogManager {
     const sessionsHTML = sessions.map(session => {
       const loginTime = new Date(session.loginTime).toLocaleString('tr-TR');
       const lastActivity = new Date(session.lastActivity).toLocaleString('tr-TR');
-      
+
       return `
         <div class="session-item">
           <div class="session-info">
@@ -2092,7 +2071,7 @@ class BlogManager {
 
     const historyHTML = recentLogins.map(login => {
       const timestamp = new Date(login.timestamp).toLocaleString('tr-TR');
-      
+
       return `
         <div class="login-history-item">
           <div class="login-info">
@@ -2120,7 +2099,7 @@ class BlogManager {
     }).join('');
 
     // Toplam sayı bilgisi ekle
-    const summaryHTML = totalCount > 7 ? 
+    const summaryHTML = totalCount > 7 ?
       `<div class="security-summary">
         <p class="muted">Son 7 giriş gösteriliyor (Toplam: ${totalCount} kayıt)</p>
       </div>` : '';
@@ -2143,7 +2122,7 @@ class BlogManager {
 
     const failedHTML = recentFailedLogins.map(login => {
       const timestamp = new Date(login.timestamp).toLocaleString('tr-TR');
-      
+
       return `
         <div class="failed-login-item">
           <div class="failed-login-info">
@@ -2180,13 +2159,13 @@ class BlogManager {
     }).join('');
 
     // Toplam sayı bilgisi ve temizleme butonu ekle
-    const summaryHTML = totalCount > 5 ? 
+    const summaryHTML = totalCount > 5 ?
       `<div class="security-summary">
         <p class="muted">Son 5 hatalı giriş gösteriliyor (Toplam: ${totalCount} kayıt)</p>
         <button class="btn btn-warning btn-sm" onclick="blogManager.clearFailedLogins()">
           Tüm Logları Temizle
         </button>
-      </div>` : 
+      </div>` :
       `<div class="security-summary">
         <button class="btn btn-warning btn-sm" onclick="blogManager.clearFailedLogins()">
           Logları Temizle
@@ -2213,7 +2192,7 @@ class BlogManager {
     const analysisHTML = topRiskyIPs.map(analysis => {
       const lastAttempt = new Date(analysis.lastAttempt).toLocaleString('tr-TR');
       const riskLevel = analysis.failedAttempts > 10 ? 'high' : analysis.failedAttempts > 5 ? 'medium' : 'low';
-      
+
       return `
         <div class="ip-analysis-item">
           <div class="ip-analysis-info">
@@ -2248,7 +2227,7 @@ class BlogManager {
     }).join('');
 
     // Toplam sayı bilgisi ekle
-    const summaryHTML = totalCount > 10 ? 
+    const summaryHTML = totalCount > 10 ?
       `<div class="security-summary">
         <p class="muted">En riskli 10 IP gösteriliyor (Toplam: ${totalCount} IP)</p>
       </div>` : '';
@@ -2258,13 +2237,13 @@ class BlogManager {
 
   getBrowserInfo(userAgent) {
     if (!userAgent) return 'Bilinmiyor';
-    
+
     if (userAgent.includes('Chrome')) return 'Chrome';
     if (userAgent.includes('Firefox')) return 'Firefox';
     if (userAgent.includes('Safari')) return 'Safari';
     if (userAgent.includes('Edge')) return 'Edge';
     if (userAgent.includes('Opera')) return 'Opera';
-    
+
     return 'Diğer';
   }
 
@@ -2392,7 +2371,7 @@ class HomepageEditor {
     });
 
     // ====== Theme Editor Event Listeners ======
-    
+
     // Edit theme button
     $('#editThemeBtn')?.addEventListener('click', () => {
       this.openThemeEditor();
@@ -2457,7 +2436,7 @@ class HomepageEditor {
     });
 
     // ====== Security & Sessions Event Listeners ======
-    
+
     // Refresh security data buttons
     $('#refreshSessionsBtn')?.addEventListener('click', () => {
       this.loadSecurityData();
@@ -2499,7 +2478,7 @@ class HomepageEditor {
       this.renderHomepagePreview();
     } catch (error) {
       console.error('Error loading site config:', error);
-      
+
       if (error.message.includes('401') || error.message.includes('403')) {
         this.showNotification('Oturum süreniz dolmuş. Lütfen tekrar giriş yapın!', 'error');
         // Redirect to login
@@ -2523,17 +2502,17 @@ class HomepageEditor {
 
   updateAccountInfo(userInfo) {
     console.log('Updating account info:', userInfo);
-    
+
     // Daha spesifik selector'lar kullanarak elementleri bulalım
     const accountInfo = document.querySelector('.account-info');
     if (!accountInfo) {
       console.error('Account info element not found');
       return;
     }
-    
+
     const infoItems = accountInfo.querySelectorAll('.info-item');
     console.log('Found info items:', infoItems.length);
-    
+
     if (infoItems.length >= 2) {
       // Kullanıcı adı
       const usernameValue = infoItems[0].querySelector('.info-value');
@@ -2541,7 +2520,7 @@ class HomepageEditor {
         usernameValue.textContent = userInfo.username;
         console.log('Updated username to:', userInfo.username);
       }
-      
+
       // Son güncelleme tarihi
       const lastUpdatedValue = infoItems[1].querySelector('.info-value');
       if (lastUpdatedValue) {
@@ -2573,7 +2552,7 @@ class HomepageEditor {
     // Mevcut tema renklerini al
     const root = document.documentElement;
     const computedStyle = getComputedStyle(root);
-    
+
     const currentTheme = {
       bg: computedStyle.getPropertyValue('--bg').trim(),
       panel: computedStyle.getPropertyValue('--panel').trim(),
@@ -2738,11 +2717,11 @@ class HomepageEditor {
     if (!preview) return;
 
     const formData = this.getFormData();
-    
+
     // Mevcut tema renklerini al
     const root = document.documentElement;
     const computedStyle = getComputedStyle(root);
-    
+
     const currentTheme = {
       bg: computedStyle.getPropertyValue('--bg').trim(),
       panel: computedStyle.getPropertyValue('--panel').trim(),
@@ -2753,7 +2732,7 @@ class HomepageEditor {
       radius: computedStyle.getPropertyValue('--radius').trim(),
       shadow: computedStyle.getPropertyValue('--shadow').trim()
     };
-    
+
     // Basit 16:9 ekran önizlemesi
     preview.innerHTML = `
       <div class="hero-preview">
@@ -2889,7 +2868,7 @@ class HomepageEditor {
   async saveChanges() {
     try {
       const formData = this.getFormData();
-      
+
       // Validate required fields
       if (!formData.hero.name || !formData.hero.headline || !formData.hero.bio) {
         this.showNotification('Lütfen tüm zorunlu alanları doldurun!', 'error');
@@ -2905,14 +2884,14 @@ class HomepageEditor {
       };
 
       await this.apiService.updateSiteConfig(updatedConfig);
-      
+
       // Update local config
       this.siteConfig = updatedConfig;
-      
+
       this.showNotification('Ana ekran başarıyla güncellendi!', 'success');
       this.closeEditor();
       this.renderHomepagePreview();
-      
+
     } catch (error) {
       console.error('Error saving site config:', error);
       this.showNotification('Değişiklikler kaydedilirken hata oluştu!', 'error');
@@ -2922,12 +2901,12 @@ class HomepageEditor {
   async saveAsDraft() {
     try {
       const formData = this.getFormData();
-      
+
       // Save to localStorage as draft
       localStorage.setItem('homepage_draft', JSON.stringify(formData));
-      
+
       this.showNotification('Taslak kaydedildi!', 'success');
-      
+
     } catch (error) {
       console.error('Error saving draft:', error);
       this.showNotification('Taslak kaydedilirken hata oluştu!', 'error');
@@ -3032,13 +3011,13 @@ class HomepageEditor {
 
       this.showNotification('Hesap ayarları başarıyla güncellendi! Yeni bilgilerle giriş yapmanız gerekiyor.', 'success');
       this.closeAccountSettings();
-      
+
       // Clear form
       $('#newUsername').value = '';
       $('#currentPassword').value = '';
       $('#newPassword').value = '';
       $('#confirmPassword').value = '';
-      
+
       // 3 saniye sonra logout yap ve login sayfasına yönlendir
       setTimeout(() => {
         localStorage.removeItem('admin_token');
@@ -3056,7 +3035,7 @@ class HomepageEditor {
   }
 
   // ====== Security & Sessions Management ======
-  
+
   async loadSecurityData() {
     try {
       const securityData = await this.apiService.getSecurityData();
@@ -3078,7 +3057,7 @@ class HomepageEditor {
 
   renderActiveSessions(sessions) {
     const container = $('#activeSessionsList');
-    
+
     if (!sessions || sessions.length === 0) {
       container.innerHTML = '<p class="muted">Aktif oturum bulunamadı</p>';
       return;
@@ -3087,7 +3066,7 @@ class HomepageEditor {
     const sessionsHTML = sessions.map(session => {
       const loginTime = new Date(session.loginTime).toLocaleString('tr-TR');
       const lastActivity = new Date(session.lastActivity).toLocaleString('tr-TR');
-      
+
       return `
         <div class="session-item">
           <div class="session-info">
@@ -3131,7 +3110,7 @@ class HomepageEditor {
 
   renderLoginHistory(history) {
     const container = $('#loginHistoryList');
-    
+
     if (!history || history.length === 0) {
       container.innerHTML = '<p class="muted">Giriş geçmişi bulunamadı</p>';
       return;
@@ -3139,7 +3118,7 @@ class HomepageEditor {
 
     const historyHTML = history.map(login => {
       const timestamp = new Date(login.timestamp).toLocaleString('tr-TR');
-      
+
       return `
         <div class="login-history-item">
           <div class="login-info">
@@ -3171,7 +3150,7 @@ class HomepageEditor {
 
   renderFailedLogins(failedLogins) {
     const container = $('#failedLoginsList');
-    
+
     if (!failedLogins || failedLogins.length === 0) {
       container.innerHTML = '<p class="muted">Hatalı giriş denemesi bulunamadı</p>';
       return;
@@ -3179,7 +3158,7 @@ class HomepageEditor {
 
     const failedLoginsHTML = failedLogins.map(login => {
       const timestamp = new Date(login.timestamp).toLocaleString('tr-TR');
-      
+
       return `
         <div class="failed-login-item">
           <div class="failed-login-info">
@@ -3223,7 +3202,7 @@ class HomepageEditor {
 
   renderIPAnalysis(ipAnalysis) {
     const container = $('#ipAnalysisList');
-    
+
     if (!ipAnalysis || ipAnalysis.length === 0) {
       container.innerHTML = '<p class="muted">IP analizi bulunamadı</p>';
       return;
@@ -3232,7 +3211,7 @@ class HomepageEditor {
     const analysisHTML = ipAnalysis.map(analysis => {
       const lastAttempt = new Date(analysis.lastAttempt).toLocaleString('tr-TR');
       const riskLevel = analysis.failedAttempts > 10 ? 'high' : analysis.failedAttempts > 5 ? 'medium' : 'low';
-      
+
       return `
         <div class="ip-analysis-item">
           <div class="ip-analysis-info">
@@ -3274,13 +3253,13 @@ class HomepageEditor {
 
   getBrowserInfo(userAgent) {
     if (!userAgent || userAgent === 'Unknown') return 'Bilinmeyen';
-    
+
     if (userAgent.includes('Chrome')) return 'Chrome';
     if (userAgent.includes('Firefox')) return 'Firefox';
     if (userAgent.includes('Safari')) return 'Safari';
     if (userAgent.includes('Edge')) return 'Edge';
     if (userAgent.includes('Opera')) return 'Opera';
-    
+
     return 'Diğer';
   }
 
@@ -3339,21 +3318,21 @@ class HomepageEditor {
   }
 
   // ====== Theme Editor Methods ======
-  
+
   async openThemeEditor() {
     modalManager.openModal('themeEditorModal');
-    
+
     // Wait for modal to be fully rendered
     setTimeout(async () => {
       await this.loadCurrentTheme();
-    this.updateThemePreview();
-    
-    // Ana ekran önizlemesini de güncelle
+      this.updateThemePreview();
+
+      // Ana ekran önizlemesini de güncelle
       this.renderHomepagePreview();
-    
-    // Set initial preview theme based on current theme
-    const currentTheme = themeManager.getCurrentTheme();
-    this.setPreviewTheme(currentTheme);
+
+      // Set initial preview theme based on current theme
+      const currentTheme = themeManager.getCurrentTheme();
+      this.setPreviewTheme(currentTheme);
     }, 100);
   }
 
@@ -3370,132 +3349,59 @@ class HomepageEditor {
         if (data.success && data.theme) {
           const themeData = data.theme;
           console.log('Loading theme from server:', themeData);
-          
+
           // Set form values from server theme
           $('#lightBg').value = themeData.light.bg;
+          $('#lightAccent').value = themeData.light.accent;
+          $('#darkBg').value = themeData.dark.bg;
+
+          // Hidden inputs
           $('#lightPanel').value = themeData.light.panel;
           $('#lightInk').value = themeData.light.ink;
           $('#lightMuted').value = themeData.light.muted;
           $('#lightLine').value = themeData.light.line;
-          // Force update color input by removing and re-adding value
-          const lightAccentInput = $('#lightAccent');
-          lightAccentInput.value = themeData.light.accent;
-          
-          // Force browser to update color picker display
-          lightAccentInput.style.backgroundColor = themeData.light.accent;
-          
-          console.log('Setting lightAccent to:', themeData.light.accent);
-          console.log('lightAccent input value:', lightAccentInput.value);
-          console.log('lightAccent input element:', lightAccentInput);
-          
-          $('#darkBg').value = themeData.dark.bg;
+
+          $('#darkAccent').value = themeData.dark.accent;
           $('#darkPanel').value = themeData.dark.panel;
           $('#darkInk').value = themeData.dark.ink;
           $('#darkMuted').value = themeData.dark.muted;
           $('#darkLine').value = themeData.dark.line;
-          // Force update dark accent color input
-          const darkAccentInput = $('#darkAccent');
-          darkAccentInput.value = themeData.dark.accent;
-          darkAccentInput.style.backgroundColor = themeData.dark.accent;
-          
+
           $('#borderRadius').value = themeData.borderRadius;
           $('#shadowIntensity').value = themeData.shadowIntensity;
           $('#fontFamily').value = themeData.fontFamily;
-          
+
           this.updateAllColorTexts();
-          this.updateRangeValue('borderRadius', themeData.borderRadius, 'px');
-          this.updateRangeValue('shadowIntensity', themeData.shadowIntensity, '%');
-          
+
           // Update theme preview after loading
           this.updateThemePreview();
-          
+
           return;
         }
       }
     } catch (error) {
       console.error('Error loading theme from server:', error);
     }
-    
+
     // Fallback to localStorage
     const savedTheme = localStorage.getItem('customTheme');
     if (savedTheme) {
       try {
         const themeData = JSON.parse(savedTheme);
-        
+
         // Set form values from saved theme
         $('#lightBg').value = themeData.light.bg;
-        $('#lightPanel').value = themeData.light.panel;
-        $('#lightInk').value = themeData.light.ink;
-        $('#lightMuted').value = themeData.light.muted;
-        $('#lightLine').value = themeData.light.line;
         $('#lightAccent').value = themeData.light.accent;
-        
         $('#darkBg').value = themeData.dark.bg;
-        $('#darkPanel').value = themeData.dark.panel;
-        $('#darkInk').value = themeData.dark.ink;
-        $('#darkMuted').value = themeData.dark.muted;
-        $('#darkLine').value = themeData.dark.line;
-        $('#darkAccent').value = themeData.dark.accent;
-        
-        $('#borderRadius').value = themeData.borderRadius;
-        $('#shadowIntensity').value = themeData.shadowIntensity;
-        $('#fontFamily').value = themeData.fontFamily;
-        
+
         this.updateAllColorTexts();
-        this.updateRangeValue('borderRadius', themeData.borderRadius, 'px');
-        this.updateRangeValue('shadowIntensity', themeData.shadowIntensity, '%');
-        
-        // Update theme preview after loading
         this.updateThemePreview();
         return;
       } catch (error) {
         console.error('Error loading saved theme:', error);
       }
     }
-    
-    // Load current theme values from CSS variables (fallback)
-    const root = document.documentElement;
-    const computedStyle = getComputedStyle(root);
-    
-    // Light theme colors
-    $('#lightBg').value = this.rgbToHex(computedStyle.getPropertyValue('--bg').trim());
-    $('#lightPanel').value = this.rgbToHex(computedStyle.getPropertyValue('--panel').trim());
-    $('#lightInk').value = this.rgbToHex(computedStyle.getPropertyValue('--ink').trim());
-    $('#lightMuted').value = this.rgbToHex(computedStyle.getPropertyValue('--muted').trim());
-    $('#lightLine').value = this.rgbToHex(computedStyle.getPropertyValue('--line').trim());
-    $('#lightAccent').value = this.rgbToHex(computedStyle.getPropertyValue('--accent').trim());
-    
-    // Dark theme colors - get from CSS variables or use defaults
-    const darkBg = computedStyle.getPropertyValue('--dark-bg').trim() || '#0b0d0f';
-    const darkPanel = computedStyle.getPropertyValue('--dark-panel').trim() || '#14171a';
-    const darkInk = computedStyle.getPropertyValue('--dark-ink').trim() || '#e8edf2';
-    const darkMuted = computedStyle.getPropertyValue('--dark-muted').trim() || '#9aa4b2';
-    const darkLine = computedStyle.getPropertyValue('--dark-line').trim() || '#2a2f35';
-    const darkAccent = computedStyle.getPropertyValue('--dark-accent').trim() || '#84CC16';
-    
-    $('#darkBg').value = this.rgbToHex(darkBg);
-    $('#darkPanel').value = this.rgbToHex(darkPanel);
-    $('#darkInk').value = this.rgbToHex(darkInk);
-    $('#darkMuted').value = this.rgbToHex(darkMuted);
-    $('#darkLine').value = this.rgbToHex(darkLine);
-    $('#darkAccent').value = this.rgbToHex(darkAccent);
-    
-    // Update text inputs
-    this.updateAllColorTexts();
-    
-    // Load other settings
-    const borderRadius = computedStyle.getPropertyValue('--radius').trim();
-    $('#borderRadius').value = parseInt(borderRadius) || 16;
-    $('#borderRadiusValue').textContent = `${$('#borderRadius').value}px`;
-    
-    const shadowIntensity = 60; // Default value
-    $('#shadowIntensity').value = shadowIntensity;
-    $('#shadowIntensityValue').textContent = `${shadowIntensity}%`;
-    
-    // Font family
-    $('#fontFamily').value = 'Inter'; // Default
-    
-    // Update theme preview after loading
+
     this.updateThemePreview();
   }
 
@@ -3508,13 +3414,13 @@ class HomepageEditor {
   }
 
   updateAllColorTexts() {
-    const colorInputs = [
-      'lightBg', 'lightPanel', 'lightInk', 'lightMuted', 'lightLine', 'lightAccent',
-      'darkBg', 'darkPanel', 'darkInk', 'darkMuted', 'darkLine', 'darkAccent'
-    ];
-    
-    colorInputs.forEach(inputId => {
-      this.updateColorText(inputId);
+    const colorIds = ['lightBg', 'lightAccent', 'darkBg'];
+    colorIds.forEach(id => {
+      const input = $(`#${id}`);
+      const text = $(`#${id}Text`);
+      if (input && text) {
+        text.value = input.value.toUpperCase();
+      }
     });
   }
 
@@ -3529,7 +3435,7 @@ class HomepageEditor {
     $('#previewLightTheme').classList.toggle('active', theme === 'light');
     $('#previewDarkTheme').classList.toggle('active', theme === 'dark');
     this.updateThemePreview();
-    
+
     // Also update the actual page theme if in theme editor
     themeManager.setTheme(theme);
   }
@@ -3538,36 +3444,38 @@ class HomepageEditor {
     const previewContainer = $('#themeLivePreview');
     if (!previewContainer) return;
 
+    const accentColor = $('#lightAccent').value;
+
     const lightTheme = {
       bg: $('#lightBg').value,
-      panel: $('#lightPanel').value,
-      ink: $('#lightInk').value,
-      muted: $('#lightMuted').value,
-      line: $('#lightLine').value,
-      accent: $('#lightAccent').value
+      panel: '#fafaf8',
+      ink: '#0b0b0b',
+      muted: '#6b7280',
+      line: '#e5e7eb',
+      accent: accentColor
     };
 
     const darkTheme = {
       bg: $('#darkBg').value,
-      panel: $('#darkPanel').value,
-      ink: $('#darkInk').value,
-      muted: $('#darkMuted').value,
-      line: $('#darkLine').value,
-      accent: $('#darkAccent').value
+      panel: '#14171a',
+      ink: '#e8edf2',
+      muted: '#9aa4b2',
+      line: '#2a2f35',
+      accent: accentColor
     };
 
     // Apply theme changes to the actual site in real-time
     const themeData = {
       light: lightTheme,
       dark: darkTheme,
-      borderRadius: $('#borderRadius').value,
-      shadowIntensity: $('#shadowIntensity').value,
-      fontFamily: $('#fontFamily').value
+      borderRadius: 16,
+      shadowIntensity: 60,
+      fontFamily: 'Inter'
     };
-    
+
     // Apply the theme changes immediately (using global function from theme-manager.js)
     applyThemeVariables(themeData);
-    
+
     // Update admin panel preview elements (using global function from admin.js)
     window.updateThemePreview(themeData);
 
@@ -3642,7 +3550,7 @@ class HomepageEditor {
 
   rgbToHex(rgb) {
     if (!rgb || rgb === 'none') return '#000000';
-    
+
     // Handle rgb(r, g, b) format
     const rgbMatch = rgb.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
     if (rgbMatch) {
@@ -3651,51 +3559,53 @@ class HomepageEditor {
       const b = parseInt(rgbMatch[3]);
       return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
     }
-    
+
     // Handle hex format
     if (rgb.startsWith('#')) {
       return rgb;
     }
-    
+
     return '#000000';
   }
 
   async saveTheme() {
     try {
+      const accentColor = $('#lightAccent').value;
+
       const themeData = {
         light: {
           bg: $('#lightBg').value,
-          panel: $('#lightPanel').value,
-          ink: $('#lightInk').value,
-          muted: $('#lightMuted').value,
-          line: $('#lightLine').value,
-          accent: $('#lightAccent').value
+          panel: '#fafaf8',
+          ink: '#0b0b0b',
+          muted: '#6b7280',
+          line: '#e5e7eb',
+          accent: accentColor
         },
         dark: {
           bg: $('#darkBg').value,
-          panel: $('#darkPanel').value,
-          ink: $('#darkInk').value,
-          muted: $('#darkMuted').value,
-          line: $('#darkLine').value,
-          accent: $('#darkAccent').value
+          panel: '#14171a',
+          ink: '#e8edf2',
+          muted: '#9aa4b2',
+          line: '#2a2f35',
+          accent: accentColor
         },
-        borderRadius: $('#borderRadius').value,
-        shadowIntensity: $('#shadowIntensity').value,
-        fontFamily: $('#fontFamily').value
+        borderRadius: 16,
+        shadowIntensity: 60,
+        fontFamily: 'Inter'
       };
 
       // Save theme to server (admin-specific function)
       await saveCustomThemeToServer(themeData);
-      
+
       // Ana ekran önizlemesini güncelle
       this.renderHomepagePreview();
-      
+
       // Tema önizleme kısmını da güncelle (global fonksiyon)
       const currentThemeData = await this.getCurrentThemeData();
       if (currentThemeData) {
         updateThemePreview(currentThemeData);
       }
-      
+
       this.showNotification('Tema başarıyla kaydedildi!', 'success');
       this.closeThemeEditor();
     } catch (error) {
@@ -3728,7 +3638,7 @@ class HomepageEditor {
 
     // Reset theme to defaults (admin-specific function)
     await resetThemeToDefaults();
-    
+
     // Reset form values to defaults
     $('#lightBg').value = '#f8f8f6';
     $('#lightPanel').value = '#fafaf8';
@@ -3736,23 +3646,23 @@ class HomepageEditor {
     $('#lightMuted').value = '#6b7280';
     $('#lightLine').value = '#e5e7eb';
     $('#lightAccent').value = '#84CC16';
-    
+
     $('#darkBg').value = '#0b0d0f';
     $('#darkPanel').value = '#14171a';
     $('#darkInk').value = '#e8edf2';
     $('#darkMuted').value = '#9aa4b2';
     $('#darkLine').value = '#2a2f35';
     $('#darkAccent').value = '#84CC16';
-    
+
     $('#borderRadius').value = 16;
     $('#shadowIntensity').value = 60;
     $('#fontFamily').value = 'Inter';
-    
+
     this.updateAllColorTexts();
     this.updateRangeValue('borderRadius', 16, 'px');
     this.updateRangeValue('shadowIntensity', 60, '%');
     this.updateThemePreview();
-    
+
     this.showNotification('Tema varsayılan ayarlara döndürüldü!', 'success');
   }
 }
@@ -3773,11 +3683,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Initialize theme manager first
   themeManager = new ThemeManager();
-  
+
   modalManager = new ModalManager();
   blogManager = new BlogManager();
   homepageEditor = new HomepageEditor(blogManager.apiService);
-  
+
   // Load and display current theme preview
   try {
     const currentTheme = await loadCustomTheme();
@@ -3787,21 +3697,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   } catch (error) {
     console.log('Could not load theme preview:', error);
   }
-  
+
   // Set the reference between BlogManager and HomepageEditor
   blogManager.setHomepageEditor(homepageEditor);
-  
+
   // Make blogManager globally available for notifications
   window.blogManager = blogManager;
-  
+
   // Initialize blog manager after homepageEditor is created
   await blogManager.init();
-  
+
   // Set gallery manager reference in blog manager
   if (galleryManager) {
     blogManager.setGalleryManager(galleryManager);
   }
-  
+
   // Initialize modal image upload event listeners
   const imageFileInput = document.getElementById('imageFileInput');
   if (imageFileInput) {
@@ -3809,7 +3719,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       handleImageFileSelection(e.target.files);
     });
   }
-  
+
   // Watch for theme changes and update chart colors
   const themeObserver = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
@@ -3825,7 +3735,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
   });
-  
+
   // Start observing theme changes
   themeObserver.observe(document.documentElement, {
     attributes: true,
@@ -3840,20 +3750,20 @@ function formatText(type) {
   if (!editor || !editor.contains(document.activeElement)) {
     editor = document.getElementById('editMarkdownEditor');
   }
-  
+
   if (!editor) return;
-  
+
   const selection = window.getSelection();
-  
+
   if (!selection.rangeCount) return;
-  
+
   const range = selection.getRangeAt(0);
   const selectedText = range.toString();
-  
+
   if (!selectedText && type !== 'list' && type !== 'orderedList' && type !== 'taskList' && type !== 'code' && type !== 'horizontalRule' && type !== 'table') {
     // If no text selected, insert placeholder
     let placeholder = '';
-    switch(type) {
+    switch (type) {
       case 'bold': placeholder = '**kalın metin**'; break;
       case 'italic': placeholder = '*italik metin*'; break;
       case 'h1': placeholder = '# Başlık 1'; break;
@@ -3865,7 +3775,7 @@ function formatText(type) {
       case 'list': placeholder = '- liste öğesi'; break;
       case 'blockquote': placeholder = '> alıntı metni'; break;
     }
-    
+
     const textNode = document.createTextNode(placeholder);
     range.insertNode(textNode);
     range.selectNodeContents(textNode);
@@ -3873,8 +3783,8 @@ function formatText(type) {
     selection.addRange(range);
     return;
   }
-  
-  switch(type) {
+
+  switch (type) {
     case 'bold':
       insertMarkdown(editor, '**', '**', selectedText);
       break;
@@ -3917,13 +3827,13 @@ function formatText(type) {
 function insertMarkdown(editor, before, after, selectedText) {
   const selection = window.getSelection();
   const range = selection.getRangeAt(0);
-  
+
   const markdownText = before + selectedText + after;
   const textNode = document.createTextNode(markdownText);
-  
+
   range.deleteContents();
   range.insertNode(textNode);
-  
+
   // Update hidden textarea
   updateHiddenTextarea(editor);
 }
@@ -3932,7 +3842,7 @@ function updateHiddenTextarea(editor) {
   const editorId = editor.id;
   const textareaId = editorId === 'markdownEditor' ? 'postContent' : 'editPostContent';
   const textarea = document.getElementById(textareaId);
-  
+
   if (textarea) {
     textarea.value = editor.innerText;
   }
@@ -3942,12 +3852,12 @@ function updateHiddenTextarea(editor) {
 function initMarkdownEditors() {
   const newEditor = document.getElementById('markdownEditor');
   const editEditor = document.getElementById('editMarkdownEditor');
-  
+
   if (newEditor) {
     newEditor.addEventListener('input', () => updateHiddenTextarea(newEditor));
     newEditor.addEventListener('blur', () => updateHiddenTextarea(newEditor));
   }
-  
+
   if (editEditor) {
     editEditor.addEventListener('input', () => updateHiddenTextarea(editEditor));
     editEditor.addEventListener('blur', () => updateHiddenTextarea(editEditor));
@@ -3958,7 +3868,7 @@ function initMarkdownEditors() {
 document.addEventListener('DOMContentLoaded', () => {
   // Initialize markdown editors for existing modals
   initMarkdownEditors();
-  
+
   // Watch for modal openings
   const observer = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
@@ -3969,7 +3879,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   });
-  
+
   observer.observe(document.body, {
     childList: true,
     subtree: true
@@ -4115,14 +4025,14 @@ class GalleryManager {
   createImageItem(image, folderName) {
     const imageUrl = `../images/${folderName}/${image.filename}`;
     const fileSize = this.formatFileSize(image.size);
-    
+
     // System folder için "Yeni İcon Yap" butonu ekle
     const systemIconButton = folderName === 'system' ? `
           <button class="gallery-action-btn set-icon" title="Yeni İcon Yap" onclick="galleryManager.setAsNewIcon('${image.filename}')">
             ⭐
           </button>
         ` : '';
-    
+
     return `
       <div class="gallery-image-item" data-filename="${image.filename}" data-folder="${folderName}">
         <img src="${imageUrl}" alt="${image.originalName}" class="gallery-image">
@@ -4198,7 +4108,7 @@ class GalleryManager {
     const imageUrl = `../images/deleted/${image.filename}`;
     const fileSize = this.formatFileSize(image.size);
     const deletedDate = new Date(image.deletedAt).toLocaleDateString('tr-TR');
-    
+
     return `
       <div class="gallery-image-item deleted-item" data-filename="${image.filename}" data-folder="deleted">
         <img src="${imageUrl}" alt="${image.originalName}" class="gallery-image">
@@ -4237,14 +4147,14 @@ class GalleryManager {
   updateDeletedActions(hasImages) {
     const deleteAllBtn = document.getElementById('deleteAllDeletedBtn');
     const restoreAllBtn = document.getElementById('restoreAllDeletedBtn');
-    
+
     if (deleteAllBtn) deleteAllBtn.disabled = !hasImages;
     if (restoreAllBtn) restoreAllBtn.disabled = !hasImages;
   }
 
   updateFolderCounts() {
     const folders = ['system', 'profile', 'blog-covers', 'blog-content'];
-    
+
     folders.forEach(folder => {
       const container = document.getElementById(`${folder}Images`);
       if (container) {
@@ -4269,7 +4179,7 @@ class GalleryManager {
 
   filterGallery() {
     const folders = ['system', 'profile', 'blog-covers', 'blog-content'];
-    
+
     folders.forEach(folder => {
       const folderElement = document.getElementById(`${folder}-folder`);
       if (folderElement) {
@@ -4302,7 +4212,7 @@ class GalleryManager {
     if (!files || files.length === 0) return;
 
     this.uploadedFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
-    
+
     if (this.uploadedFiles.length === 0) {
       alert('Lütfen sadece resim dosyaları seçin.');
       return;
@@ -4344,7 +4254,7 @@ class GalleryManager {
   async startUpload() {
     const targetFolder = document.getElementById('uploadTargetFolder').value;
     const startUploadBtn = document.getElementById('startUploadBtn');
-    
+
     if (startUploadBtn) {
       startUploadBtn.disabled = true;
       startUploadBtn.textContent = 'Yükleniyor...';
@@ -4354,7 +4264,7 @@ class GalleryManager {
       for (let i = 0; i < this.uploadedFiles.length; i++) {
         const file = this.uploadedFiles[i];
         await this.uploadFile(file, targetFolder);
-        
+
         // Update progress
         const progress = ((i + 1) / this.uploadedFiles.length) * 100;
         this.updateUploadProgress(progress);
@@ -4362,13 +4272,13 @@ class GalleryManager {
 
       // Refresh gallery
       await this.loadGallery();
-      
+
       // Show success message
       this.showUploadSuccess();
-      
+
       // Reset upload
       this.resetUpload();
-      
+
     } catch (error) {
       console.error('Upload error:', error);
       alert('Resim yüklenirken hata oluştu: ' + error.message);
@@ -4408,7 +4318,7 @@ class GalleryManager {
         } catch (e) {
           errorData = { error: 'Upload failed' };
         }
-        
+
         // Create error with code information
         const apiError = new Error(errorData?.error || 'Upload failed');
         if (errorData?.code) apiError.code = errorData.code;
@@ -4422,8 +4332,8 @@ class GalleryManager {
       return await response.json();
     } catch (error) {
       // Preserve error code if it exists
-      const errorMessage = error.responseData 
-        ? error.message 
+      const errorMessage = error.responseData
+        ? error.message
         : `Failed to upload ${file.name}: ${error.message}`;
       const preservedError = new Error(errorMessage);
       if (error.code) preservedError.code = error.code;
@@ -4449,7 +4359,7 @@ class GalleryManager {
     if (fileInput) {
       fileInput.value = '';
     }
-    
+
     const uploadZone = document.getElementById('uploadZone');
     if (uploadZone) {
       uploadZone.innerHTML = `
@@ -4507,10 +4417,10 @@ class GalleryManager {
         imageElement.remove();
         this.updateFolderCounts();
       }
-      
+
       // Reload deleted images
       await this.loadDeletedImages();
-      
+
       alert('Resim "Son Silinenler" bölümüne taşındı!');
     } catch (error) {
       console.error('Delete error:', error);
@@ -4545,7 +4455,7 @@ class GalleryManager {
 
       // Reload all gallery to show restored image
       await this.loadGallery();
-      
+
       alert('Resim başarıyla geri yüklendi!');
     } catch (error) {
       console.error('Restore error:', error);
@@ -4577,7 +4487,7 @@ class GalleryManager {
         imageElement.remove();
         this.updateFolderCounts();
       }
-      
+
       alert('Resim kalıcı olarak silindi!');
     } catch (error) {
       console.error('Permanent delete error:', error);
@@ -4588,7 +4498,7 @@ class GalleryManager {
   async deleteAllDeleted() {
     const deletedContainer = document.getElementById('deletedImages');
     const deletedItems = deletedContainer.querySelectorAll('.gallery-image-item');
-    
+
     if (deletedItems.length === 0) {
       alert('Silinecek resim bulunmuyor!');
       return;
@@ -4610,10 +4520,10 @@ class GalleryManager {
       });
 
       await Promise.all(deletePromises);
-      
+
       // Clear deleted images container
       await this.loadDeletedImages();
-      
+
       alert(`${deletedItems.length} resim kalıcı olarak silindi!`);
     } catch (error) {
       console.error('Delete all error:', error);
@@ -4624,7 +4534,7 @@ class GalleryManager {
   async restoreAllDeleted() {
     const deletedContainer = document.getElementById('deletedImages');
     const deletedItems = deletedContainer.querySelectorAll('.gallery-image-item');
-    
+
     if (deletedItems.length === 0) {
       alert('Geri yüklenecek resim bulunmuyor!');
       return;
@@ -4646,10 +4556,10 @@ class GalleryManager {
       });
 
       await Promise.all(restorePromises);
-      
+
       // Reload all gallery to show restored images
       await this.loadGallery();
-      
+
       alert(`${deletedItems.length} resim başarıyla geri yüklendi!`);
     } catch (error) {
       console.error('Restore all error:', error);
@@ -4678,12 +4588,12 @@ class GalleryManager {
       }
 
       alert('✅ Yeni sistem ikonu başarıyla ayarlandı!\n\nTüm HTML dosyalarındaki favicon referansları güncellendi.');
-      
+
       // Sayfayı yenile ki yeni favicon görünsün
       setTimeout(() => {
         window.location.reload();
       }, 1000);
-      
+
     } catch (error) {
       console.error('Set icon error:', error);
       alert('İkon ayarlanırken hata oluştu: ' + error.message);
@@ -4730,24 +4640,24 @@ class GalleryManager {
   handleAvatarImageClick(event) {
     const img = event.target;
     const imagePath = img.src.replace(window.location.origin + '/', '');
-    
+
     // Update avatar input
     const avatarInput = document.getElementById('heroAvatar');
     if (avatarInput) {
       avatarInput.value = imagePath;
-      
+
       // Update live preview
       updateAvatarPreview(imagePath);
-      
+
       // Show success message
       alert('✅ Avatar resmi başarıyla seçildi!');
-      
+
       // Switch back to homepage editor
       const homepageTab = document.querySelector('[data-tab="personal"]');
       if (homepageTab) {
         homepageTab.click();
       }
-      
+
       // Disable avatar selection mode
       this.disableAvatarSelectionMode();
     }
@@ -4761,13 +4671,13 @@ let galleryManager;
 document.addEventListener('DOMContentLoaded', () => {
   // Initialize existing functionality
   initMarkdownEditors();
-  
+
   // Initialize gallery manager
   galleryManager = new GalleryManager();
-  
+
   // Make galleryManager globally available
   window.galleryManager = galleryManager;
-  
+
   // Add click outside to close avatar modal
   document.addEventListener('click', (e) => {
     const avatarModal = document.getElementById('avatarSelectionModal');
@@ -4832,7 +4742,7 @@ async function loadLogStatistics() {
     }
 
     const data = await response.json();
-    
+
     if (data.logs && data.logs.length > 0) {
       // Calculate total statistics
       let totalLogs = 0;
@@ -4917,57 +4827,57 @@ let currentImageUploadType = null;
 
 function handleImageFileSelection(files) {
   console.log('handleImageFileSelection called with:', files);
-  
+
   if (!files || files.length === 0) {
     console.log('No files selected');
     return;
   }
-  
+
   console.log('Files selected:', files.length);
-  
+
   // Show preview for first file
   const file = files[0];
   console.log('Processing file:', file.name, file.size);
-  
+
   const reader = new FileReader();
-  
-  reader.onload = function(e) {
+
+  reader.onload = function (e) {
     console.log('File read successfully');
     const previewImage = document.getElementById('previewImage');
     const imagePreview = document.getElementById('imagePreview');
     const uploadArea = document.getElementById('uploadArea');
-    
+
     console.log('Elements found:', {
       previewImage: !!previewImage,
       imagePreview: !!imagePreview,
       uploadArea: !!uploadArea
     });
-    
+
     if (previewImage && imagePreview && uploadArea) {
       previewImage.src = e.target.result;
       uploadArea.style.display = 'none';
       imagePreview.style.display = 'block';
-      
+
       // Update image info
       const imageInfo = document.querySelector('.image-info');
       if (imageInfo) {
         const nameElement = imageInfo.querySelector('.info-item:nth-child(1) span');
         const sizeElement = imageInfo.querySelector('.info-item:nth-child(2) span');
-        
+
         if (nameElement) nameElement.textContent = file.name;
         if (sizeElement) sizeElement.textContent = formatFileSize(file.size);
       }
-      
+
       console.log('Preview updated successfully');
     } else {
       console.error('Required elements not found for preview');
     }
   };
-  
-  reader.onerror = function(error) {
+
+  reader.onerror = function (error) {
     console.error('Error reading file:', error);
   };
-  
+
   reader.readAsDataURL(file);
 }
 
@@ -4994,24 +4904,24 @@ function openImageUploadModal(context, type = 'upload') {
   console.log('Opening image upload modal:', context, type);
   currentImageUploadContext = context;
   currentImageUploadType = type;
-  
+
   // Show the image upload modal
   const modal = document.getElementById('imageUploadModal');
   if (modal) {
     modal.classList.add('show');
     modal.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
-    
+
     // Reset modal state
     resetImageUploadModal();
-    
+
     // Configure modal based on type
     if (type === 'gallery') {
       showGallerySelection();
     } else {
       showUploadArea();
     }
-    
+
     // Ensure file input event listener is attached
     setTimeout(() => {
       const imageFileInput = document.getElementById('imageFileInput');
@@ -5033,7 +4943,7 @@ function closeImageUploadModal() {
     modal.setAttribute('aria-hidden', 'true');
     document.body.style.overflow = '';
   }
-  
+
   // Reset context
   currentImageUploadContext = null;
   currentImageUploadType = null;
@@ -5048,14 +4958,14 @@ function resetImageUploadModal() {
   const usageSelection = document.getElementById('usageSelection');
   const insertBtn = document.getElementById('insertImageBtn');
   const insertButtonText = document.getElementById('insertButtonText');
-  
+
   if (uploadArea) uploadArea.style.display = 'block';
   if (uploadProgress) uploadProgress.style.display = 'none';
   if (imagePreview) imagePreview.style.display = 'none';
   if (imageSettings) imageSettings.style.display = 'none';
   if (usageSelection) usageSelection.style.display = 'none';
   if (insertBtn) insertBtn.disabled = true;
-  
+
   // Update button text based on context
   if (insertButtonText) {
     if (currentImageUploadContext === 'avatar') {
@@ -5064,11 +4974,11 @@ function resetImageUploadModal() {
       insertButtonText.textContent = 'Resmi Ekle';
     }
   }
-  
+
   // Clear file input
   const fileInput = document.getElementById('imageFileInput');
   if (fileInput) fileInput.value = '';
-  
+
   // Reset usage type selection
   const usageTypeRadios = document.querySelectorAll('input[name="usageType"]');
   usageTypeRadios.forEach(radio => {
@@ -5086,7 +4996,7 @@ function resetImageUploadModal() {
 function showUploadArea() {
   const uploadArea = document.getElementById('uploadArea');
   const usageSelection = document.getElementById('usageSelection');
-  
+
   if (uploadArea) uploadArea.style.display = 'block';
   if (usageSelection) usageSelection.style.display = 'block';
 }
@@ -5095,7 +5005,7 @@ function showGallerySelection() {
   // For gallery selection, we'll show the upload area but with different text
   const uploadArea = document.getElementById('uploadArea');
   const uploadContent = uploadArea?.querySelector('.upload-content');
-  
+
   if (uploadContent) {
     uploadContent.innerHTML = `
       <div class="upload-icon">🖼️</div>
@@ -5114,11 +5024,11 @@ function showGalleryBrowser() {
   if (galleryTab) {
     galleryTab.click();
     closeImageUploadModal();
-    
+
     // Enable avatar selection mode if we're selecting for avatar
     if (currentImageUploadContext === 'avatar' && galleryManager) {
       galleryManager.enableAvatarSelectionMode();
-      
+
       // Show a notification
       const notification = document.createElement('div');
       notification.className = 'avatar-selection-notification';
@@ -5129,7 +5039,7 @@ function showGalleryBrowser() {
           <button class="notification-close" onclick="this.parentElement.parentElement.remove()">×</button>
         </div>
       `;
-      
+
       // Add notification styles
       notification.style.cssText = `
         position: fixed;
@@ -5144,9 +5054,9 @@ function showGalleryBrowser() {
         max-width: 300px;
         animation: slideInRight 0.3s ease-out;
       `;
-      
+
       document.body.appendChild(notification);
-      
+
       // Auto-remove notification after 5 seconds
       setTimeout(() => {
         if (notification.parentElement) {
@@ -5159,23 +5069,23 @@ function showGalleryBrowser() {
 
 function insertImage() {
   if (!currentImageUploadContext) return;
-  
+
   // Get the selected image path from the preview
   const previewImage = document.getElementById('previewImage');
   if (!previewImage || !previewImage.src) {
     alert('Lütfen önce bir resim seçin!');
     return;
   }
-  
+
   // Extract the relative path from the full URL
   const imagePath = previewImage.src.replace(window.location.origin + '/', '');
-  
+
   // Update the appropriate input field based on context
   if (currentImageUploadContext === 'avatar') {
     const avatarInput = document.getElementById('heroAvatar');
     if (avatarInput) {
       avatarInput.value = imagePath;
-      
+
       // Update live preview if available
       updateAvatarPreview(imagePath);
     }
@@ -5185,7 +5095,7 @@ function insertImage() {
       coverInput.value = imagePath;
     }
   }
-  
+
   // Close modal
   closeImageUploadModal();
 }
@@ -5210,13 +5120,13 @@ let selectedAvatarImage = null;
 
 function openAvatarSelectionModal() {
   console.log('Opening avatar selection modal');
-  
+
   const modal = document.getElementById('avatarSelectionModal');
   if (modal) {
     modal.classList.add('show');
     modal.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
-    
+
     // Load avatar gallery
     loadAvatarGallery();
   }
@@ -5229,10 +5139,10 @@ function closeAvatarSelectionModal() {
     modal.setAttribute('aria-hidden', 'true');
     document.body.style.overflow = '';
   }
-  
+
   // Reset selection
   selectedAvatarImage = null;
-  
+
   // Clear file input
   const fileInput = document.getElementById('avatarFileInput');
   if (fileInput) {
@@ -5243,38 +5153,38 @@ function closeAvatarSelectionModal() {
 async function loadAvatarGallery() {
   const galleryGrid = document.getElementById('avatarGalleryGrid');
   if (!galleryGrid) return;
-  
+
   // Show loading
   galleryGrid.innerHTML = '<div class="gallery-loading">Profil fotoğrafları yükleniyor...</div>';
-  
+
   try {
     // Use existing gallery manager to get profile images
     const images = await galleryManager.getFolderImages('profile');
-    
+
     if (images.length === 0) {
       galleryGrid.innerHTML = '<div class="gallery-empty">Profil klasöründe resim bulunamadı.</div>';
       return;
     }
-    
+
     // Render gallery images
     galleryGrid.innerHTML = '';
-    
+
     images.forEach(image => {
       const imageItem = document.createElement('div');
       imageItem.className = 'gallery-image-item';
       imageItem.dataset.imagePath = image.path;
-      
+
       imageItem.innerHTML = `
         <img src="${image.path}" alt="${image.name}" onerror="this.src='https://placehold.co/120x120/cccccc/ffffff?text=Resim+Yüklenemedi'">
         <div class="gallery-image-info">${image.name}</div>
       `;
-      
+
       // Add click handler
       imageItem.addEventListener('click', () => selectAvatarImage(imageItem, image.path));
-      
+
       galleryGrid.appendChild(imageItem);
     });
-    
+
   } catch (error) {
     console.error('Error loading avatar gallery:', error);
     galleryGrid.innerHTML = '<div class="gallery-empty">Profil fotoğrafları yüklenirken hata oluştu.</div>';
@@ -5287,14 +5197,14 @@ function selectAvatarImage(imageItem, imagePath) {
   if (previousSelected) {
     previousSelected.classList.remove('selected');
   }
-  
+
   // Select new image
   imageItem.classList.add('selected');
   selectedAvatarImage = imagePath;
-  
+
   // Update avatar input and preview
   updateAvatarFromSelection(imagePath);
-  
+
   // Close modal after a short delay
   setTimeout(() => {
     closeAvatarSelectionModal();
@@ -5307,10 +5217,10 @@ function updateAvatarFromSelection(imagePath) {
   if (avatarInput) {
     avatarInput.value = imagePath;
   }
-  
+
   // Update live preview
   updateAvatarPreview(imagePath);
-  
+
   // Show success message
   showAvatarSelectionSuccess();
 }
@@ -5326,9 +5236,9 @@ function showAvatarSelectionSuccess() {
       <button class="notification-close" onclick="this.parentElement.parentElement.remove()">×</button>
     </div>
   `;
-  
+
   document.body.appendChild(notification);
-  
+
   // Auto-remove notification after 3 seconds
   setTimeout(() => {
     if (notification.parentElement) {
@@ -5346,69 +5256,69 @@ function openAvatarUpload() {
 
 async function handleAvatarUpload(files) {
   if (!files || files.length === 0) return;
-  
+
   const file = files[0];
-  
+
   // Validate file type
   if (!file.type.startsWith('image/')) {
     alert('Lütfen sadece resim dosyası seçin!');
     return;
   }
-  
+
   // Validate file size (max 5MB)
   if (file.size > 5 * 1024 * 1024) {
     alert('Resim dosyası 5MB\'dan küçük olmalıdır!');
     return;
   }
-  
+
   try {
     // Show upload progress
     const galleryGrid = document.getElementById('avatarGalleryGrid');
     galleryGrid.innerHTML = '<div class="gallery-loading">Avatar yükleniyor...</div>';
-    
+
     // Use existing API service for upload
     const apiService = new ApiService();
     const result = await apiService.uploadImage(file);
-    
+
     if (result.success) {
       // Update avatar input with new image path
       const avatarInput = document.getElementById('heroAvatar');
       if (avatarInput) {
         avatarInput.value = result.imagePath;
       }
-      
+
       // Update live preview
       updateAvatarPreview(result.imagePath);
-      
+
       // Reload gallery to show new image
       await loadAvatarGallery();
-      
+
       // Show success message
       showAvatarSelectionSuccess();
-      
+
       // Close modal
       closeAvatarSelectionModal();
     } else {
       throw new Error(result.error || 'Upload failed');
     }
-    
+
   } catch (error) {
     const errorCode = typeof window !== 'undefined' && window.getErrorCode ? window.getErrorCode(error) : null;
     console.error('Avatar upload error:', error);
     if (errorCode) {
-      console.error(`Hata Kodu: ${errorCode} - Detaylar için docs/HATA_KODLARI_REHBERI.md dosyasına bakın`);
+      console.error(`Hata Kodu: ${errorCode} - Detaylar için docs/ERROR_REGISTRY_TR.md dosyasına bakın`);
     }
-    
-    const errorMessage = errorCode 
+
+    const errorMessage = errorCode
       ? `Avatar yüklenirken hata oluştu: ${error.message} [Hata Kodu: ${errorCode}]`
       : `Avatar yüklenirken hata oluştu: ${error.message}`;
-    
+
     if (typeof window !== 'undefined' && window.blogManager && window.blogManager.showNotification) {
       window.blogManager.showNotification(errorMessage, 'error', errorCode, error);
     } else {
       alert(errorMessage);
     }
-    
+
     // Reload gallery on error
     await loadAvatarGallery();
   }

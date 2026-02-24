@@ -103,5 +103,5 @@ Gelecekteki güncellemelerde hedeflenen başlıklar:
 
 - **İlk Oluşturulma:** 22 Ekim 2025
 - **Son Güncelleme (Revizyon):** Şubat 2026
-- **Mevcut Versiyon Uyum:** v0.1.3.anti
+- **Mevcut Versiyon Uyum:** v0.1.4.anti
 - **Sorumlu:** Cihan Enes Durgun

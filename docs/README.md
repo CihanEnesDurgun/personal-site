@@ -6,23 +6,26 @@ Bu klasör, projenin kurumsal düzeydeki tüm dokümantasyon dosyalarını, anal
 
 ## 📁 Klasör Hiyerarşisi (Index)
 
-### 📦 [deployment/](./deployment/)
-Sunucuya yükleme ve canlı ortama çıkış (DevOps) rehberleri:
-- `quick-start-cpanel.md` - Paylaşımlı hosting (cPanel) için pratik Node.js başlangıç rehberi
-- `cpanel-manual-upload-guide.md` - Git olmayan cPanel ortamları için manuel yükleme yönergeleri
-- `cpanel-npm-install-fix.md` - Sunucu taraflı paket kurulum (npm) sorunlarına çözüm
-- `deployment-checklist.md` - Canlıya çıkmadan önceki (Pre-flight) kontrol listesi
-- `deployment-security-guide.md` - Webhook ve production ortamına ait güvenli deployment esasları
+### 📋 [project/](./project/)
+Projenin temel vizyonu, kapsamı ve makro seviyede sistem analizleri:
+- `project-brief.md` - **[Önemli]** Projenin teknik yığını ve mimari özeti
+
+### 🛠️ [error-handling/](./error-handling/)
+
+
+Hata yönetimi, registry ve mimari detaylar:
+- `ERROR_REGISTRY.md` - Sistem hatalarının merkezi kayıt defteri
+- `ERROR_REGISTRY_TR.md` - Merkezi kayıt defteri (Türkçe)
+- `ERROR_SYSTEM_ARCHITECTURE_TR.md` - Hata yakalama ve loglama mimarisi
+
+### 📖 [guides/](./guides/)
+Kullanım kılavuzları ve teknik rehberler:
+- `TERMINAL_REHBERI.md` - Terminal kullanımı ve otomasyon scriptleri rehberi
 
 ### 🔒 [security/](./security/)
 Siber güvenlik ve ortam değişkenleri konfigürasyonları:
 - `security-setup.md` - Güvenlik kurulum, hardening (sıkılaştırma) ve SSL rehberi
 - `env-information.md` - `.env` dosyasındaki tüm degişkenlerin işlev ve yaşam döngüleri
-
-### 📋 [project/](./project/)
-Projenin temel vizyonu, kapsamı ve makro seviyede sistem analizleri:
-- `project-brief.md` - **[Önemli]** Projenin teknik yığını ve mimari özeti
-- `personal-site.docx` - Projenin dökümantasyonunun raw (Word) hali
 
 ### 🛡️ [reports/](./reports/)
 - `GUVENLIK_DENETIM_RAPORU.md` - Sistemin *Defense in Depth* odaklı genel siber güvenlik denetim (audit) raporu
@@ -31,17 +34,17 @@ Projenin temel vizyonu, kapsamı ve makro seviyede sistem analizleri:
 
 ## 🚀 Hızlandırılmış Yönlendirmeler
 
-**1. Sunucuya Format Atıp Kurulum Yapıyorsanız:**
-İlk olarak [Project Brief](./project/project-brief.md) dosyasını okuyun. Teknoloji bağımlılıklarını anladıktan sonra doğrudan [Quick Start cPanel](./deployment/quick-start-cpanel.md) adımlarına geçin.
+**1. Projeyi Yeni Kuruyorsanız:**
+İlk olarak [Project Brief](./project/project-brief.md) dosyasını okuyun. Teknoloji bağımlılıklarını anladıktan sonra doğrudan kök dizindeki README dosyasını inceleyin.
 
 **2. Güvenlik Denetimi veya Zafiyet Testi Yapıyorsanız:**
-Lütfen kodları incelemeden önce doğrudan [Güvenlik Denetim Raporu](./reports/GUVENLIK_DENETIM_RAPORU.md) ve [Sistem Analizi](./project/sistem-analizi.md) makalelerini referans alın.
+Lütfen kodları incelemeden önce doğrudan [Güvenlik Denetim Raporu](./reports/GUVENLIK_DENETIM_RAPORU.md) dokümanını referans alın.
 
 ---
 
 ## 📝 Versiyon Geçmişi (Changelog)
 
-Projenin semantik versiyonlama sürecindeki her patch/minor/major güncellemesi kök dizindeki [`../version-notes/`](../version-notes/) klasöründe tasnif edilmiştir.
+Projenin semantik versiyonlama sürecindeki her patch/minor/major güncellemesi bu klasör altındaki [`./version-notes/`](./version-notes/) dizininde tasnif edilmiştir.
 
 ---
 
@@ -50,3 +53,4 @@ Projenin semantik versiyonlama sürecindeki her patch/minor/major güncellemesi 
 - [Ana Proje (Root) README](../README.md)
 - [Node.js Package Registry](../package.json)
 - [Admin CMS](../admin/README.md)
+
