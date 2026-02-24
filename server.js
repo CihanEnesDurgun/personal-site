@@ -355,7 +355,7 @@ const authenticateToken = async (req, res, next) => {
     const userAgent = req.headers['user-agent'];
 
     if (!token) {
-      Logger.warn('Erişim token\'ı gereklidir', { endpoint: req.path, method: req.method });
+      Logger.warn('[AUTH-8003] Erişim token\'ı gereklidir', { endpoint: req.path, method: req.method });
       return next(new AppError('AUTH-1001', null, 'Erişim token\'ı gereklidir'));
     }
 
@@ -364,8 +364,8 @@ const authenticateToken = async (req, res, next) => {
     try {
       decoded = jwt.verify(token, JWT_SECRET);
     } catch (err) {
-      Logger.warn('Geçersiz veya süresi dolmuş token', { endpoint: req.path, method: req.method, jwtError: err.name });
-      return next(new AppError('AUTH-1001', err, 'Geçersiz veya süresi dolmuş token'));
+      Logger.warn('[AUTH-8004] Gecersiz veya suresi dolmus token', { endpoint: req.path, method: req.method, jwtError: err.name });
+      return next(new AppError('AUTH-1001', err, 'Gecersiz veya suresi dolmus token'));
     }
 
     // If session manager is available, use enhanced validation
@@ -384,7 +384,7 @@ const authenticateToken = async (req, res, next) => {
           return next(new AppError('AUTH-1005', 403, 'Oturum süresi dolmuş veya geçersiz'));
         }
       } catch (sessionError) {
-        Logger.warn('⚠️  Session validation failed, falling back to JWT only:', sessionError.message);
+        Logger.warn('[AUTH-8005] Oturum dogrulama basarisiz, JWT ile devam ediliyor:', sessionError.message);
         // Fallback to basic JWT validation
         req.user = decoded;
       }
@@ -395,7 +395,7 @@ const authenticateToken = async (req, res, next) => {
 
     next();
   } catch (error) {
-    Logger.error('❌ Authentication error:', error);
+    Logger.error('[AUTH-8006] Kimlik dogrulama hatasi:', error);
     return next(new AppError('SYS-3001', 500, 'Kimlik doğrulama başarısız'));
   }
 };
@@ -795,6 +795,7 @@ const logFailedLogin = async (username, req, reason = 'Invalid credentials') => 
     }
 
     await writeSessionsFile(sessions);
+    Logger.warn(`[AUTH-8007] Hatali giris denemesi: ${username} IP: ${getClientIP(req)} Sebep: ${reason}`);
   } catch (error) {
     Logger.error('Error logging failed login:', error);
   }
@@ -956,7 +957,7 @@ const cleanupStatsData = async () => {
 
     // Save cleaned stats
     await writeStatsFile(stats);
-    Logger.info(`✅ Stats data cleaned successfully. Total views: ${stats.totalViews}`);
+    Logger.info(`[SYS-2016] Istatistik verileri basariyla temizlendi. Toplam goruntulenme: ${stats.totalViews}`);
 
     return stats;
   } catch (error) {
@@ -979,7 +980,7 @@ const validateStatsData = async () => {
     const orphanedStats = Object.keys(stats.postViews).filter(slug => !validPostSlugs.includes(slug));
 
     if (orphanedStats.length > 0) {
-      Logger.info(`⚠️  Found orphaned stats for deleted posts: ${orphanedStats.join(', ')}`);
+      Logger.info(`[SYS-2012] Yazar tarafindan silinmis ancak istatistigi kalmis (yoksun/orphaned) yazi datalari bulundu: ${orphanedStats.join(', ')}`);
       return false;
     }
 
@@ -987,7 +988,7 @@ const validateStatsData = async () => {
     const missingStats = validPostSlugs.filter(slug => !stats.postViews[slug]);
 
     if (missingStats.length > 0) {
-      Logger.info(`⚠️  Found posts without stats: ${missingStats.join(', ')}`);
+      Logger.info(`[SYS-2013] Istatistik (stats) kaydi bulunmayan yeni yazilar tespit edildi: ${missingStats.join(', ')}`);
       // Initialize missing stats with 0
       missingStats.forEach(slug => {
         stats.postViews[slug] = 0;
@@ -1195,11 +1196,85 @@ const generateSitemap = async () => {
 </urlset>`;
 
     await fs.writeFile('sitemap.xml', sitemapContent, 'utf8');
-    Logger.info('Sitemap updated successfully');
+    Logger.info('[SYS-2014] Site haritasi (sitemap) basariyla guncellendi');
     return true;
   } catch (error) {
     Logger.error('Error generating Sitemap:', error);
     return false;
+  }
+};
+
+
+// ====== Asset Cleanup System ======
+/**
+ * Blog yazısına ait görselleri (kapak ve içerik) temizler.
+ * Başka bir yazıda kullanılan görselleri koruyarak güvenli silme sağlar.
+ * @param {Object} post - Silinen yazı objesi
+ * @param {string} content - Silinen yazının markdown içeriği
+ */
+const cleanupPostAssets = async (post, content) => {
+  if (!post) return;
+
+  try {
+    const assetsToDelete = [];
+
+    // 1. Kapak Fotoğrafı
+    if (post.cover && post.cover.startsWith('images/')) {
+      // Sadece blog klasörlerini kontrol et (system/profile hariç)
+      if (post.cover.includes('/blog-covers/') || post.cover.includes('/blog-content/')) {
+        assetsToDelete.push(post.cover);
+      }
+    }
+
+    // 2. Markdown İçeriğindeki Görseller
+    const imageRegex = /!\[.*?\]\((.*?)\)/g;
+    let match;
+    while ((match = imageRegex.exec(content)) !== null) {
+      const url = match[1];
+      if (url.startsWith('images/') && (url.includes('/blog-covers/') || url.includes('/blog-content/'))) {
+        assetsToDelete.push(url);
+      }
+    }
+
+    const uniqueAssets = [...new Set(assetsToDelete)];
+    if (uniqueAssets.length === 0) return;
+
+    // 3. Shared Asset Kontrolü
+    const posts = await readPostsFile();
+    // Diğer yazıları (silinmekte olan hariç) filtrele
+    const otherPosts = posts.filter(p => p.slug !== post.slug && p.status !== 'deleted');
+
+    // Performans için diğer yazı içeriklerini bir kez oku
+    const otherPostsContent = await Promise.all(otherPosts.map(async p => {
+      const mdPath = path.join(CONTENT_DIR, `${p.slug}.md`);
+      try {
+        if (await fs.pathExists(mdPath)) return await fs.readFile(mdPath, 'utf8');
+      } catch (e) { }
+      return '';
+    }));
+
+    for (const assetPath of uniqueAssets) {
+      let isShared = false;
+      for (let i = 0; i < otherPosts.length; i++) {
+        if (otherPosts[i].cover === assetPath || otherPostsContent[i].includes(assetPath)) {
+          isShared = true;
+          break;
+        }
+      }
+
+      if (!isShared) {
+        const sanitizedPath = assetPath.replace(/\.\./g, '');
+        const fullPath = path.join(__dirname, sanitizedPath);
+        if (await fs.pathExists(fullPath)) {
+          await fs.remove(fullPath);
+          Logger.info(`[FILE-8005] Sahipsiz blog görseli temizlendi: ${assetPath}`);
+        }
+      } else {
+        Logger.info(`[FILE-8006] Görsel başka yazıda kullanımda, silinmedi: ${assetPath}`);
+      }
+    }
+  } catch (error) {
+    Logger.error('cleanupPostAssets hatası:', error);
   }
 };
 
@@ -1208,7 +1283,7 @@ const generateSitemap = async () => {
 // Login endpoint with strict rate limiting
 app.post('/api/login', loginLimiter, async (req, res, next) => {
   try {
-    Logger.info('🔐 Login request received');
+    Logger.info('[AUTH-8000] Giris istegi alindi');
     const { username, password } = req.body;
 
     if (!username || !password) {
@@ -1267,7 +1342,7 @@ app.post('/api/login', loginLimiter, async (req, res, next) => {
             }
           });
 
-          Logger.info(`✅ Successful login with session: ${username} from ${ip}`);
+          Logger.info(`[AUTH-8001] Basarili giris: ${username} IP: ${ip}`);
         } catch (sessionError) {
           Logger.warn('⚠️  Session creation failed, using basic JWT:', sessionError.message);
           // Fallback to basic JWT with consistent payload
@@ -1311,6 +1386,8 @@ app.post('/api/login', loginLimiter, async (req, res, next) => {
       }
     } else {
       // Log failed login attempt
+      await logFailedLogin(username, req, 'Invalid password');
+
       if (sessionManager) {
         const ip = req.ip || req.connection.remoteAddress;
         const userAgent = req.headers['user-agent'];
@@ -1349,7 +1426,7 @@ app.post('/api/logout', authenticateToken, async (req, res, next) => {
   try {
     if (sessionManager && req.user.sessionId) {
       await sessionManager.invalidateSession(req.user.sessionId);
-      Logger.info(`✅ User logged out: ${req.user.username} (${req.user.sessionId})`);
+      Logger.info(`[AUTH-8002] Kullanici basariyla cikis yapti: ${req.user.username} (Session: ${req.user.sessionId})`);
     }
 
     res.json({
@@ -1472,7 +1549,7 @@ app.get('/api/posts/:slug', authenticateToken, async (req, res, next) => {
 // Create new post
 app.post('/api/posts', authenticateToken, async (req, res, next) => {
   try {
-    const { title, excerpt, date, cover, coverCaption, tags, content, featured, status, publishDate } = req.body;
+    const { title, slug: bodySlug, excerpt, date, cover, coverCaption, tags, content, featured, status, publishDate } = req.body;
 
     // Enhanced input validation
     validateRequired(req.body, ['title', 'excerpt', 'content'], {
@@ -1503,12 +1580,12 @@ app.post('/api/posts', authenticateToken, async (req, res, next) => {
       throw error;
     }
 
-    const slug = generateSlug(title);
+    let slug = bodySlug || generateSlug(title);
     const posts = await readPostsFile();
 
-    // Check if slug already exists
+    // Check if slug already exists. If yes, append random timestamp/hash to make it unique rather than failing
     if (posts.find(p => p.slug === slug)) {
-      return next(new AppError('VAL-2001', 400, 'Bu başlıkta bir blog yazısı zaten mevcut'));
+      slug = `${slug}-${Math.random().toString(36).substring(2, 8)}`;
     }
 
     const newPost = {
@@ -1563,14 +1640,14 @@ app.post('/api/posts', authenticateToken, async (req, res, next) => {
 // Update post
 app.put('/api/posts/:slug', authenticateToken, async (req, res, next) => {
   try {
-    const { title, excerpt, date, cover, coverCaption, tags, content, featured, status, publishDate } = req.body;
+    const { title, slug: bodySlug, excerpt, date, cover, coverCaption, tags, content, featured, status, publishDate } = req.body;
     const originalSlug = req.params.slug;
 
     if (!title || !excerpt || !content) {
       return next(new AppError('VAL-2001', 400, 'Eksik gerekli alanlar'));
     }
 
-    const newSlug = generateSlug(title);
+    let newSlug = bodySlug || generateSlug(title);
     const posts = await readPostsFile();
 
     const postIndex = posts.findIndex(p => p.slug === originalSlug);
@@ -1578,9 +1655,9 @@ app.put('/api/posts/:slug', authenticateToken, async (req, res, next) => {
       return next(new AppError('RES-6001', 404, 'Blog yazısı bulunamadı'));
     }
 
-    // Check if new slug conflicts with other posts
+    // Check if new slug conflicts with other posts (excluding itself)
     if (originalSlug !== newSlug && posts.find(p => p.slug === newSlug)) {
-      return next(new AppError('VAL-2001', 400, 'Bu başlıkta bir blog yazısı zaten mevcut'));
+      newSlug = `${newSlug}-${Math.random().toString(36).substring(2, 8)}`;
     }
 
     const updatedPost = {
@@ -1891,14 +1968,26 @@ app.delete('/api/posts/:slug/permanent', authenticateToken, async (req, res, nex
       return next(new AppError('SYS-3001', 500, 'Blog yazıları metadata kaydedilirken hata oluştu'));
     }
 
-    // Delete markdown file permanently
+    // --- Asset Temizleme Operasyonu ---
     const markdownPath = path.join(CONTENT_DIR, `${slug}.md`);
     try {
-      await fs.remove(markdownPath);
-      Logger.info(`Markdown file deleted: ${markdownPath}`);
-    } catch (error) {
-      Logger.info(`Markdown file not found or already deleted: ${markdownPath}`);
+      let content = '';
+      if (await fs.pathExists(markdownPath)) {
+        content = await fs.readFile(markdownPath, 'utf8');
+      }
+
+      // Önce görselleri temizle (Shared check dahil)
+      await cleanupPostAssets(post, content);
+
+      // Sonra markdown dosyasını sil
+      if (await fs.pathExists(markdownPath)) {
+        await fs.remove(markdownPath);
+        Logger.info(`[FILE-8004] Markdown dosyası kalıcı olarak silindi: ${markdownPath}`);
+      }
+    } catch (cleanupError) {
+      Logger.error(`Kalıcı silme asset temizliği sırasında hata (Slug: ${slug}):`, cleanupError);
     }
+    // ----------------------------------
 
     // Clean up stats data for permanently deleted post
     await cleanupStatsData();
@@ -1960,7 +2049,7 @@ app.post('/api/upload', authenticateToken, (req, res, next) => {
 
       try {
         await fs.move(sourcePath, targetPath, { overwrite: true });
-        Logger.info(`✅ File moved to ${targetFolder}: ${req.file.originalname} -> ${req.file.filename}`);
+        Logger.info(`[FILE-8000] Dosya basariyla '${targetFolder}' klasorune tasindi: ${req.file.originalname} -> ${req.file.filename}`);
       } catch (moveError) {
         Logger.error('Error moving file to target folder:', moveError);
         // If move fails, try to copy instead
@@ -1975,7 +2064,7 @@ app.post('/api/upload', authenticateToken, (req, res, next) => {
       }
 
       // Log successful upload
-      Logger.info(`✅ File uploaded successfully to ${targetFolder}: ${req.file.originalname} -> ${req.file.filename}`);
+      Logger.info(`[FILE-8001] '${targetFolder}' klasorune dosya yuklemesi basarili: ${req.file.originalname} -> ${req.file.filename}`);
 
       const imageUrl = `images/${targetFolder}/${req.file.filename}`;
       res.json({
@@ -1998,7 +2087,7 @@ app.post('/api/upload', authenticateToken, (req, res, next) => {
 // Get deleted images (must be before /api/gallery/:folder)
 app.get('/api/gallery/deleted', authenticateToken, async (req, res, next) => {
   try {
-    Logger.info('Getting deleted images...');
+    Logger.info('[SYS-2011] Silinmis gorseller getiriliyor...');
     const deletedDir = path.join(__dirname, 'images', 'deleted');
     const deletedImagesPath = path.join(__dirname, 'data', 'deleted-images.json');
 
@@ -2252,6 +2341,65 @@ app.delete('/api/gallery/:folder/:filename', authenticateToken, async (req, res,
   }
 });
 
+// Clean up all orphaned assets (not used in any post)
+app.post('/api/gallery/cleanup-orphans', authenticateToken, async (req, res, next) => {
+  try {
+    Logger.info('[FILE-8010] Sahipsiz görsel temizliği başlatıldı...');
+
+    const posts = await readPostsFile();
+    const usedAssets = new Set();
+
+    // 1. Tüm yazılardaki kullanılan assetleri topla
+    for (const post of posts) {
+      if (post.cover) usedAssets.add(post.cover);
+
+      const mdPath = path.join(CONTENT_DIR, `${post.slug}.md`);
+      try {
+        if (await fs.pathExists(mdPath)) {
+          const content = await fs.readFile(mdPath, 'utf8');
+          const imageRegex = /!\[.*?\]\((.*?)\)/g;
+          let match;
+          while ((match = imageRegex.exec(content)) !== null) {
+            usedAssets.add(match[1]);
+          }
+        }
+      } catch (e) { }
+    }
+
+    // 2. Klasörleri tara ve kullanılmayanları sil
+    const cleanupFolders = ['blog-covers', 'blog-content'];
+    let deletedCount = 0;
+    const deletedFiles = [];
+
+    for (const folder of cleanupFolders) {
+      const folderPath = path.join(__dirname, 'images', folder);
+      if (await fs.pathExists(folderPath)) {
+        const files = await fs.readdir(folderPath);
+        for (const file of files) {
+          const assetPath = `images/${folder}/${file}`;
+          if (!usedAssets.has(assetPath)) {
+            await fs.remove(path.join(folderPath, file));
+            deletedCount++;
+            deletedFiles.push(assetPath);
+          }
+        }
+      }
+    }
+
+    Logger.info(`[FILE-8011] Temizlik tamamlandı. ${deletedCount} sahipsiz görsel silindi.`);
+
+    res.json({
+      success: true,
+      message: `${deletedCount} sahipsiz görsel başarıyla temizlendi`,
+      deletedCount,
+      deletedFiles
+    });
+  } catch (error) {
+    Logger.error('Orphan cleanup error:', error);
+    next(new AppError('SYS-3001', 500, 'Sahipsiz görseller temizlenirken hata oluştu'));
+  }
+});
+
 
 // Get dashboard stats
 app.get('/api/stats', authenticateToken, async (req, res, next) => {
@@ -2369,10 +2517,10 @@ app.get('/api/stats/analytics', authenticateToken, async (req, res, next) => {
 
     if (timeRange === 'all') {
       days = null; // null means all time
-      Logger.info(`📊 Analytics requested for ALL TIME`);
+      Logger.info(`[SYS-2015] Tum zamanlarin (ALL TIME) analitik verileri istendi`);
     } else {
       days = parseInt(timeRange) || 30;
-      Logger.info(`📊 Analytics requested for last ${days} days`);
+      Logger.info(`[SYS-2015] Son ${days} gunluk analitik veriler istendi`);
     }
 
     // Get popular posts (only active/published posts)
@@ -2478,7 +2626,7 @@ app.get('/api/stats/analytics', authenticateToken, async (req, res, next) => {
 // Manual stats cleanup (admin only)
 app.post('/api/stats/cleanup', authenticateToken, async (req, res, next) => {
   try {
-    Logger.info('🧹 Manual stats cleanup requested by admin');
+    Logger.info('[SYS-2007] Yonetici tarafindan manuel istatistik veri dogrulamasi/temizlemesi istendi');
 
     // Clean up stats data
     const cleanedStats = await cleanupStatsData();
@@ -3569,10 +3717,10 @@ app.listen(PORT, async () => {
     }
   }, SESSION_LIMITS.CLEANUP_INTERVAL);
 
-  Logger.info(`[SYS-3000] Personal Site ${APP_VERSION} - Admin API Sunucusu ${PORT} portunda calisiyor`);
-  Logger.info(`[SYS-3001] Guvenlik ve Oturum Yonetim Sistemi (Session Management) aktif`);
-  Logger.info(`[SYS-3002] Istatistik Veri Dogrulama ve Temizleme Sistemi aktif`);
-  Logger.info(`[SYS-3003] Otomatik Oturum Temizleme Sistemi aktif (her ${SESSION_LIMITS.CLEANUP_INTERVAL / (60 * 1000)} dakikada bir)`);
+  Logger.info(`[SYS-8000] Personal Site ${APP_VERSION} - Admin API Sunucusu ${PORT} portunda calisiyor`);
+  Logger.info(`[SYS-8001] Guvenlik ve Oturum Yonetim Sistemi (Session Management) aktif`);
+  Logger.info(`[SYS-8002] Istatistik Veri Dogrulama ve Temizleme Sistemi aktif`);
+  Logger.info(`[SYS-8003] Otomatik Oturum Temizleme Sistemi aktif (her ${SESSION_LIMITS.CLEANUP_INTERVAL / (60 * 1000)} dakikada bir)`);
   // Logger.info(`📝 API Documentation:`);
   // Logger.info(`   POST /api/login - Login`);
   // Logger.info(`   GET  /api/posts - Get all posts`);

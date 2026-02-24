@@ -13,6 +13,11 @@ Errors are categorized using an alphanumeric prefix followed by a 4-digit number
 - **`FILE-5000`**: File Operations (Upload limits, invalid extensions)
 - **`RES-6000`**: Resource Operations (404 Not Found, 409 Conflicts)
 
+### System Information Logs
+- **`ENV-1000`**: Environment & Configuration (Variables, initial setups)
+- **`SYS-2000`**: System Initialization & Operations (Managers, periodic tasks)
+- **`SYS-8000`**: Server Lifecycle (Server boot, system states)
+
 ---
 
 ## 🔐 1. Authentication & Authorization (AUTH-1000)
@@ -57,6 +62,62 @@ Errors are categorized using an alphanumeric prefix followed by a 4-digit number
 | :--- | :--- | :--- | :--- |
 | **`RES-6001`** | 404 | Resource Not Found | The requested resource could not be found. |
 | **`RES-6002`** | 409 | Resource Conflict | A conflict occurred, such as attempting to create a resource that already exists. |
+
+---
+
+## ℹ️ 7. System Information Logs (INFO/WARN)
+These codes are used alongside standard logs to provide standardized filtering for server operations. They do not throw HTTP errors.
+
+### 🌐 Environment & Configuration (ENV-1000)
+| Code | Level | Description |
+| :--- | :--- | :--- |
+| **`ENV-1000`** | INFO | Cevresel degiskenler basariyla yuklendi |
+| **`ENV-1001`** | INFO | JWT_SECRET: AYARLANDI |
+| **`ENV-1002`** | INFO | BCRYPT_SALT_ROUNDS yuklendi |
+| **`ENV-1003`** | INFO | NODE_ENV durumu belirlendi |
+| **`ENV-1004`** | WARN | Gecersiz BCRYPT_SALT_ROUNDS degeri |
+
+### ⚙️ System Initialization & Operations (SYS-2000)
+| Code | Level | Description |
+| :--- | :--- | :--- |
+| **`SYS-2000`** | INFO | Oturum Yoneticisi (Session Manager) basariyla baslatildi |
+| **`SYS-2001`** | ERROR| Oturum Yoneticisi (Session Manager) baslatilamadi |
+| **`SYS-2003`** | INFO | Log Temizleme Yoneticisi (Cleanup Manager) basariyla baslatildi |
+| **`SYS-2005`** | INFO | Istatistik veri dogrulamasi basariyla tamamlandi |
+| **`SYS-2006`** | INFO | RSS akisi basariyla guncellendi |
+| **`SYS-2008`** | INFO | Istatistik verileri dogrulaniyor... |
+| **`SYS-2009`** | INFO | Oturum (session) verileri temizleniyor... |
+| **`SYS-2012`** | INFO | Yazar tarafindan silinmis ancak istatistigi kalmis (yoksun/orphaned) yazi datalari bulundu |
+| **`SYS-2013`** | INFO | Istatistik (stats) kaydi bulunmayan yeni yazilar tespit edildi |
+| **`SYS-2014`** | INFO | Sitemap updated successfully |
+| **`SYS-2015`** | INFO | Analytics data (all-time / daily) requested |
+| **`SYS-2016`** | INFO | Statistics data cleaned successfully |
+
+### 🔐 Authentication Logs (AUTH-8000)
+| Code | Level | Description |
+| :--- | :--- | :--- |
+| **`AUTH-8000`** | INFO | Giris istegi alindi |
+| **`AUTH-8001`** | INFO | Successful login |
+| **`AUTH-8002`** | INFO | User logged out successfully |
+| **`AUTH-8003`** | WARN | Access token is required |
+| **`AUTH-8004`** | WARN | Invalid or expired token |
+| **`AUTH-8005`** | WARN | Session validation failed, falling back to JWT |
+| **`AUTH-8006`** | ERROR | Authentication system error |
+| **`AUTH-8007`** | WARN | Failed login attempt |
+
+### 📁 File Operation Logs (FILE-8000)
+| Code | Level | Description |
+| :--- | :--- | :--- |
+| **`FILE-8000`** | INFO | Dosya basariyla hedef klasore tasindi |
+| **`FILE-8001`** | INFO | Hedef klasore dosya yuklemesi basarili |
+
+### 🚀 Server Lifecycle (SYS-8000)
+| Code | Level | Description |
+| :--- | :--- | :--- |
+| **`SYS-8000`** | INFO | Personal Site - Admin API Sunucusu portunda calisiyor |
+| **`SYS-8001`** | INFO | Guvenlik ve Oturum Yonetim Sistemi (Session Management) aktif |
+| **`SYS-8002`** | INFO | Istatistik Veri Dogrulama ve Temizleme Sistemi aktif |
+| **`SYS-8003`** | INFO | Otomatik Oturum Temizleme Sistemi aktif |
 
 ---
 

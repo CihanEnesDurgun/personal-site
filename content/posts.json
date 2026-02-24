@@ -1,39 +1,5 @@
 [
   {
-    "slug": "hosgeldiniz-blog-sitem-hakkinda",
-    "title": "Hoşgeldiniz! Blog Sitem Hakkında...",
-    "excerpt": "Blog sitemiz hakkında bilgi verdiğimiz, sitemize yeni gelen misafirlerimiz için bilgi metni.",
-    "date": "2025-11-15",
-    "cover": "images/blog-covers/IMG_6663.jpg",
-    "coverCaption": "IMG_6663.jpg",
-    "tags": [
-      "markdown",
-      "test"
-    ],
-    "featured": false,
-    "status": "published",
-    "publishDate": "2025-11-15T14:14:52.005Z",
-    "createdAt": "2025-11-15T14:10:49.750Z",
-    "updatedAt": "2025-11-15T14:14:52.005Z"
-  },
-  {
-    "slug": "sistem-hatalari-notlarim",
-    "title": "Sistem Hataları Notlarım",
-    "excerpt": "Bu yazıda sistemimizdeki hataları not ediyorum.",
-    "date": "2025-10-16",
-    "cover": "images/blog-covers/Test-Logo-Small-Black-transparent-1.png",
-    "coverCaption": "Sistem Hatalarını Test Ediyoruz.",
-    "tags": [
-      "Sistem",
-      "Test"
-    ],
-    "featured": false,
-    "status": "published",
-    "publishDate": "2025-10-16T16:24:54.122Z",
-    "createdAt": "2025-10-16T16:24:44.929Z",
-    "updatedAt": "2025-10-27T16:17:28.931Z"
-  },
-  {
     "slug": "headtracker-imudan-stabil-takip",
     "title": "Headtracker: IMU'dan Stabil Takip",
     "excerpt": "ESP-NOW protokolü ile cihazlar arası doğrudan iletişim ve IMU tabanlı headtracker sistemi hakkında detaylı rehber.",

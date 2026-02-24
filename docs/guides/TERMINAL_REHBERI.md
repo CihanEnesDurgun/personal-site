@@ -42,22 +42,33 @@ Terminalde aktif olarak çalışan bir sunucuyu, işlemi veya scripti durdurmak 
 - **İlk Yöntem (Klavye Kısayolu):** `Ctrl` + `C`
 *(Bastıktan sonra sistem size "İşletim dosyasından çıkılsın mı? (Y/N)" diye sorabilir, `Y` tuşuna basıp `Enter`layarak tamamen durdurabilirsiniz.)*
 
-### ⚠️ Ctrl+C Çalışmıyorsa (Alternatif Zorla Durdurma Yöntemleri)
-Bazen port (3001) asılı kalır veya terminal tepki vermez. Bu durumda arka planda çalışan Node.js sunucusunu "zorla" kapatmanız gerekir. Bunun için yepyeni, boş bir terminal (PowerShell) açıp şu komutlardan birini kullanabilirsiniz:
+### ⚠️ Port Çakışması (EADDRINUSE) veya Askıda Kalan İşlemler (Hard Reset)
+Bazen terminal yanıt vermez veya sunucuyu başlatmaya çalıştığınızda **"EADDRINUSE: address already in use"** (Port dolu) hatası alırsınız. Bu durumda arka planda asılı kalmış Node.js süreçlerini veya portları zorla temizlemeniz gerekir (Hard Reset). Yeni, boş bir terminal (PowerShell) açıp şu yöntemleri kullanabilirsiniz:
 
-**Yöntem 1 (Windows PowerShell İçin En Kolayı):**
-Tüm çalışan Node.js görevlerini tek seferde sonlandırır.
+**Yöntem 1 (En Hızlı Yol - Tüm Node.js işlemlerini öldürür):**
+Bu komut, aktif olarak çalışan tüm Node.js tabanlı sunucuları ve betikleri anında durdurur ve tuttukları portları (3000, 3001 vb.) serbest bırakır.
 ```powershell
-Stop-Process -Name "node" -Force
-```
-
-**Yöntem 2 (Windows Cmd İçin alternatif):**
-Aynı şekilde tüm arka plan Node.js işlemlerini acil kapatır.
-```bash
 taskkill /F /IM node.exe
 ```
 
-*Not: Bunu yaptıktan sonra tekrar `npm run dev` ile sunucuyu sıfırdan sorunsuzca başlatabilirsiniz.*
+**Yöntem 2 (Sadece Belirli Portları Kapatmak İçin - PowerShell Scripti):**
+Eğer tüm Node işlemlerini değil de sadece belirli portları zorla temizlemek isterseniz PowerShell'e bu kod bloğunu kopyalayıp yapıştırabilirsiniz:
+```powershell
+$ports = @(3000, 3001, 8000, 8080) # Kapatmak istediğiniz portları buradan belirleyebilirsiniz
+foreach ($port in $ports) {
+    $connections = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue
+    if ($connections) {
+        foreach ($conn in $connections) {
+            Stop-Process -Id $conn.OwningProcess -Force -ErrorAction SilentlyContinue
+            Write-Host "$port portunu kullanan islem (PID: $($conn.OwningProcess)) sonlandirildi." -ForegroundColor Green
+        }
+    } else {
+        Write-Host "$port portu su an bos." -ForegroundColor Yellow
+    }
+}
+```
+
+*Not: Hard reset işleminden sonra portlar açılacağı için terminalinize dönüp `npm run dev` ile sunucuyu sıfırdan sorunsuzca başlatabilirsiniz.*
 
 ---
 

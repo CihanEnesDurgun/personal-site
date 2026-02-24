@@ -230,7 +230,9 @@
     text-overflow: ellipsis;
 }
 
-.gallery-loading, .gallery-empty, .gallery-error {
+.gallery-loading,
+.gallery-empty,
+.gallery-error {
     text-align: center;
     padding: 40px;
     color: var(--muted);
@@ -287,7 +289,7 @@
     --line: #e5e7eb;
     --accent: #84CC16;
     --radius: 16px;
-    --shadow: 0 10px 24px rgba(0,0,0,.06);
+    --shadow: 0 10px 24px rgba(0, 0, 0, .06);
 }
 
 /* Dark theme */
@@ -298,7 +300,7 @@
     --muted: #9aa4b2;
     --line: #2a2f35;
     --accent: #84CC16;
-    --shadow: 0 12px 28px rgba(0,0,0,.35);
+    --shadow: 0 12px 28px rgba(0, 0, 0, .35);
 }
 
 /* Temel reset */
@@ -400,8 +402,8 @@ body {
 }
 
 /* Post sayfası main padding */
-main { 
-  padding-top: 0px; 
+main {
+    padding-top: 0px;
 }
 
 /* Post sayfası utility sınıfları */
@@ -445,7 +447,7 @@ div.mb-8,
     align-items: center;
 }
 
-.space-x-4 > * + * {
+.space-x-4>*+* {
     margin-left: 1rem;
 }
 
@@ -478,25 +480,25 @@ div.mb-8,
 
 /* ========== HERO IMAGE (Post sayfası ile birebir aynı) ========== */
 #postHero {
-  margin: 0.5rem 0 2rem;
-  text-align: center;
+    margin: 0.5rem 0 2rem;
+    text-align: center;
 }
 
 #heroImg {
-  width: 100%;
-  max-width: 600px;
+    width: 100%;
+    max-width: 600px;
     height: auto;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  display: block;
-  margin: 0 auto;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    display: block;
+    margin: 0 auto;
 }
 
 #heroCaption {
-  text-align: center;
-  font-size: 0.875rem;
-  margin-top: 0.75rem;
-  color: var(--muted);
+    text-align: center;
+    font-size: 0.875rem;
+    margin-top: 0.75rem;
+    color: var(--muted);
 }
 
 /* Editör İçerik - Post sayfası blog-content ile birebir aynı */
@@ -506,7 +508,8 @@ div.mb-8,
     border: none;
     outline: none;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    font-size: 1.125rem; /* 18px - Post sayfası ile aynı */
+    font-size: 1.125rem;
+    /* 18px - Post sayfası ile aynı */
     line-height: 1.7;
     color: var(--ink);
     background: transparent;
@@ -518,7 +521,8 @@ div.mb-8,
 
 /* Preview İçerik - Post sayfası blog-content ile birebir aynı */
 .preview-content {
-    font-size: 1.125rem; /* 18px */
+    font-size: 1.125rem;
+    /* 18px */
     line-height: 1.7;
     color: var(--ink);
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -526,7 +530,12 @@ div.mb-8,
     max-width: none;
 }
 
-.preview-content h1, .preview-content h2, .preview-content h3, .preview-content h4, .preview-content h5, .preview-content h6 {
+.preview-content h1,
+.preview-content h2,
+.preview-content h3,
+.preview-content h4,
+.preview-content h5,
+.preview-content h6 {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     color: var(--ink);
     margin-top: 2em;
@@ -536,34 +545,34 @@ div.mb-8,
     letter-spacing: -0.01em;
 }
 
-.preview-content h1 { 
-    font-size: 2.5rem; 
+.preview-content h1 {
+    font-size: 2.5rem;
     margin-top: 2.5em;
     margin-bottom: 1em;
     line-height: 1.2;
 }
 
-.preview-content h2 { 
-    font-size: 2rem; 
+.preview-content h2 {
+    font-size: 2rem;
     margin-top: 2em;
     margin-bottom: 0.8em;
     line-height: 1.3;
 }
 
-.preview-content h3 { 
-    font-size: 1.5rem; 
+.preview-content h3 {
+    font-size: 1.5rem;
     margin-top: 1.8em;
     margin-bottom: 0.6em;
     line-height: 1.4;
 }
 
-.preview-content p { 
-    margin-bottom: 1em; 
+.preview-content p {
+    margin-bottom: 1em;
     line-height: 1.7;
 }
 
-.preview-content a { 
-    color: var(--accent); 
+.preview-content a {
+    color: var(--accent);
     text-decoration: none;
     border-bottom: 1px solid transparent;
     transition: all 0.2s ease;
@@ -618,11 +627,35 @@ div.mb-8,
     height: auto;
     border-radius: var(--radius);
     display: block;
-    margin: 1.5em auto;
+    margin: 1em auto;
     box-shadow: var(--shadow);
 }
 
-.preview-content ul, .preview-content ol {
+.preview-content figure {
+    text-align: center;
+    margin: 16px 0;
+    display: block;
+}
+
+.preview-content figure img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 6px;
+    display: block;
+    margin: 0 auto;
+}
+
+.preview-content figcaption {
+    font-size: 14px;
+    color: var(--muted);
+    font-style: italic;
+    text-align: center;
+    margin-top: 8px;
+    margin-bottom: 0;
+}
+
+.preview-content ul,
+.preview-content ol {
     margin: 1.25em 0;
     padding-left: 1.5em;
 }
@@ -746,7 +779,12 @@ div.mb-8,
     max-width: none;
 }
 
-#editorContent h1, #editorContent h2, #editorContent h3, #editorContent h4, #editorContent h5, #editorContent h6 {
+#editorContent h1,
+#editorContent h2,
+#editorContent h3,
+#editorContent h4,
+#editorContent h5,
+#editorContent h6 {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     color: var(--ink);
     margin-top: 2em;
@@ -756,29 +794,29 @@ div.mb-8,
     letter-spacing: -0.01em;
 }
 
-#editorContent h1 { 
-    font-size: 2.5rem; 
+#editorContent h1 {
+    font-size: 2.5rem;
     margin-top: 2.5em;
     margin-bottom: 1em;
     line-height: 1.2;
 }
 
-#editorContent h2 { 
-    font-size: 2rem; 
+#editorContent h2 {
+    font-size: 2rem;
     margin-top: 2em;
     margin-bottom: 0.8em;
     line-height: 1.3;
 }
 
-#editorContent h3 { 
-    font-size: 1.5rem; 
+#editorContent h3 {
+    font-size: 1.5rem;
     margin-top: 1.8em;
     margin-bottom: 0.6em;
     line-height: 1.4;
 }
 
-#editorContent p { 
-    margin-bottom: 1em; 
+#editorContent p {
+    margin-bottom: 1em;
     line-height: 1.7;
 }
 
@@ -803,10 +841,48 @@ div.mb-8,
 #editorContent s,
 #editorContent del {
     text-decoration: line-through;
+}
+
+#editorContent figure {
+    text-align: center;
+    margin: 16px 0;
+    display: block;
+}
+
+#editorContent figure img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 6px;
+    display: block;
+    margin: 0 auto;
+}
+
+#editorContent figcaption {
+    font-size: 14px;
+    color: var(--muted);
+    font-style: italic;
+    text-align: center;
+    margin-top: 8px;
+    margin-bottom: 0;
+}
+
+#editorContent img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius);
+    display: block;
+    margin: 1em auto;
+    box-shadow: var(--shadow);
+}
+
+#editorContent s,
+#editorContent del {
+    text-decoration: line-through;
     color: var(--muted);
 }
 
-#editorContent ul, #editorContent ol {
+#editorContent ul,
+#editorContent ol {
     margin: 1.25em 0;
     padding-left: 1.5em;
 }
@@ -854,7 +930,7 @@ div.mb-8,
     font-size: 1.1em;
 }
 
-#editorContent code { 
+#editorContent code {
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     background: var(--panel);
     padding: 0.2em 0.4em;
@@ -910,23 +986,23 @@ div.mb-8,
         top: 10px;
         left: 10px;
     }
-    
+
     .top-right-buttons {
         top: 10px;
         right: 10px;
         gap: 6px;
     }
-    
+
     .top-save-btn {
         padding: 6px 10px;
         font-size: 12px;
     }
-    
+
     .admin-fixed-button {
         padding: 6px 10px;
         font-size: 12px;
     }
-    
+
     .theme-chip {
         width: 36px !important;
         height: 36px !important;
@@ -1211,9 +1287,9 @@ div.mb-8,
 .form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-        gap: 16px;
-    }
-    
+    gap: 16px;
+}
+
 .form-actions {
     display: flex;
     gap: 12px;
@@ -1379,7 +1455,7 @@ div.mb-8,
 }
 
 .save-indicator.show {
-        opacity: 1;
+    opacity: 1;
     transform: translateY(0);
 }
 
@@ -1392,59 +1468,60 @@ div.mb-8,
         left: 10px;
         max-height: 70vh;
     }
-    
+
     .sidebar-btn {
         width: 36px;
         height: 36px;
-    font-size: 12px;
+        font-size: 12px;
     }
-    
+
     .group-label {
         font-size: 7px;
         margin-bottom: 2px;
     }
-    
+
     .main-content {
         padding: 40px 0;
     }
-    
+
     #documentTitle {
         font-size: 2rem;
     }
-    
+
     .editor-content {
         font-size: 1rem;
     }
-    
-    
+
+
     .top-right-buttons {
         top: 10px;
         right: 10px;
         gap: 8px;
     }
-    
-    
+
+
     .admin-fixed-button {
         padding: 8px 12px;
-    font-size: 12px;
+        font-size: 12px;
     }
-    
+
     .stats-container {
-    flex-direction: column;
-    gap: 8px;
+        flex-direction: column;
+        gap: 8px;
         padding: 0 10px;
     }
-    
-    .stats-left, .stats-right {
+
+    .stats-left,
+    .stats-right {
         justify-content: center;
         flex-wrap: wrap;
         gap: 0.75rem;
     }
-    
+
     .stat-item {
         font-size: 11px;
     }
-    
+
     .form-row {
         grid-template-columns: 1fr;
     }
@@ -1455,27 +1532,27 @@ div.mb-8,
     .sidebar-toolbar {
         width: 50px;
         padding: 8px 0;
-    gap: 12px;
+        gap: 12px;
         left: 5px;
     }
-    
+
     .sidebar-btn {
         width: 32px;
         height: 32px;
         font-size: 11px;
     }
-    
+
     .group-label {
         font-size: 6px;
     }
-    
+
     .top-right-buttons {
         top: 5px;
         right: 5px;
-    gap: 6px;
-}
+        gap: 6px;
+    }
 
-    
+
     .admin-fixed-button {
         padding: 6px 10px;
         font-size: 11px;
@@ -1900,7 +1977,7 @@ div.mb-8,
     margin: 0;
 }
 
-.format-option input[type="radio"]:checked + .option-content {
+.format-option input[type="radio"]:checked+.option-content {
     color: var(--accent);
 }
 
@@ -2025,20 +2102,20 @@ div.mb-8,
         width: 95%;
         max-height: 90vh;
     }
-    
+
     .mode-selection {
         flex-direction: column;
     }
-    
+
     .settings-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .preview-content {
         flex-direction: column;
         align-items: center;
     }
-    
+
     .gallery-grid {
         grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
     }
@@ -2186,11 +2263,11 @@ div.mb-8,
         max-width: none;
         margin: 20px;
     }
-    
+
     .preview-content {
         gap: 12px;
     }
-    
+
     .preview-img {
         max-height: 150px;
     }

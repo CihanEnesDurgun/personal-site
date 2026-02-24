@@ -1,0 +1,9 @@
+{
+    "ignore": [
+        "logs/*",
+        "data/*",
+        "public/uploads/*",
+        "rss.xml"
+    ],
+    "ext": "js,json"
+}

@@ -3,32 +3,6 @@
     "lora-deneme": [],
     "headtracker-imudan-stabil-takip": [
       {
-        "id": "mh29fed0xti3lvw1qo",
-        "name": "cihan",
-        "email": "cihanenesdurgun1410@gmail.com",
-        "content": "yorum 1",
-        "date": "2025-10-22T17:21:17.172Z",
-        "approved": true,
-        "ip": "::1",
-        "parent_id": null,
-        "thread_id": "mh29fed0xti3lvw1qo",
-        "depth": 0,
-        "reply_to_name": null
-      },
-      {
-        "id": "mh29gg7uve2fwl1zggh",
-        "name": "test-yanıtlayıcı",
-        "email": "24010103063@subu.edu.tr",
-        "content": "test",
-        "date": "2025-10-22T17:22:06.234Z",
-        "approved": true,
-        "ip": "::1",
-        "parent_id": "mh29fed0xti3lvw1qo",
-        "thread_id": "mh29fed0xti3lvw1qo",
-        "depth": 1,
-        "reply_to_name": "cihan"
-      },
-      {
         "id": "mhnpb1jzm3n12zukfuf",
         "name": "TESTCİHAN",
         "email": "cihanenesdurgun1410@gmail.com",
@@ -44,21 +18,7 @@
     ],
     "lora-vs-espnow-gecikme-menzil": [],
     "test-yazisi-1243-editoru-test-ediyoruz": [],
-    "test-post": [
-      {
-        "id": "mlxs8axyxb51dlf0erj",
-        "name": "Hacker",
-        "email": "test@t.com",
-        "content": "<b>bold</b>",
-        "date": "2026-02-22T13:27:19.656Z",
-        "approved": false,
-        "ip": "eff8e7ca506627fe",
-        "parent_id": null,
-        "thread_id": "mlxs8axyxb51dlf0erj",
-        "depth": 0,
-        "reply_to_name": null
-      }
-    ]
+    "test-post": []
   },
-  "lastUpdated": "2026-02-22T13:27:19.656Z"
+  "lastUpdated": "2026-02-24T21:28:13.027Z"
 }

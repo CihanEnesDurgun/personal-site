@@ -13,6 +13,11 @@ Hatalar, bir alfanumerik ön ek (prefix) ve onu takip eden 4 haneli bir sayı il
 - **`FILE-5000`**: Dosya İşlemleri (Yükleme sınırları, geçersiz uzantılar)
 - **`RES-6000`**: Kaynak İşlemleri (404 Bulunamadı, 409 Çakışmalar)
 
+### Sistem Bilgi Kayıtları (System Info Logs)
+- **`ENV-1000`**: Çevresel Değişkenler & Konfigürasyon (Değişken kurulumları)
+- **`SYS-2000`**: Sistem Başlatma & İşlemleri (Temizlik, doğrulamalar, periyodik işler)
+- **`SYS-8000`**: Sunucu Döngüsü (Sunucunun ayağa kalkması ve modülleri)
+
 ---
 
 ## 🔐 1. Kimlik Doğrulama & Yetkilendirme (AUTH-1000)
@@ -57,6 +62,62 @@ Hatalar, bir alfanumerik ön ek (prefix) ve onu takip eden 4 haneli bir sayı il
 | :--- | :--- | :--- | :--- |
 | **`RES-6001`** | 404 | Kaynak Bulunamadı | İstediğiniz kaynak bulunamadı. |
 | **`RES-6002`** | 409 | Kaynak Çakışması | Zaten var olan bir kaynağı yeniden oluşturmaya çalışmak gibi bir çakışma meydana geldi. |
+
+---
+
+## ℹ️ 7. Sistem Bilgi Kayıtları (INFO/WARN)
+Bu kodlar, sistem günlüklerinde (log) tutarlı filtreleme sağlamak amacıyla kullanılır. Herhangi bir HTTP hatası fırlatmazlar.
+
+### 🌐 Çevresel Değişkenler & Yapılandırma (ENV-1000)
+| Kod | Seviye | Mesaj (Türkçe Log) |
+| :--- | :--- | :--- |
+| **`ENV-1000`** | INFO | Cevresel degiskenler basariyla yuklendi |
+| **`ENV-1001`** | INFO | JWT_SECRET: AYARLANDI |
+| **`ENV-1002`** | INFO | BCRYPT_SALT_ROUNDS yuklendi |
+| **`ENV-1003`** | INFO | NODE_ENV durumu belirlendi |
+| **`ENV-1004`** | WARN | Gecersiz BCRYPT_SALT_ROUNDS degeri |
+
+### ⚙️ Sistem Başlatma & İşlemleri (SYS-2000)
+| Kod | Seviye | Mesaj (Türkçe Log) |
+| :--- | :--- | :--- |
+| **`SYS-2000`** | INFO | Oturum Yoneticisi (Session Manager) basariyla baslatildi |
+| **`SYS-2001`** | ERROR| Oturum Yoneticisi (Session Manager) baslatilamadi |
+| **`SYS-2003`** | INFO | Log Temizleme Yoneticisi (Cleanup Manager) basariyla baslatildi |
+| **`SYS-2005`** | INFO | Istatistik veri dogrulamasi basariyla tamamlandi |
+| **`SYS-2006`** | INFO | RSS akisi basariyla guncellendi |
+| **`SYS-2008`** | INFO | Istatistik verileri dogrulaniyor... |
+| **`SYS-2009`** | INFO | Oturum (session) verileri temizleniyor... |
+| **`SYS-2012`** | INFO | Yazar tarafindan silinmis ancak istatistigi kalmis (yoksun/orphaned) yazi datalari bulundu |
+| **`SYS-2013`** | INFO | Istatistik (stats) kaydi bulunmayan yeni yazilar tespit edildi |
+| **`SYS-2014`** | INFO | Site haritasi (sitemap) basariyla guncellendi |
+| **`SYS-2015`** | INFO | Analitik veriler (tum zamanlar / gun bazinda) istendi |
+| **`SYS-2016`** | INFO | Istatistik verileri basariyla temizlendi |
+
+### 🔐 Kimlik Doğrulama Kayıtları (AUTH-8000)
+| Kod | Seviye | Mesaj (Türkçe Log) |
+| :--- | :--- | :--- |
+| **`AUTH-8000`** | INFO | Giris istegi alindi |
+| **`AUTH-8001`** | INFO | Basarili giris |
+| **`AUTH-8002`** | INFO | Kullanici basariyla cikis yapti |
+| **`AUTH-8003`** | WARN | Erisim token'ı gereklidir |
+| **`AUTH-8004`** | WARN | Gecersiz veya suresi dolmus token |
+| **`AUTH-8005`** | WARN | Oturum dogrulama basarisiz, JWT ile devam ediliyor |
+| **`AUTH-8006`** | ERROR | Kimlik dogrulama hatasi |
+| **`AUTH-8007`** | WARN | Hatali giris denemesi |
+
+### 📁 Dosya İşlem Kayıtları (FILE-8000)
+| Kod | Seviye | Mesaj (Türkçe Log) |
+| :--- | :--- | :--- |
+| **`FILE-8000`** | INFO | Dosya basariyla hedef klasore tasindi |
+| **`FILE-8001`** | INFO | Hedef klasore dosya yuklemesi basarili |
+
+### 🚀 Sunucu Döngüsü (SYS-8000)
+| Kod | Seviye | Mesaj (Türkçe Log) |
+| :--- | :--- | :--- |
+| **`SYS-8000`** | INFO | Personal Site - Admin API Sunucusu portunda calisiyor |
+| **`SYS-8001`** | INFO | Guvenlik ve Oturum Yonetim Sistemi (Session Management) aktif |
+| **`SYS-8002`** | INFO | Istatistik Veri Dogrulama ve Temizleme Sistemi aktif |
+| **`SYS-8003`** | INFO | Otomatik Oturum Temizleme Sistemi aktif |
 
 ---
 
