@@ -2,7 +2,7 @@
 
 // ====== Development Mode Configuration ======
 const DEVELOPMENT_MODE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const API_BASE_URL = DEVELOPMENT_MODE ? `${window.location.protocol}//${window.location.host}/api` : 'https://cihanenesdurgun.com/api';
+const API_BASE_URL = `${window.location.origin}/api`;
 
 // ====== API Service ======
 class ApiService {
@@ -22,7 +22,7 @@ class ApiService {
 
   async request(endpoint, options = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
-    
+
     const config = {
       headers: {
         'Content-Type': 'application/json',
@@ -37,7 +37,7 @@ class ApiService {
 
     try {
       const response = await fetch(url, config);
-      
+
       if (response.status === 401 || response.status === 403) {
         this.clearToken();
         window.location.href = 'login.html';
@@ -52,7 +52,7 @@ class ApiService {
       }
 
       const data = await response.json();
-      
+
       if (!response.ok) {
         // Create error with code information
         const apiError = new Error(data.error || `HTTP ${response.status}: API isteği başarısız`);
@@ -83,11 +83,11 @@ class ApiService {
       method: 'POST',
       body: JSON.stringify({ username, password })
     });
-    
+
     if (response.success) {
       this.setToken(response.token);
     }
-    
+
     return response;
   }
 
@@ -166,7 +166,7 @@ class ApiService {
       } catch (e) {
         // If parsing fails, use default error
       }
-      
+
       // Create error with code information
       const apiError = new Error(errorData?.error || 'Yükleme başarısız');
       if (errorData?.code) apiError.code = errorData.code;
@@ -211,7 +211,7 @@ class ApiService {
   }
 
   // ====== Security & Sessions API Endpoints ======
-  
+
   // Get security data (active sessions, login history, failed logins, IP analysis)
   async getSecurityData() {
     return await this.request('/security/data');
@@ -271,14 +271,14 @@ const generateSlug = (title) => {
     'Ş': 'S', 'ş': 's',
     'Ü': 'U', 'ü': 'u'
   };
-  
+
   let slug = title;
-  
+
   // Türkçe karakterleri değiştir
   Object.keys(turkishToEnglish).forEach(turkishChar => {
     slug = slug.replace(new RegExp(turkishChar, 'g'), turkishToEnglish[turkishChar]);
   });
-  
+
   return slug
     .toLowerCase()
     .replace(/[^a-z0-9\s-]/g, '')

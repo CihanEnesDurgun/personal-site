@@ -2,7 +2,7 @@
 
 // ====== Development Mode Configuration ======
 const DEVELOPMENT_MODE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const API_BASE_URL = DEVELOPMENT_MODE ? `${window.location.protocol}//${window.location.host}/api` : 'https://cihanenesdurgun.com/api';
+const API_BASE_URL = `${window.location.origin}/api`;
 
 // ====== CONFIG ======
 // Note: Credentials are handled by login form input - never hardcode passwords!

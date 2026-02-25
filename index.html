@@ -44,7 +44,9 @@
   <link rel="stylesheet" href="src/css/styles.css" />
 </head>
 
-<body>
+<body class="has-particles">
+  <canvas id="particles-canvas"></canvas>
+
   <!-- Skip to content link for screen readers -->
 
 
@@ -129,6 +131,12 @@
   </script>
 
   <script src="src/js/version.js"></script>
+  <script src="src/js/particles-bg.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      new ParticlesBackground('particles-canvas');
+    });
+  </script>
 </body>
 
 </html>

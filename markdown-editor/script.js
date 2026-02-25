@@ -4,7 +4,7 @@ let currentViewMode = 'edit';
 // ====== Development Mode Configuration ======
 // Auto-detect development mode based on current hostname
 const DEVELOPMENT_MODE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const API_BASE_URL = DEVELOPMENT_MODE ? `${window.location.protocol}//${window.location.host}/api` : 'https://cihanenesdurgun.com/api';
+const API_BASE_URL = `${window.location.origin}/api`;
 
 // Initialize editor
 document.addEventListener('DOMContentLoaded', async () => {

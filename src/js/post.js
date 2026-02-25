@@ -280,7 +280,7 @@ async function boot() {
 // ====== Development Mode Configuration ======
 // Auto-detect development mode based on current hostname
 const DEVELOPMENT_MODE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const API_BASE_URL = DEVELOPMENT_MODE ? `${window.location.protocol}//${window.location.host}` : 'https://cihanenesdurgun.com';
+const API_BASE_URL = window.location.origin;
 
 // ====== Statistics Tracking ======
 async function trackPostView(slug) {

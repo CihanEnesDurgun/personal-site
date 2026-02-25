@@ -16,7 +16,7 @@ async function loadCustomTheme() {
         const themeData = data.theme;
         console.log('Theme loaded successfully:', themeData);
         const root = document.documentElement;
-        
+
         // Apply light theme variables
         root.style.setProperty('--bg', themeData.light.bg);
         root.style.setProperty('--panel', themeData.light.panel);
@@ -24,7 +24,7 @@ async function loadCustomTheme() {
         root.style.setProperty('--muted', themeData.light.muted);
         root.style.setProperty('--line', themeData.light.line);
         root.style.setProperty('--accent', themeData.light.accent);
-        
+
         // Apply dark theme variables
         root.style.setProperty('--dark-bg', themeData.dark.bg);
         root.style.setProperty('--dark-panel', themeData.dark.panel);
@@ -32,12 +32,12 @@ async function loadCustomTheme() {
         root.style.setProperty('--dark-muted', themeData.dark.muted);
         root.style.setProperty('--dark-line', themeData.dark.line);
         root.style.setProperty('--dark-accent', themeData.dark.accent);
-        
+
         // Apply other settings
         root.style.setProperty('--radius', `${themeData.borderRadius}px`);
         root.style.setProperty('--shadow', `0 10px 24px rgba(0,0,0,${themeData.shadowIntensity / 100 * 0.06})`);
         root.style.setProperty('--shadow-lg', `0 20px 40px rgba(0,0,0,${themeData.shadowIntensity / 100 * 0.1})`);
-        
+
         console.log('Custom theme applied successfully');
         return;
       }
@@ -45,14 +45,14 @@ async function loadCustomTheme() {
   } catch (error) {
     console.error('Error loading custom theme:', error);
   }
-  
+
   // Fallback to localStorage
   const savedTheme = localStorage.getItem('customTheme');
   if (savedTheme) {
     try {
       const themeData = JSON.parse(savedTheme);
       const root = document.documentElement;
-      
+
       // Apply theme variables
       root.style.setProperty('--bg', themeData.light.bg);
       root.style.setProperty('--panel', themeData.light.panel);
@@ -60,18 +60,18 @@ async function loadCustomTheme() {
       root.style.setProperty('--muted', themeData.light.muted);
       root.style.setProperty('--line', themeData.light.line);
       root.style.setProperty('--accent', themeData.light.accent);
-      
+
       root.style.setProperty('--dark-bg', themeData.dark.bg);
       root.style.setProperty('--dark-panel', themeData.dark.panel);
       root.style.setProperty('--dark-ink', themeData.dark.ink);
       root.style.setProperty('--dark-muted', themeData.dark.muted);
       root.style.setProperty('--dark-line', themeData.dark.line);
       root.style.setProperty('--dark-accent', themeData.dark.accent);
-      
+
       root.style.setProperty('--radius', `${themeData.borderRadius}px`);
       root.style.setProperty('--shadow', `0 10px 24px rgba(0,0,0,${themeData.shadowIntensity / 100 * 0.06})`);
       root.style.setProperty('--shadow-lg', `0 20px 40px rgba(0,0,0,${themeData.shadowIntensity / 100 * 0.1})`);
-      
+
       console.log('Theme loaded from localStorage');
     } catch (error) {
       console.error('Error loading theme from localStorage:', error);
@@ -83,7 +83,7 @@ async function loadCustomTheme() {
 // ====== Development Mode Configuration ======
 // Auto-detect development mode based on current hostname
 const DEVELOPMENT_MODE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const API_BASE_URL = DEVELOPMENT_MODE ? `${window.location.protocol}//${window.location.host}/api` : 'https://cihanenesdurgun.com/api';
+const API_BASE_URL = `${window.location.origin}/api`;
 
 // ====== CONFIG ======
 const CONFIG = {
@@ -117,7 +117,7 @@ class ApiService {
     });
 
     const data = await response.json();
-    
+
     if (response.ok && data.success) {
       this.setToken(data.token);
       return data;
@@ -133,48 +133,48 @@ class SessionManager {
     this.sessionKey = 'admin_session';
     this.rememberKey = 'admin_remember';
   }
-  
+
   // Check if user is authenticated
   isAuthenticated() {
     const session = this.getSession();
     if (!session) return false;
-    
+
     const now = Date.now();
     const expiresAt = session.expiresAt;
-    
+
     if (now > expiresAt) {
       this.clearSession();
       return false;
     }
-    
+
     return true;
   }
-  
+
   // Create new session
   createSession(username, rememberMe = false) {
     const now = Date.now();
     const duration = rememberMe ? CONFIG.rememberMeDuration : CONFIG.sessionTimeout;
     const expiresAt = now + duration;
-    
+
     const session = {
       username: username,
       createdAt: now,
       expiresAt: expiresAt,
       rememberMe: rememberMe
     };
-    
+
     localStorage.setItem(this.sessionKey, JSON.stringify(session));
-    
+
     if (rememberMe) {
       localStorage.setItem(this.rememberKey, 'true');
     }
   }
-  
+
   // Get current session
   getSession() {
     const sessionStr = localStorage.getItem(this.sessionKey);
     if (!sessionStr) return null;
-    
+
     try {
       return JSON.parse(sessionStr);
     } catch (error) {
@@ -183,21 +183,21 @@ class SessionManager {
       return null;
     }
   }
-  
+
   // Clear session
   clearSession() {
     localStorage.removeItem(this.sessionKey);
     localStorage.removeItem(this.rememberKey);
   }
-  
+
   // Get session info
   getSessionInfo() {
     const session = this.getSession();
     if (!session) return null;
-    
+
     const now = Date.now();
     const timeLeft = session.expiresAt - now;
-    
+
     return {
       username: session.username,
       timeLeft: timeLeft,
@@ -214,14 +214,14 @@ class AuthManager {
     this.lockoutDuration = 15 * 60 * 1000; // 15 minutes
     this.loginAttemptsKey = 'login_attempts';
   }
-  
+
   // Check if login is locked
   isLoginLocked() {
     const attempts = this.getLoginAttempts();
     if (attempts.count >= this.maxLoginAttempts) {
       const now = Date.now();
       const timeLeft = attempts.lockoutUntil - now;
-      
+
       if (timeLeft > 0) {
         return {
           locked: true,
@@ -232,17 +232,17 @@ class AuthManager {
         this.resetLoginAttempts();
       }
     }
-    
+
     return { locked: false };
   }
-  
+
   // Get login attempts
   getLoginAttempts() {
     const attemptsStr = localStorage.getItem(this.loginAttemptsKey);
     if (!attemptsStr) {
       return { count: 0, lockoutUntil: 0 };
     }
-    
+
     try {
       return JSON.parse(attemptsStr);
     } catch (error) {
@@ -250,24 +250,24 @@ class AuthManager {
       return { count: 0, lockoutUntil: 0 };
     }
   }
-  
+
   // Increment login attempts
   incrementLoginAttempts() {
     const attempts = this.getLoginAttempts();
     attempts.count++;
-    
+
     if (attempts.count >= this.maxLoginAttempts) {
       attempts.lockoutUntil = Date.now() + this.lockoutDuration;
     }
-    
+
     localStorage.setItem(this.loginAttemptsKey, JSON.stringify(attempts));
   }
-  
+
   // Reset login attempts
   resetLoginAttempts() {
     localStorage.removeItem(this.loginAttemptsKey);
   }
-  
+
   // Authenticate user
   authenticate(username, password) {
     // Check if login is locked
@@ -276,12 +276,12 @@ class AuthManager {
       const minutes = Math.ceil(lockStatus.timeLeft / (60 * 1000));
       throw new Error(`Çok fazla başarısız giriş denemesi. ${minutes} dakika sonra tekrar deneyin.`);
     }
-    
+
     // This method is deprecated - we now use API authentication
     // Keeping for backward compatibility but not used
     return false;
   }
-  
+
   // Login user
   login(username, password, rememberMe = false) {
     try {
@@ -294,13 +294,13 @@ class AuthManager {
       throw error;
     }
   }
-  
+
   // Logout user
   logout() {
     this.sessionManager.clearSession();
     window.location.href = 'login.html';
   }
-  
+
   // Check authentication and redirect
   checkAuth() {
     if (this.sessionManager.isAuthenticated()) {
@@ -316,78 +316,78 @@ class LoginUI {
     this.authManager = new AuthManager();
     this.init();
   }
-  
+
   init() {
     this.setupEventListeners();
     this.checkRememberMe();
   }
-  
+
   setupEventListeners() {
     // Form submission
     $('#loginForm').addEventListener('submit', (e) => {
       e.preventDefault();
       this.handleLogin();
     });
-    
+
     // Password toggle
     $('.toggle-password').addEventListener('click', () => {
       this.togglePassword();
     });
-    
+
     // Modal close
     $$('.modal-close').forEach(btn => {
       btn.addEventListener('click', () => {
         this.closeErrorModal();
       });
     });
-    
+
     // Close modal when clicking outside
     $('#errorModal').addEventListener('click', (e) => {
       if (e.target.id === 'errorModal') {
         this.closeErrorModal();
       }
     });
-    
+
     // Enter key in inputs
     $('#username').addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
         $('#password').focus();
       }
     });
-    
+
     $('#password').addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
         this.handleLogin();
       }
     });
   }
-  
+
   async handleLogin() {
     const username = $('#username').value.trim();
     const password = $('#password').value;
     const rememberMe = $('#rememberMe').checked;
-    
+
     // Basic validation
     if (!username || !password) {
       this.showError('Lütfen tüm alanları doldurun.');
       return;
     }
-    
+
     // Show loading state
     this.setLoadingState(true);
-    
+
     try {
       // Attempt login via API
       const apiService = new ApiService();
       await apiService.login(username, password);
-      
+
       // Success - redirect to admin panel
       window.location.href = 'index.html';
-      
+
     } catch (error) {
       this.showError(error.message, error);
       this.setLoadingState(false);
-      
+
       // Add shake animation to form
       $('#loginForm').classList.add('shake');
       setTimeout(() => {
@@ -395,12 +395,12 @@ class LoginUI {
       }, 500);
     }
   }
-  
+
   togglePassword() {
     const passwordInput = $('#password');
     const toggleBtn = $('.toggle-password');
     const eyeIcon = toggleBtn.querySelector('.eye-icon');
-    
+
     if (passwordInput.type === 'password') {
       passwordInput.type = 'text';
       eyeIcon.innerHTML = `
@@ -416,12 +416,12 @@ class LoginUI {
       toggleBtn.setAttribute('aria-label', 'Şifreyi göster');
     }
   }
-  
+
   setLoadingState(loading) {
     const btn = $('.login-btn');
     const btnText = $('.btn-text');
     const spinner = $('.loading-spinner');
-    
+
     if (loading) {
       btn.disabled = true;
       btn.classList.add('loading');
@@ -434,7 +434,7 @@ class LoginUI {
       spinner.style.display = 'none';
     }
   }
-  
+
   showError(message, error = null) {
     // Get error code if error object is provided
     let errorCode = null;
@@ -443,28 +443,28 @@ class LoginUI {
     } else if (typeof window !== 'undefined' && window.getErrorCode) {
       errorCode = window.getErrorCode(message);
     }
-    
+
     // Format message with error code
     let displayMessage = message;
     if (errorCode) {
       displayMessage = `${message} [Hata Kodu: ${errorCode}]`;
     }
-    
+
     $('#errorMessage').textContent = displayMessage;
     $('#errorModal').classList.add('show');
   }
-  
+
   closeErrorModal() {
     $('#errorModal').classList.remove('show');
   }
-  
+
   checkRememberMe() {
     const remembered = localStorage.getItem('admin_remember');
     if (remembered === 'true') {
       $('#rememberMe').checked = true;
     }
   }
-  
+
 
 }
 
@@ -473,24 +473,24 @@ class SecurityUtils {
   // Simple password strength checker
   static checkPasswordStrength(password) {
     let score = 0;
-    
+
     if (password.length >= 8) score++;
     if (/[a-z]/.test(password)) score++;
     if (/[A-Z]/.test(password)) score++;
     if (/[0-9]/.test(password)) score++;
     if (/[^A-Za-z0-9]/.test(password)) score++;
-    
+
     return {
       score: score,
       strength: score < 3 ? 'weak' : score < 4 ? 'medium' : 'strong'
     };
   }
-  
+
   // Sanitize input
   static sanitizeInput(input) {
     return input.replace(/[<>]/g, '');
   }
-  
+
   // Generate random token
   static generateToken() {
     return Math.random().toString(36).substring(2) + Date.now().toString(36);
@@ -504,10 +504,10 @@ let authManager;
 document.addEventListener('DOMContentLoaded', async () => {
   // Load custom theme first
   await loadCustomTheme();
-  
+
   authManager = new AuthManager();
   loginUI = new LoginUI();
-  
+
   // Check if user is already authenticated
   authManager.checkAuth();
 });

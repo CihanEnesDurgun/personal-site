@@ -65,6 +65,7 @@ const execAsync = promisify(exec);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const SITE_URL = process.env.SITE_URL || 'https://cihanenesdurgun.com';
 
 // ULTRA SIMPLE TEST ENDPOINT - Before ANY middleware
 app.get('/api/simple-test', (req, res, next) => {
@@ -145,8 +146,8 @@ const loginLimiter = process.env.NODE_ENV === 'production' ? rateLimit({
 
 // CORS Configuration - Enhanced Security
 const allowedOrigins = process.env.CORS_ORIGIN ?
-  process.env.CORS_ORIGIN.split(',').map(origin => origin.trim()).filter(origin => origin && !origin.includes('yourdomain.com')) :
-  ['http://localhost:3000', 'http://127.0.0.1:3000'];
+  process.env.CORS_ORIGIN.split(',').map(origin => origin.trim()) :
+  ['http://localhost:3000', 'http://127.0.0.1:3000', SITE_URL, SITE_URL.replace('://', '://www.')];
 
 const corsOptions = {
   origin: function (origin, callback) {
@@ -181,13 +182,18 @@ const corsOptions = {
       }
     }
 
-    // Check against allowed origins
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      Logger.info(`✅ CORS: Allowed origin: ${origin}`);
+    // Check against allowed origins or same-domain variants
+    const siteDomain = new URL(SITE_URL).hostname;
+    const isSameDomain = origin && (origin.endsWith('.' + siteDomain) || origin === SITE_URL || origin === SITE_URL.replace('://', '://www.'));
+
+    if (allowedOrigins.indexOf(origin) !== -1 || isSameDomain) {
+      if (isSameDomain && allowedOrigins.indexOf(origin) === -1) {
+        Logger.info(`✅ CORS: Allowed same-domain origin: ${origin}`);
+      }
       callback(null, true);
     } else {
       Logger.warn(`🚨 CORS blocked request from origin: ${origin}`);
-      callback(new Error(`CORS politikası ihlali - Origin '${origin}' izin verilmemiş`), false);
+      callback(new AppError('AUTH-1002', 403, `CORS politikası ihlali - Origin '${origin}' izin verilmemiş`), false);
     }
   },
   credentials: true,
@@ -244,7 +250,7 @@ app.use((req, res, next) => {
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
       "font-src 'self' data: https://fonts.gstatic.com; " +
       "img-src 'self' data: https:; " +
-      "connect-src 'self' https://cihanenesdurgun.com; " +
+      "connect-src 'self'; " +
       "frame-ancestors 'none'"
     );
   } else {
@@ -1120,8 +1126,8 @@ const generateRSS = async () => {
   <channel>
     <title>Cihan Enes Durgun - İHA, Kablosuz Haberleşme ve Gömülü Sistemler</title>
     <description>Meraklı Bir Mühendisin Blogu: Teknoloji, Kişisel Gelişim ve Hayata Dair Düşünceler. İHA, kablosuz haberleşme ve gömülü sistemler üzerine teknik notlar, proje günlükleri ve deneyler</description>
-    <link>https://cihanenesdurgun.com</link>
-    <atom:link href="https://cihanenesdurgun.com/rss.xml" rel="self" type="application/rss+xml" />
+    <link>${SITE_URL}</link>
+    <atom:link href="${SITE_URL}/rss.xml" rel="self" type="application/rss+xml" />
     <language>tr</language>
     <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
     <generator>Cihan Enes Durgun Blog System ${APP_VERSION}</generator>
@@ -1133,8 +1139,8 @@ const generateRSS = async () => {
       return `    <item>
       <title>${post.title}</title>
       <description>${post.excerpt}</description>
-      <link>https://cihanenesdurgun.com/post.html?slug=${post.slug}</link>
-      <guid>https://cihanenesdurgun.com/post.html?slug=${post.slug}</guid>
+      <link>${SITE_URL}/post.html?slug=${post.slug}</link>
+      <guid>${SITE_URL}/post.html?slug=${post.slug}</guid>
       <pubDate>${pubDate}</pubDate>
       ${categories}
     </item>`;
@@ -1162,7 +1168,7 @@ const generateSitemap = async () => {
       .sort((a, b) => new Date(b.date) - new Date(a.date));
 
     // Base URLs
-    const baseUrl = 'https://cihanenesdurgun.com';
+    const baseUrl = SITE_URL;
     const currentDate = new Date().toISOString().split('T')[0];
 
     let sitemapContent = `<?xml version="1.0" encoding="UTF-8"?>
@@ -2460,7 +2466,7 @@ app.get('/api/version', (req, res, next) => {
 // Debug endpoint to check CSP settings
 app.get('/api/debug/csp', (req, res, next) => {
   const cspHeader = process.env.NODE_ENV === 'production'
-    ? "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://cihanenesdurgun.com; frame-ancestors 'none'"
+    ? "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self'; frame-ancestors 'none'"
     : "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:*; frame-ancestors 'none'";
 
   res.json({
@@ -2976,7 +2982,7 @@ app.get('/api/site-config', authenticateToken, async (req, res, next) => {
         site: {
           title: "Cihan Enes Durgun - İHA, Kablosuz Haberleşme ve Gömülü Sistemler",
           description: "Meraklı Bir Mühendisin Blogu: Teknoloji, Kişisel Gelişim ve Hayata Dair Düşünceler. İHA, kablosuz haberleşme ve gömülü sistemler üzerine teknik notlar, proje günlükleri ve deneyler",
-          url: "https://cihanenesdurgun.com",
+          url: SITE_URL,
           author: "Cihan Enes Durgun",
           keywords: "İHA, drone, kablosuz haberleşme, gömülü sistemler, elektronik, mühendislik, teknoloji, blog"
         },
@@ -3014,7 +3020,7 @@ app.get('/api/site-config', authenticateToken, async (req, res, next) => {
         site: {
           title: "Cihan Enes Durgun - İHA, Kablosuz Haberleşme ve Gömülü Sistemler",
           description: "Meraklı Bir Mühendisin Blogu: Teknoloji, Kişisel Gelişim ve Hayata Dair Düşünceler. İHA, kablosuz haberleşme ve gömülü sistemler üzerine teknik notlar, proje günlükleri ve deneyler",
-          url: "https://cihanenesdurgun.com",
+          url: SITE_URL,
           author: "Cihan Enes Durgun",
           keywords: "İHA, drone, kablosuz haberleşme, gömülü sistemler, elektronik, mühendislik, teknoloji, blog"
         },
