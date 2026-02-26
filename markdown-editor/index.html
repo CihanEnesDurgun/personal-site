@@ -308,85 +308,147 @@
     </div>
   </div>
 
-  <!-- Image Insert Modal - Simplified -->
-  <div id="imageInsertModal" class="simple-image-modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>🖼️ Görsel Ekle</h3>
-        <button class="modal-close" onclick="closeImageModal()">&times;</button>
-      </div>
+  <!-- Pro Media Library Modal (Split-Pane V2) -->
+  <div id="imageInsertModal" class="pro-media-modal">
+    <div class="modal-backdrop"></div>
+    <div class="pro-modal-container">
 
-      <div class="modal-body">
-        <!-- Mode Selection -->
-        <div class="mode-selection">
-          <button id="galleryModeBtn" class="mode-btn active" onclick="setImageMode('gallery')">
-            <svg viewBox="0 0 24 24" width="20" height="20">
-              <path
-                d="M22 16V4c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2zm-11-4l2.03 2.71L16 11l4 5H8l3-4zM2 6v14c0 1.1.9 2 2 2h14v-2H4V6H2z" />
-            </svg>
-            Galeriden Seç
-          </button>
-          <button id="uploadModeBtn" class="mode-btn" onclick="setImageMode('upload')">
-            <svg viewBox="0 0 24 24" width="20" height="20">
-              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+      <!-- Left Sidebar: Navigation -->
+      <aside class="pro-sidebar">
+        <div class="pro-sidebar-header">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"
+            stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+            <polyline points="21 15 16 10 5 21"></polyline>
+          </svg>
+          <h3>Medya Kütüphanesi</h3>
+        </div>
+        <nav class="pro-nav">
+          <button id="navUploadBtn" class="pro-nav-btn" onclick="setProMode('upload', null)">
+            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
             </svg>
             Bilgisayardan Yükle
           </button>
+          <div class="pro-nav-divider">KLASÖRLER</div>
+          <button id="navBlogContentBtn" class="pro-nav-btn active" onclick="setProMode('gallery', 'blog-content')">
+            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 11.08V8l-6-6H6a2 2 0 0 0-2 2v16c0 1.1.9 2 2 2h6"></path>
+              <path d="M14 3v5h5M18 21v-6M15 18h6"></path>
+            </svg>
+            Blog İçerik
+          </button>
+          <button id="navBlogCoversBtn" class="pro-nav-btn" onclick="setProMode('gallery', 'blog-covers')">
+            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"
+              stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            </svg>
+            Blog Kapak
+          </button>
+          <button id="navProfileBtn" class="pro-nav-btn" onclick="setProMode('gallery', 'profile')">
+            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            Profil
+          </button>
+          <button id="navSystemBtn" class="pro-nav-btn" onclick="setProMode('gallery', 'system')">
+            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"
+              stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path
+                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+              </path>
+            </svg>
+            Sistem İkonları
+          </button>
+        </nav>
+      </aside>
+
+      <!-- Center: Main Workspace -->
+      <main class="pro-main">
+        <div class="pro-main-header">
+          <h4 id="proMainTitle">Blog İçerik Görselleri</h4>
+          <button class="modal-close" onclick="closeImageModal()">
+            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"
+              stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
         </div>
 
-        <!-- Gallery Mode -->
-        <div id="galleryMode" class="image-mode active">
-          <div class="gallery-folder-selector">
-            <select id="galleryFolderSelect" class="form-select">
-              <option value="all">Tüm Klasörler</option>
-              <option value="blog-content">Blog İçerik Resimleri</option>
-              <option value="blog-covers">Blog Kapak Resimleri</option>
-              <option value="profile">Profil Fotoğrafları</option>
-              <option value="system">Sistem İkonları</option>
-            </select>
+        <div class="pro-workspace">
+          <!-- Gallery Grid -->
+          <div id="proGalleryGrid" class="pro-gallery-grid active">
+            <!-- Images load here via JS -->
           </div>
-          <div class="gallery-grid" id="galleryGrid">
-            <!-- Gallery images will be loaded here -->
-          </div>
-        </div>
 
-        <!-- Upload Mode -->
-        <div id="uploadMode" class="image-mode">
-          <div class="upload-area" id="imageUploadArea">
+          <!-- Upload Area -->
+          <div id="proUploadArea" class="pro-upload-area">
             <div class="upload-content">
-              <div class="upload-icon">📁</div>
-              <h4>Resim Yükle</h4>
-              <p>Resimleri buraya sürükleyip bırakın veya seçmek için tıklayın</p>
+              <div class="upload-icon-wrapper">
+                <svg viewBox="0 0 24 24" width="32" height="32" stroke="currentColor" stroke-width="2" fill="none"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+              </div>
+              <h4>Görsel Yükle</h4>
+              <p>Sürükle bırak veya <span>bilgisayarından seç.</span></p>
               <input type="file" id="imageFileInput" accept="image/*" style="display: none;">
-              <button type="button" class="btn btn-primary" onclick="document.getElementById('imageFileInput').click()">
-                Resim Seç
-              </button>
+              <button type="button" class="btn-outline"
+                onclick="document.getElementById('imageFileInput').click()">Dosya Seç</button>
             </div>
           </div>
         </div>
+      </main>
 
-        <!-- Image Preview & Description -->
-        <div class="image-preview-section" id="imagePreviewSection" style="display: none;">
-          <div class="preview-header">
-            <h4>Seçilen Görsel</h4>
+      <!-- Right Sidebar: Details Panel -->
+      <aside class="pro-details-panel">
+
+        <!-- Empty State -->
+        <div id="proEmptyDetails" class="pro-details-empty active">
+          <svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" stroke-width="1.5" fill="none"
+            stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+            <polyline points="21 15 16 10 5 21"></polyline>
+          </svg>
+          <p>Detayları görmek için bir görsel seçin</p>
+        </div>
+
+        <!-- Content State -->
+        <div id="proImageDetails" class="pro-details-content">
+          <div class="pro-preview-box">
+            <img id="previewImageBlur" src="" alt="" aria-hidden="true" class="pro-preview-blur">
+            <img id="previewImage" src="" alt="Önizleme" class="pro-preview-img-main">
           </div>
-          <div class="preview-content">
-            <img id="previewImage" src="" alt="Önizleme" class="preview-img">
-            <div class="image-description">
-              <label for="imageDescription">Açıklama (Alt Metin):</label>
-              <input type="text" id="imageDescription" placeholder="Görselin açıklamasını yazın..."
-                class="description-input">
-            </div>
+
+          <div class="pro-meta">
+            <h5 id="proMetaName" class="meta-name">Görsel Seçilmedi</h5>
+          </div>
+
+          <div class="pro-form-group">
+            <label for="imageDescription">Alternatif Metin (Alt Text)</label>
+            <input type="text" id="imageDescription" class="pro-input" placeholder="Açıklama girin...">
           </div>
         </div>
-      </div>
 
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closeImageModal()">İptal</button>
-        <button type="button" class="btn btn-primary" id="insertImageBtn" onclick="insertSelectedImage()" disabled>
-          Görseli Ekle
-        </button>
-      </div>
+        <div class="pro-actions">
+          <button type="button" class="btn-ghost" onclick="closeImageModal()">İptal</button>
+          <button type="button" class="btn-primary" id="insertImageBtn" onclick="insertSelectedImage()" disabled>Görseli
+            Ekle</button>
+        </div>
+      </aside>
+
     </div>
   </div>
 

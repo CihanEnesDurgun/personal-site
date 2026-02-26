@@ -186,7 +186,15 @@ async function boot() {
     const md = await mdResponse.text();
 
     // Markdown'ı HTML'e çevir (önce normal, sonra özel image işleme)
-    let rawHtml = marked.parse(md, {
+    // Pre-process: encode spaces and special chars in image URLs
+    const sanitizedMd = md.replace(/!\[([^\]]*)\]\(([^)]*)\)/g, (match, alt, src) => {
+      if (/[^a-zA-Z0-9\/._\-:]/.test(src)) {
+        const encodedSrc = encodeURI(decodeURI(src));
+        return `![${alt}](${encodedSrc})`;
+      }
+      return match;
+    });
+    let rawHtml = marked.parse(sanitizedMd, {
       sanitize: false,
       gfm: true,
       breaks: true
@@ -195,24 +203,52 @@ async function boot() {
     // Güvenlik: XSS koruması için DOMPurify ile temizle
     let html = DOMPurify.sanitize(rawHtml);
 
-    // Sonradan image'ları özel şekilde işle
-    html = html.replace(/<img src="([^"]*)" alt="([^"]*)"[^>]*>/g, function (match, src, alt) {
+    // Sonradan image'ları özel şekilde işle — DOM tabanlı
+    const tempContainer = document.createElement('div');
+    tempContainer.innerHTML = html;
+
+    const images = tempContainer.querySelectorAll('img');
+    images.forEach(img => {
+      // Skip if already inside a figure
+      if (img.closest('figure')) return;
+
+      const src = img.getAttribute('src') || '';
+      const alt = img.getAttribute('alt') || '';
       const filename = src.split('/').pop().split('.')[0];
 
-      // Her zaman figure yapısı kullan, alt'ta açıklama varsa göster
-      if (alt && alt.trim() && alt !== filename) {
-        // Açıklamalı görsel - figure yapısı
-        return `<figure style="text-align: center; margin: 2em 0;">
-          <img src="${src}" alt="" style="max-width: 100%; height: auto; border-radius: 6px; display: block; margin: 0 auto;">
-          <figcaption style="font-size: 14px; color: var(--muted); font-style: italic; text-align: center; margin-top: 8px;">${alt}</figcaption>
-        </figure>`;
-      } else {
-        // Açıklamasız görsel - figure yapısı ama figcaption yok
-        return `<figure style="text-align: center; margin: 2em 0;">
-          <img src="${src}" alt="" style="max-width: 100%; height: auto; border-radius: 6px; display: block; margin: 0 auto;">
-        </figure>`;
+      // Create figure wrapper
+      const figure = document.createElement('figure');
+      figure.style.textAlign = 'center';
+      figure.style.margin = '2em 0';
+
+      // Create new img with proper styling
+      const newImg = document.createElement('img');
+      newImg.src = src;
+      newImg.alt = '';
+      newImg.style.maxWidth = '100%';
+      newImg.style.height = 'auto';
+      newImg.style.borderRadius = '6px';
+      newImg.style.display = 'block';
+      newImg.style.margin = '0 auto';
+      figure.appendChild(newImg);
+
+      // Add caption if alt text is meaningful (not just the filename)
+      if (alt && alt.trim() && alt !== filename && alt !== filename + '.' + src.split('.').pop()) {
+        const figcaption = document.createElement('figcaption');
+        figcaption.style.fontSize = '14px';
+        figcaption.style.color = 'var(--muted)';
+        figcaption.style.fontStyle = 'italic';
+        figcaption.style.textAlign = 'center';
+        figcaption.style.marginTop = '8px';
+        figcaption.textContent = alt;
+        figure.appendChild(figcaption);
       }
+
+      // Replace original img with figure
+      img.parentNode.replaceChild(figure, img);
     });
+
+    html = tempContainer.innerHTML;
 
     // İçeriği güncelle
     q('#postContent').innerHTML = html;

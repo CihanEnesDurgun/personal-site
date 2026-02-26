@@ -320,26 +320,65 @@ const fileFilter = (req, file, cb) => {
 };
 
 // Multer configuration for secure file uploads
+
+// Sanitize filename for URL-safe usage
+function sanitizeFilename(originalName, postTitle) {
+  const ext = path.extname(originalName).toLowerCase();
+  let baseName = path.basename(originalName, ext);
+
+  // Turkish character map
+  const trMap = {
+    'ç': 'c', 'Ç': 'C', 'ğ': 'g', 'Ğ': 'G', 'ı': 'i', 'İ': 'I',
+    'ö': 'o', 'Ö': 'O', 'ş': 's', 'Ş': 'S', 'ü': 'u', 'Ü': 'U',
+    'â': 'a', 'Â': 'A', 'î': 'i', 'Î': 'I', 'û': 'u', 'Û': 'U'
+  };
+
+  // Check if original name needs sanitizing
+  const needsSanitize = /[^a-zA-Z0-9._-]/.test(baseName);
+
+  if (needsSanitize) {
+    // Try to use post title first for a meaningful name
+    let cleanBase = (postTitle || baseName);
+
+    // Replace Turkish chars
+    cleanBase = cleanBase.replace(/[çÇğĞıİöÖşŞüÜâÂîÎûÛ]/g, c => trMap[c] || c);
+
+    // Replace spaces and non-alphanumeric chars with hyphens
+    cleanBase = cleanBase
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')   // Remove accents
+      .replace(/[^a-zA-Z0-9]/g, '-')                       // Non-alphanum → hyphen
+      .replace(/-+/g, '-')                                   // Collapse hyphens
+      .replace(/^-|-$/g, '')                                 // Trim hyphens
+      .toLowerCase()
+      .substring(0, 60);                                     // Limit length
+
+    // Add timestamp for uniqueness
+    const timestamp = new Date().toISOString()
+      .replace(/[T:]/g, '-')
+      .replace(/\..+/, '')   // e.g. 2026-02-27-00-33
+      .substring(0, 16);
+
+    // If cleanBase is empty after sanitizing, use a generic prefix
+    if (!cleanBase) cleanBase = 'gorsel';
+
+    return `${cleanBase}-${timestamp}${ext}`;
+  }
+
+  // Original name is already clean
+  return originalName;
+}
+
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, 'images/')
   },
   filename: function (req, file, cb) {
-    // Preserve original filename but ensure it's safe
-    let filename = file.originalname;
+    // Use post title from request body if available
+    const postTitle = req.body.postTitle || null;
+    const safeFilename = sanitizeFilename(file.originalname, postTitle);
 
-    // Remove any path separators and dangerous characters
-    filename = filename.replace(/[\/\\:*?"<>|]/g, '_');
-
-    // Ensure filename is not empty and has proper extension
-    if (!filename || filename.trim() === '') {
-      const timestamp = Date.now();
-      const randomSuffix = Math.random().toString(36).substring(2, 8);
-      const fileExtension = path.extname(file.originalname).toLowerCase();
-      filename = `upload-${timestamp}-${randomSuffix}${fileExtension}`;
-    }
-
-    cb(null, filename);
+    Logger.info(`[FILE-8002] Dosya adi duzenlendi: "${file.originalname}" -> "${safeFilename}"`);
+    cb(null, safeFilename);
   }
 });
 
@@ -556,7 +595,63 @@ const writeUsersFile = async (users) => {
   }
 };
 
-// ====== Session Management Functions ======
+// ====== Image-Tag Registry Functions ======
+const IMAGE_TAGS_FILE = path.join(__dirname, 'data', 'image-tags.json');
+
+const readImageTags = async () => {
+  try {
+    if (await fs.pathExists(IMAGE_TAGS_FILE)) {
+      return await fs.readJson(IMAGE_TAGS_FILE);
+    }
+    return {};
+  } catch (error) {
+    Logger.error('Error reading image-tags.json:', error);
+    return {};
+  }
+};
+
+const writeImageTags = async (tags) => {
+  try {
+    await fs.writeJson(IMAGE_TAGS_FILE, tags, { spaces: 2 });
+    return true;
+  } catch (error) {
+    Logger.error('Error writing image-tags.json:', error);
+    return false;
+  }
+};
+
+// Add a postSlug tag to an image path. Idempotent — won't duplicate.
+const addImageTag = async (imagePath, postSlug) => {
+  if (!imagePath || !postSlug) return;
+  const tags = await readImageTags();
+  if (!tags[imagePath]) tags[imagePath] = [];
+  if (!tags[imagePath].includes(postSlug)) {
+    tags[imagePath].push(postSlug);
+  }
+  await writeImageTags(tags);
+};
+
+// Remove a postSlug from all images. Returns array of image paths now fully orphaned (no slugs left).
+const removePostFromImageTags = async (postSlug) => {
+  const tags = await readImageTags();
+  const orphaned = [];
+
+  for (const [imagePath, slugs] of Object.entries(tags)) {
+    if (!slugs.includes(postSlug)) continue;
+    const remaining = slugs.filter(s => s !== postSlug);
+    if (remaining.length === 0) {
+      orphaned.push(imagePath);
+      delete tags[imagePath];
+    } else {
+      tags[imagePath] = remaining;
+    }
+  }
+
+  await writeImageTags(tags);
+  return orphaned; // e.g. ["images/blog-covers/photo.jpg", "images/blog-content/img.png"]
+};
+
+
 const readSessionsFile = async () => {
   try {
     const data = await fs.readFile(SESSIONS_FILE, 'utf8');
@@ -1714,6 +1809,59 @@ app.put('/api/posts/:slug', authenticateToken, async (req, res, next) => {
   }
 });
 
+// Tag all images in a post
+app.post('/api/posts/:slug/tag-images', authenticateToken, async (req, res, next) => {
+  try {
+    const slug = req.params.slug;
+    const posts = await readPostsFile();
+    const post = posts.find(p => p.slug === slug);
+
+    if (!post) {
+      return res.json({ success: true, message: 'Post not found, skipped tagging' });
+    }
+
+    let taggedCount = 0;
+
+    // 1. Tag cover image
+    if (post.cover && post.cover.startsWith('images/')) {
+      await addImageTag(post.cover, slug);
+      taggedCount++;
+    }
+
+    // 2. Tag images in markdown content
+    const markdownPath = path.join(CONTENT_DIR, `${slug}.md`);
+    if (await fs.pathExists(markdownPath)) {
+      const content = await fs.readFile(markdownPath, 'utf8');
+      const imageRegex = /!\[.*?\]\((.*?)\)/g;
+      let match;
+      while ((match = imageRegex.exec(content)) !== null) {
+        let imgSrc = match[1];
+        // Clean up URL if encoded
+        try { imgSrc = decodeURIComponent(imgSrc); } catch (e) { }
+
+        // We only tag local images managed by our gallery
+        if (imgSrc.startsWith('images/')) {
+          await addImageTag(imgSrc, slug);
+          taggedCount++;
+        } else if (imgSrc.includes('/images/')) {
+          // Fallback if URL contains domain (e.g. http://localhost:3000/images/...)
+          const relativePath = imgSrc.substring(imgSrc.indexOf('images/'));
+          await addImageTag(relativePath, slug);
+          taggedCount++;
+        }
+      }
+    }
+
+    Logger.info(`[FILE-8013] Tagged ${taggedCount} images for post: ${slug}`);
+    res.json({ success: true, taggedCount });
+
+  } catch (error) {
+    Logger.error('Error auto-tagging post images:', error);
+    // Silent fail so we don't break the client save flow
+    res.json({ success: false, error: 'Auto-tagging failed' });
+  }
+});
+
 // Toggle featured status
 app.patch('/api/posts/:slug/featured', authenticateToken, async (req, res, next) => {
   try {
@@ -1785,6 +1933,50 @@ app.delete('/api/posts/:slug', authenticateToken, async (req, res, next) => {
 
     // Clean up stats data for deleted post
     await cleanupStatsData();
+
+    // AUTO-RECYCLE IMAGES: Remove post slug from image tags and move orphaned ones to deleted
+    try {
+      const orphanedPaths = await removePostFromImageTags(slug);
+      if (orphanedPaths.length > 0) {
+        Logger.info(`[FILE-8012] Post deleted, recycling ${orphanedPaths.length} orphaned images for post: ${slug}`);
+
+        const deletedDir = path.join(__dirname, 'images', 'deleted');
+        await fs.ensureDir(deletedDir);
+
+        const deletedImagesPath = path.join(__dirname, 'data', 'deleted-images.json');
+        let deletedImagesMeta = [];
+        if (await fs.pathExists(deletedImagesPath)) {
+          deletedImagesMeta = await fs.readJson(deletedImagesPath);
+        }
+
+        for (const imgPath of orphanedPaths) {
+          // imgPath is e.g. "images/blog-covers/photo.jpg"
+          const parts = imgPath.split('/');
+          if (parts.length >= 3) {
+            const folder = parts[1];
+            const filename = parts.pop();
+            const fullLocalPath = path.join(__dirname, 'images', folder, filename);
+            const targetDeletedPath = path.join(deletedDir, filename);
+
+            if (await fs.pathExists(fullLocalPath)) {
+              await fs.move(fullLocalPath, targetDeletedPath);
+              deletedImagesMeta.push({
+                filename: filename,
+                originalFolder: folder,
+                deletedAt: new Date().toISOString(),
+                originalPath: imgPath,
+                deletedByPost: slug
+              });
+              Logger.info(`✅ Auto-recycled image: ${imgPath}`);
+            }
+          }
+        }
+        await fs.writeJson(deletedImagesPath, deletedImagesMeta, { spaces: 2 });
+      }
+    } catch (recycleErr) {
+      Logger.error(`Error during auto-recycling images for post ${slug}:`, recycleErr);
+      // Non-fatal error, continue with deletion process
+    }
 
     // Generate RSS feed after post deletion
     await generateRSS();
@@ -2073,6 +2265,14 @@ app.post('/api/upload', authenticateToken, (req, res, next) => {
       Logger.info(`[FILE-8001] '${targetFolder}' klasorune dosya yuklemesi basarili: ${req.file.originalname} -> ${req.file.filename}`);
 
       const imageUrl = `images/${targetFolder}/${req.file.filename}`;
+
+      // Tag image with postSlug if provided
+      const postSlug = req.body.postSlug || '';
+      if (postSlug) {
+        addImageTag(imageUrl, postSlug).catch(e => Logger.error('addImageTag error:', e));
+        Logger.info(`[FILE-8011] Gorsel etiketlendi: ${imageUrl} -> ${postSlug}`);
+      }
+
       res.json({
         success: true,
         url: imageUrl,

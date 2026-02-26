@@ -1,10 +1,29 @@
 // Global variables
 let currentViewMode = 'edit';
+let editingPostStatus = null; // Track the status of the post being edited
 
 // ====== Development Mode Configuration ======
 // Auto-detect development mode based on current hostname
 const DEVELOPMENT_MODE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 const API_BASE_URL = `${window.location.origin}/api`;
+
+// ====== Marked Configuration ======
+// Configure marked with a custom renderer for images to support figure/figcaption
+try {
+    const renderer = new marked.Renderer();
+    renderer.image = function (href, title, text) {
+        // Return a structural figure with editable caption
+        return `
+<figure style="margin: 2em 0; text-align: center; display: block;">
+  <img src="${href}" alt="${text}" style="max-width: 100%; height: auto; border-radius: 6px; display: block; margin: 0 auto; box-shadow: var(--shadow);">
+  <figcaption class="image-caption" contenteditable="true" placeholder="Görsel açıklaması girin...">${text || 'Görsel açıklaması'}</figcaption>
+</figure>`.trim();
+    };
+    marked.setOptions({ renderer: renderer });
+    console.log('Marked custom renderer initialized');
+} catch (e) {
+    console.error('Error configuring marked renderer:', e);
+}
 
 // Initialize editor
 document.addEventListener('DOMContentLoaded', async () => {
@@ -98,7 +117,16 @@ async function loadPostForEdit(slug) {
         // Set editor content from API response (which includes markdown content)
         const editorContent = document.getElementById('editorContent');
         if (editorContent && post.content) {
-            const htmlContent = marked.parse(post.content);
+            // Pre-process: encode spaces and special chars in image URLs
+            const sanitizedContent = post.content.replace(/!\[([^\]]*)\]\(([^)]*)\)/g, (match, alt, src) => {
+                // Only encode if URL has spaces or special chars
+                if (/[^a-zA-Z0-9\/._\-:]/.test(src)) {
+                    const encodedSrc = encodeURI(decodeURI(src)); // decode first to avoid double-encoding
+                    return `![${alt}](${encodedSrc})`;
+                }
+                return match;
+            });
+            const htmlContent = marked.parse(sanitizedContent);
             editorContent.innerHTML = htmlContent;
             console.log('Editor content set from API response');
         } else if (editorContent) {
@@ -134,6 +162,10 @@ async function loadPostForEdit(slug) {
 
         // Set document title
         document.title = `Düzenle: ${post.title}`;
+
+        // Save post status for edit mode preservation
+        editingPostStatus = post.status || 'draft';
+        console.log('Post status saved for editing:', editingPostStatus);
 
         // Update stats
         setTimeout(updateAllStats, 100);
@@ -867,131 +899,267 @@ function copyMarkdown() {
     }
 }
 
-// HTML to Markdown conversion (simplified)
+// HTML to Markdown conversion — DOM-based for correct element ordering
 function htmlToMarkdown(html) {
     try {
-        let markdown = html;
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
 
-        // Use a temporary div to decode basic HTML entities and handle DOM easier? 
-        // We stick to regex for simplicity and speed here, but add new rules
+        // First: normalize — split block parents around any nested <figure>
+        const figures = tempDiv.querySelectorAll('figure');
+        figures.forEach(fig => {
+            const blockTags = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'LI', 'BLOCKQUOTE'];
+            let parent = fig.parentNode;
 
-        // Convert headers
-        markdown = markdown.replace(/<h1[^>]*>(.*?)<\/h1>/gi, '\n\n# $1\n\n');
-        markdown = markdown.replace(/<h2[^>]*>(.*?)<\/h2>/gi, '\n\n## $1\n\n');
-        markdown = markdown.replace(/<h3[^>]*>(.*?)<\/h3>/gi, '\n\n### $1\n\n');
-        markdown = markdown.replace(/<h4[^>]*>(.*?)<\/h4>/gi, '\n\n#### $1\n\n');
-        markdown = markdown.replace(/<h5[^>]*>(.*?)<\/h5>/gi, '\n\n##### $1\n\n');
-        markdown = markdown.replace(/<h6[^>]*>(.*?)<\/h6>/gi, '\n\n###### $1\n\n');
+            while (parent && parent !== tempDiv && blockTags.includes(parent.tagName)) {
+                // Extract everything after the figure into a fragment
+                const range = document.createRange();
+                range.setStartAfter(fig);
+                range.setEnd(parent, parent.childNodes.length);
+                const afterFragment = range.extractContents();
 
-        // Convert bold and italic
-        markdown = markdown.replace(/<strong[^>]*>(.*?)<\/strong>/gi, '**$1**');
-        markdown = markdown.replace(/<b[^>]*>(.*?)<\/b>/gi, '**$1**');
-        markdown = markdown.replace(/<em[^>]*>(.*?)<\/em>/gi, '*$1*');
-        markdown = markdown.replace(/<i[^>]*>(.*?)<\/i>/gi, '*$1*');
+                const grandParent = parent.parentNode;
+                if (!grandParent) break;
 
-        // Convert links
-        markdown = markdown.replace(/<a[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/gi, '[$2]($1)');
+                // Move figure out of parent, right after parent
+                grandParent.insertBefore(fig, parent.nextSibling);
 
-        // Convert figure containers with images and captions
-        markdown = markdown.replace(/<figure[^>]*>[\s\S]*?<img[^>]*src="([^"]*)"[^>]*alt="([^"]*)"[^>]*>[\s\S]*?(?:<figcaption[^>]*>(.*?)<\/figcaption>)?[\s\S]*?<\/figure>/gi, function (match, src, alt, caption) {
-            const imageText = caption && caption.trim() ? caption : (alt ? alt : src.split('/').pop().split('.')[0]);
-            return `\n\n![${imageText}](${src})\n\n`;
-        });
+                // If there's content after the figure, wrap it in a clone of the parent tag
+                if (afterFragment.textContent.trim() || afterFragment.querySelector('img, figure, br')) {
+                    const afterClone = parent.cloneNode(false);
+                    afterClone.appendChild(afterFragment);
+                    grandParent.insertBefore(afterClone, fig.nextSibling);
+                }
 
-        // Convert div containers with images and captions
-        markdown = markdown.replace(/<div[^>]*style="[^"]*text-align:\s*center[^"]*"[^>]*>[\s\S]*?<img[^>]*src="([^"]*)"[^>]*alt="([^"]*)"[^>]*>[\s\S]*?<p[^>]*>(.*?)<\/p>[\s\S]*?<\/div>/gi, function (match, src, alt, caption) {
-            const imageText = caption && caption.trim() ? caption : alt;
-            return `\n\n![${imageText}](${src})\n\n`;
-        });
+                // Remove original parent if it's now empty
+                if (!parent.textContent.trim() && !parent.querySelector('img, figure')) {
+                    parent.remove();
+                }
 
-        // Convert div containers with images but no captions
-        markdown = markdown.replace(/<div[^>]*style="[^"]*text-align:\s*center[^"]*"[^>]*>[\s\S]*?<img[^>]*src="([^"]*)"[^>]*alt="([^"]*)"[^>]*>[\s\S]*?<\/div>/gi, function (match, src, alt) {
-            return `\n\n![${alt}](${src})\n\n`;
-        });
-
-        // Convert simple images
-        markdown = markdown.replace(/<img[^>]*src="([^"]*)"[^>]*alt="([^"]*)"[^>]*>/gi, function (match, src, alt) {
-            if (alt && alt.trim()) {
-                return `\n\n![${alt}](${src})\n\n`;
+                parent = fig.parentNode;
             }
-            const filename = src.split('/').pop().split('.')[0];
-            return `\n\n![${filename}](${src})\n\n`;
         });
 
-        // Convert code blocks (pre > code)
-        markdown = markdown.replace(/<pre[^>]*><code[^>]*>([\s\S]*?)<\/code><\/pre>/gi, function (match, code) {
-            // Unescape HTML entities in code block
-            code = code.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
-            return '\n```\n' + code + '\n```\n\n';
-        });
-
-        // Pre without code tag
-        markdown = markdown.replace(/<pre[^>]*>([\s\S]*?)<\/pre>/gi, function (match, code) {
-            code = code.replace(/<br[^>]*>/gi, '\n').replace(/<[^>]+>/g, '');
-            code = code.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
-            return '\n```\n' + code + '\n```\n\n';
-        });
-
-        // Convert inline code
-        markdown = markdown.replace(/<code[^>]*>(.*?)<\/code>/gi, function (match, code) {
-            code = code.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
-            return '`' + code + '`';
-        });
-
-        // Convert blockquotes
-        markdown = markdown.replace(/<blockquote[^>]*>([\s\S]*?)<\/blockquote>/gi, function (match, content) {
-            let text = content.replace(/<p[^>]*>/gi, '').replace(/<\/p>/gi, '\n');
-            text = text.replace(/<br[^>]*>/gi, '\n').replace(/<[^>]+>/g, '');
-            const lines = text.trim().split('\n');
-            return '\n\n' + lines.map(line => '> ' + line).join('\n') + '\n\n';
-        });
-
-        // Convert lists
-        markdown = markdown.replace(/<ul[^>]*>([\s\S]*?)<\/ul>/gi, function (match, content) {
-            const listItems = content.replace(/<li[^>]*>(.*?)<\/li>/gi, '- $1\n');
-            return '\n\n' + listItems + '\n\n';
-        });
-
-        markdown = markdown.replace(/<ol[^>]*>([\s\S]*?)<\/ol>/gi, function (match, content) {
-            let counter = 1;
-            const listItems = content.replace(/<li[^>]*>(.*?)<\/li>/gi, function (liMatch, liContent) {
-                return `${counter++}. ${liContent}\n`;
-            });
-            return '\n\n' + listItems + '\n\n';
-        });
-
-        // Convert paragraphs
-        markdown = markdown.replace(/<p[^>]*>(.*?)<\/p>/gi, function (match, content) {
-            if (match.includes('font-size: 14px') || match.includes('color: var(--muted)') || match.includes('font-style: italic')) {
-                return '';
+        function getInlineMarkdown(node) {
+            if (node.nodeType === Node.TEXT_NODE) {
+                return node.textContent;
             }
-            return '\n\n' + content + '\n\n';
-        });
+            if (node.nodeType !== Node.ELEMENT_NODE) return '';
 
-        // Convert horizontal rules
-        markdown = markdown.replace(/<hr[^>]*>/gi, '\n\n---\n\n');
+            const tag = node.tagName;
+            const inner = Array.from(node.childNodes).map(getInlineMarkdown).join('');
 
-        // Convert line breaks
-        markdown = markdown.replace(/<br[^>]*>/gi, '\n');
+            // Helper: check if we need a leading space to separate from previous sibling
+            function needsLeadingSpace() {
+                const prev = node.previousSibling;
+                if (!prev) return false;
+                // If previous sibling is a text node ending with whitespace, no space needed
+                if (prev.nodeType === Node.TEXT_NODE) {
+                    return prev.textContent.length > 0 && !/\s$/.test(prev.textContent);
+                }
+                // If previous sibling is an inline element, we need space
+                if (prev.nodeType === Node.ELEMENT_NODE) {
+                    return true;
+                }
+                return false;
+            }
 
-        // Remove remaining HTML tags
-        markdown = markdown.replace(/<[^>]*>/g, '');
+            const prefix = needsLeadingSpace() ? ' ' : '';
 
-        // Decode common HTML entities
-        markdown = markdown.replace(/&nbsp;/g, ' ');
-        markdown = markdown.replace(/&lt;/g, '<');
-        markdown = markdown.replace(/&gt;/g, '>');
-        markdown = markdown.replace(/&amp;/g, '&');
-        markdown = markdown.replace(/&quot;/g, '"');
-        markdown = markdown.replace(/&#39;/g, "'");
+            switch (tag) {
+                case 'STRONG': case 'B': return inner.trim() ? `${prefix}**${inner.trim()}**` : '';
+                case 'EM': case 'I': return inner.trim() ? `${prefix}*${inner.trim()}*` : '';
+                case 'U': return inner.trim() ? `${prefix}<u>${inner.trim()}</u>` : '';
+                case 'S': case 'STRIKE': case 'DEL': return inner.trim() ? `${prefix}~~${inner.trim()}~~` : '';
+                case 'CODE': {
+                    let code = node.textContent;
+                    code = code.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+                    return `${prefix}\`` + code + '`';
+                }
+                case 'A': {
+                    const href = node.getAttribute('href') || '';
+                    return `${prefix}[${inner}](${href})`;
+                }
+                case 'BR': return '\n';
+                case 'IMG': {
+                    const src = node.getAttribute('src') || '';
+                    const alt = node.getAttribute('alt') || src.split('/').pop().split('.')[0];
+                    return `![${alt}](${src})`;
+                }
+                default: return inner;
+            }
+        }
 
-        // Clean up empty lines
+        // Inline tag set — these should never produce paragraph breaks
+        const INLINE_TAGS = new Set(['STRONG', 'B', 'EM', 'I', 'U', 'S', 'STRIKE', 'DEL', 'A', 'CODE', 'SPAN', 'SUB', 'SUP', 'MARK', 'SMALL', 'ABBR']);
+
+        function processNode(node) {
+            if (node.nodeType === Node.TEXT_NODE) {
+                const text = node.textContent.trim();
+                if (!text) return '';
+                // Check if this text node is adjacent to inline siblings
+                const hasInlineSibling = (node.previousSibling && node.previousSibling.nodeType === Node.ELEMENT_NODE && INLINE_TAGS.has(node.previousSibling.tagName)) ||
+                    (node.nextSibling && node.nextSibling.nodeType === Node.ELEMENT_NODE && INLINE_TAGS.has(node.nextSibling.tagName));
+                if (hasInlineSibling) {
+                    return node.textContent; // Keep raw text, no paragraph break
+                }
+                return text + '\n\n';
+            }
+            if (node.nodeType !== Node.ELEMENT_NODE) return '';
+
+            const tag = node.tagName;
+
+            // Inline elements at top level — use getInlineMarkdown (no paragraph break)
+            if (INLINE_TAGS.has(tag)) {
+                const md = getInlineMarkdown(node);
+                // Check if next sibling is also inline or text — if so, don't add paragraph break
+                const next = node.nextSibling;
+                const nextIsInline = next && ((next.nodeType === Node.TEXT_NODE && next.textContent.trim()) ||
+                    (next.nodeType === Node.ELEMENT_NODE && INLINE_TAGS.has(next.tagName)));
+                return nextIsInline ? md : (md ? md + '\n\n' : '');
+            }
+
+            // --- Block elements ---
+
+            // Headings
+            if (/^H[1-6]$/.test(tag)) {
+                const level = tag[1];
+                const prefix = '#'.repeat(parseInt(level));
+                const inner = Array.from(node.childNodes).map(getInlineMarkdown).join('').trim();
+                if (!inner) return '';
+                return `${prefix} ${inner}\n\n`;
+            }
+
+            // Figure (image container)
+            if (tag === 'FIGURE') {
+                const img = node.querySelector('img');
+                if (!img) return '';
+                const src = img.getAttribute('src') || '';
+                const alt = img.getAttribute('alt') || '';
+                const figcaption = node.querySelector('figcaption');
+                let caption = figcaption ? figcaption.textContent.trim() : '';
+                // Skip placeholder captions
+                const placeholders = ['görsel açıklaması', 'görsel açıklaması ekleyin', 'image caption', 'görsel açıklaması...'];
+                if (caption && placeholders.includes(caption.toLowerCase())) {
+                    caption = '';
+                }
+                // Use caption for alt text, fallback to alt, fallback to filename
+                const imageText = caption || alt || src.split('/').pop().split('.')[0];
+                return `![${imageText}](${src})\n\n`;
+            }
+
+            // Standalone image
+            if (tag === 'IMG') {
+                const src = node.getAttribute('src') || '';
+                const alt = node.getAttribute('alt') || src.split('/').pop().split('.')[0];
+                return `![${alt}](${src})\n\n`;
+            }
+
+            // Horizontal rule
+            if (tag === 'HR') return '---\n\n';
+
+            // Code blocks
+            if (tag === 'PRE') {
+                const codeEl = node.querySelector('code');
+                let code = codeEl ? codeEl.textContent : node.textContent;
+                code = code.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+                return '```\n' + code + '\n```\n\n';
+            }
+
+            // Blockquote
+            if (tag === 'BLOCKQUOTE') {
+                const inner = Array.from(node.childNodes).map(processNode).join('').trim();
+                const lines = inner.split('\n');
+                return lines.map(line => '> ' + line).join('\n') + '\n\n';
+            }
+
+            // Unordered list
+            if (tag === 'UL') {
+                const items = node.querySelectorAll(':scope > li');
+                let result = '';
+                items.forEach(li => {
+                    const inner = Array.from(li.childNodes).map(getInlineMarkdown).join('').trim();
+                    result += `- ${inner}\n\n`;
+                });
+                return result;
+            }
+
+            // Ordered list
+            if (tag === 'OL') {
+                const items = node.querySelectorAll(':scope > li');
+                let result = '';
+                let counter = 1;
+                items.forEach(li => {
+                    const inner = Array.from(li.childNodes).map(getInlineMarkdown).join('').trim();
+                    result += `${counter++}. ${inner}\n\n`;
+                });
+                return result;
+            }
+
+            // Paragraph
+            if (tag === 'P') {
+                const inner = Array.from(node.childNodes).map(getInlineMarkdown).join('').trim();
+                if (!inner) return '';
+                return inner + '\n\n';
+            }
+
+            // Table
+            if (tag === 'TABLE') {
+                let result = '';
+                const rows = node.querySelectorAll('tr');
+                rows.forEach((row, ri) => {
+                    const cells = row.querySelectorAll('th, td');
+                    const cellTexts = Array.from(cells).map(c => c.textContent.trim());
+                    result += '| ' + cellTexts.join(' | ') + ' |\n';
+                    if (ri === 0) {
+                        result += '| ' + cellTexts.map(() => '---').join(' | ') + ' |\n';
+                    }
+                });
+                return result + '\n';
+            }
+
+            // DIV — treat as a container, process children  
+            if (tag === 'DIV') {
+                // Check if it's an image container div
+                const img = node.querySelector('img');
+                if (img && node.style.textAlign === 'center') {
+                    const src = img.getAttribute('src') || '';
+                    const alt = img.getAttribute('alt') || '';
+                    const pCaption = node.querySelector('p');
+                    const caption = pCaption ? pCaption.textContent.trim() : '';
+                    const imageText = caption || alt || src.split('/').pop().split('.')[0];
+                    return `![${imageText}](${src})\n\n`;
+                }
+                return Array.from(node.childNodes).map(processNode).join('');
+            }
+
+            // FIGCAPTION — skip (handled by FIGURE)
+            if (tag === 'FIGCAPTION') return '';
+
+            // BR
+            if (tag === 'BR') return '\n';
+
+            // Default: process children
+            return Array.from(node.childNodes).map(processNode).join('');
+        }
+
+        // Process all top-level children in order
+        let markdown = Array.from(tempDiv.childNodes).map(processNode).join('');
+
+        // Decode remaining HTML entities
         markdown = markdown
-            .replace(/\n\s*\n\s*\n/g, '\n\n') // Compress 3+ newlines into 2
-            .replace(/^\s+|\s+$/g, '')
+            .replace(/&nbsp;/g, ' ')
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&amp;/g, '&')
+            .replace(/&quot;/g, '"')
+            .replace(/&#39;/g, "'");
+
+        // Clean up excessive newlines
+        markdown = markdown
+            .replace(/\n{3,}/g, '\n\n')
             .trim();
 
-        // Conversion complete
         return markdown;
     } catch (error) {
         console.error('HTML to Markdown conversion error:', error);
@@ -1051,10 +1219,13 @@ async function submitPost() {
         console.log('Method:', method);
         console.log('Edit mode:', isEditMode);
 
+        // In edit mode, preserve the existing post status; for new posts, default to draft
+        const postStatus = isEditMode && editingPostStatus ? editingPostStatus : 'draft';
+
         const requestBody = {
             ...postData,
             content: content,
-            status: 'draft'
+            status: postStatus
         };
 
         console.log('Request body:', requestBody);
@@ -1076,6 +1247,23 @@ async function submitPost() {
         if (response.ok) {
             const result = await response.json();
             console.log('Post saved successfully:', result);
+
+            // Trigger auto-tagging for images in this post
+            const savedSlug = editSlug || (result.post && result.post.slug);
+            if (savedSlug) {
+                try {
+                    await fetch(`${API_BASE_URL}/posts/${savedSlug}/tag-images`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+                        }
+                    });
+                    console.log('Images tagged successfully for post:', savedSlug);
+                } catch (tagErr) {
+                    console.error('Failed to tag images, but post was saved:', tagErr);
+                }
+            }
+
             alert(isEditMode ? 'Blog yazısı başarıyla güncellendi!' : 'Blog yazısı başarıyla taslak olarak kaydedildi!');
             window.location.href = '../admin/index.html';
         } else {
@@ -1163,9 +1351,21 @@ function updateSlugFromTitle() {
 
 // Get post data from form
 function getPostData() {
-    // Get cover photo URL from the hero image
+    // Get cover photo URL from the hero image — extract relative path only
     const heroImg = document.getElementById('heroImg');
-    const coverUrl = heroImg && heroImg.src && !heroImg.src.includes('placehold.co') ? heroImg.src : '';
+    let coverUrl = '';
+    if (heroImg && heroImg.src && !heroImg.src.includes('placehold.co')) {
+        try {
+            // heroImg.src returns full URL (e.g. http://localhost:3000/images/blog-covers/photo.jpg)
+            // We need only the relative path: images/blog-covers/photo.jpg
+            const url = new URL(heroImg.src);
+            coverUrl = url.pathname.replace(/^\//, ''); // Remove leading slash
+        } catch (e) {
+            // If URL parsing fails, try getAttribute which returns the raw value
+            coverUrl = heroImg.getAttribute('src') || '';
+            if (coverUrl.startsWith('/')) coverUrl = coverUrl.substring(1);
+        }
+    }
 
     // Get cover photo caption
     const heroCaption = document.getElementById('heroCaption');
@@ -1276,7 +1476,7 @@ function closeCoverGallery() {
 }
 
 // Load cover gallery images
-function loadCoverGallery() {
+async function loadCoverGallery() {
     const folderSelect = document.getElementById('coverGalleryFolderSelect');
     const galleryGrid = document.getElementById('coverGalleryGrid');
     const selectedFolder = folderSelect.value;
@@ -1284,37 +1484,66 @@ function loadCoverGallery() {
     // Clear existing images
     galleryGrid.innerHTML = '<div class="gallery-loading">Galeri yükleniyor...</div>';
 
-    // Get mock gallery images
-    const mockImages = getMockGalleryImages(selectedFolder);
+    try {
+        // Fetch from API
+        const response = await fetch(`/api/gallery/${selectedFolder === 'all' ? 'blog-covers' : selectedFolder}`, {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+            }
+        });
 
-    // Get cached images (uploaded images)
-    const cachedImages = galleryCache[selectedFolder] || [];
-
-    // Combine mock and cached images (cached first for recent uploads)
-    const allImages = [...cachedImages, ...mockImages];
-
-    if (allImages.length === 0) {
-        galleryGrid.innerHTML = '<div class="gallery-empty">Bu klasörde resim bulunamadı.</div>';
-        return;
-    }
-
-    // Render gallery images
-    galleryGrid.innerHTML = '';
-    allImages.forEach(image => {
-        const galleryItem = document.createElement('div');
-        galleryItem.className = 'gallery-item';
-        if (image.isNew) {
-            galleryItem.classList.add('new-upload');
+        if (!response.ok) {
+            throw new Error('Galeriyi yüklerken hata oluştu: ' + response.status);
         }
-        galleryItem.onclick = () => selectCoverImage(image);
 
-        galleryItem.innerHTML = `
-            <img src="${image.url}" alt="${image.name}" loading="lazy">
-            <div class="item-name">${image.name}</div>
-        `;
+        const data = await response.json();
+        const apiImages = data.images || [];
 
-        galleryGrid.appendChild(galleryItem);
-    });
+        // Also get cached images for newly uploaded ones that might not be available from API immediately (though usually they are)
+        const cachedImages = galleryCache[selectedFolder] || [];
+
+        // Merge API logic with cache logic securely
+        const allImages = [...apiImages.map(imgData => ({
+            name: imgData.originalName || imgData.filename,
+            url: `../${imgData.url}`,
+            folder: imgData.folder,
+            isNew: false
+        }))];
+
+        // Add cached images that aren't already in the API response (based on URL)
+        cachedImages.forEach(cachedImg => {
+            if (!allImages.some(img => img.url === cachedImg.url)) {
+                allImages.unshift(cachedImg); // Put new ones at the beginning
+            }
+        });
+
+        if (allImages.length === 0) {
+            galleryGrid.innerHTML = '<div class="gallery-empty">Bu klasörde resim bulunamadı.</div>';
+            return;
+        }
+
+        // Render gallery images
+        galleryGrid.innerHTML = '';
+        allImages.forEach(image => {
+            const galleryItem = document.createElement('div');
+            galleryItem.className = 'gallery-item';
+            if (image.isNew) {
+                galleryItem.classList.add('new-upload');
+            }
+            galleryItem.onclick = (e) => selectCoverImage(image, e);
+
+            galleryItem.innerHTML = `
+                <img src="${image.url}" alt="${image.name}" loading="lazy">
+                <div class="item-name">${image.name}</div>
+            `;
+
+            galleryGrid.appendChild(galleryItem);
+        });
+
+    } catch (error) {
+        console.error('Error loading cover gallery:', error);
+        galleryGrid.innerHTML = '<div class="gallery-error">Galeri yüklenirken hata oluştu.</div>';
+    }
 }
 
 // Select cover image from gallery
@@ -1415,6 +1644,20 @@ async function uploadCoverPhotoToServer(file) {
         formData.append('image', file);
         formData.append('folder', 'blog-covers'); // Specify the folder for cover photos
 
+        // Send post title for meaningful filename generation
+        const postTitleEl = document.getElementById('postTitle');
+        if (postTitleEl && postTitleEl.textContent.trim()) {
+            formData.append('postTitle', postTitleEl.textContent.trim());
+        }
+
+        // Send postSlug for automatic image tagging
+        const { slug } = getPostData();
+        const editSlug = new URLSearchParams(window.location.search).get('edit');
+        const activeSlug = editSlug || slug;
+        if (activeSlug) {
+            formData.append('postSlug', activeSlug);
+        }
+
         const response = await fetch('/api/upload', {
             method: 'POST',
             headers: {
@@ -1461,7 +1704,7 @@ function openCoverPhotoModal() {
         console.log('Modal element:', modal);
 
         if (modal) {
-            modal.style.display = 'block';
+            modal.classList.add('active');
             console.log('Modal displayed');
 
             // Don't reset the cover photo modal flag
@@ -1621,6 +1864,7 @@ async function uploadCoverPhoto(file) {
 
 // Global variables for image modal
 let currentImageMode = 'gallery';
+let currentProFolder = 'blog-content'; // New global state for selected folder
 let selectedImage = null;
 let uploadedImage = null;
 let isCoverPhotoModal = false; // Track if modal is opened for cover photo selection
@@ -1630,34 +1874,37 @@ let savedCursorOffset = null; // Save cursor offset when modal opens
 // Open image insert modal
 function openImageModal() {
     try {
-        isCoverPhotoModal = false; // Set flag for regular image insertion
+        isCoverPhotoModal = false;
 
-        // Save current cursor position before opening modal
+        // Reset saved cursor
+        savedCursorElement = null;
+        savedCursorOffset = null;
+
+        // Only save cursor if it's actually inside the editor
+        const editor = document.getElementById('editorContent');
         const selection = window.getSelection();
-        if (selection.rangeCount > 0) {
+        if (editor && selection.rangeCount > 0) {
             const range = selection.getRangeAt(0);
-            savedCursorElement = range.startContainer;
-            savedCursorOffset = range.startOffset;
-            console.log('Cursor position saved:', savedCursorElement, 'offset:', savedCursorOffset);
+            let node = range.startContainer;
+            let insideEditor = false;
+            while (node) {
+                if (node === editor) { insideEditor = true; break; }
+                node = node.parentNode;
+            }
+            if (insideEditor) {
+                savedCursorElement = range.startContainer;
+                savedCursorOffset = range.startOffset;
+                console.log('Cursor saved inside editor');
+            } else {
+                console.log('Cursor was NOT inside editor, will append to end');
+            }
         }
 
         const modal = document.getElementById('imageInsertModal');
         if (modal) {
-            modal.style.display = 'block';
+            modal.classList.add('active');
             resetImageModal();
-            loadGalleryImages();
-
-            // Reset modal title for regular image insertion
-            const modalTitle = modal.querySelector('.modal-header h3');
-            if (modalTitle) {
-                modalTitle.textContent = '🖼️ Görsel Ekle';
-            }
-
-            // Reset insert button text
-            const insertBtn = document.getElementById('insertImageBtn');
-            if (insertBtn) {
-                insertBtn.textContent = 'Görseli Ekle';
-            }
+            setProMode('gallery', 'blog-content'); // Default Mode
         }
     } catch (error) {
         console.error('Error opening image modal:', error);
@@ -1669,13 +1916,11 @@ function closeImageModal() {
     try {
         const modal = document.getElementById('imageInsertModal');
         if (modal) {
-            modal.style.display = 'none';
+            modal.classList.remove('active');
             resetImageModal();
         }
-        // Clear saved cursor position when modal is closed
         savedCursorElement = null;
         savedCursorOffset = null;
-        console.log('Modal closed, saved cursor position cleared');
     } catch (error) {
         console.error('Error closing image modal:', error);
     }
@@ -1685,167 +1930,164 @@ function closeImageModal() {
 function resetImageModal() {
     selectedImage = null;
     uploadedImage = null;
-    currentImageMode = 'gallery';
 
-    // Reset UI elements
-    document.getElementById('galleryModeBtn').classList.add('active');
-    document.getElementById('uploadModeBtn').classList.remove('active');
-    document.getElementById('galleryMode').classList.add('active');
-    document.getElementById('uploadMode').classList.remove('active');
-
-    // Hide sections
-    document.getElementById('imagePreviewSection').style.display = 'none';
+    // Reset right sidebar details
+    const emptyState = document.getElementById('proEmptyDetails');
+    const contentState = document.getElementById('proImageDetails');
+    if (emptyState) emptyState.classList.add('active');
+    if (contentState) contentState.classList.remove('active');
 
     // Disable insert button
-    document.getElementById('insertImageBtn').disabled = true;
+    const insertBtn = document.getElementById('insertImageBtn');
+    if (insertBtn) insertBtn.disabled = true;
 
-    // Clear selections
+    // Clear description input
+    const descInput = document.getElementById('imageDescription');
+    if (descInput) descInput.value = '';
+
+    // Clear selections in grid
     document.querySelectorAll('.gallery-item').forEach(item => {
         item.classList.remove('selected');
     });
 
-    // Clear description input
-    document.getElementById('imageDescription').value = '';
-
-    // Reset cover photo modal flag
     isCoverPhotoModal = false;
-
-    // Cursor position is cleared when modal is closed, not on reset
 }
 
-// Set image mode (gallery or upload)
-function setImageMode(mode) {
+// Set Pro Mode (Grid vs Upload & Folder Selection)
+function setProMode(mode, folder) {
     try {
         currentImageMode = mode;
+        if (folder) currentProFolder = folder;
 
-        // Update button states
-        document.getElementById('galleryModeBtn').classList.toggle('active', mode === 'gallery');
-        document.getElementById('uploadModeBtn').classList.toggle('active', mode === 'upload');
+        // 1. Update Navigation Button Active States
+        document.querySelectorAll('.pro-nav-btn').forEach(btn => btn.classList.remove('active'));
 
-        // Update mode visibility
-        document.getElementById('galleryMode').classList.toggle('active', mode === 'gallery');
-        document.getElementById('uploadMode').classList.toggle('active', mode === 'upload');
+        if (mode === 'upload') {
+            document.getElementById('navUploadBtn').classList.add('active');
+            document.getElementById('proGalleryGrid').classList.remove('active');
+            document.getElementById('proUploadArea').classList.add('active');
+        } else if (mode === 'gallery') {
+            document.getElementById('proUploadArea').classList.remove('active');
+            document.getElementById('proGalleryGrid').classList.add('active');
 
-        // Reset selections when switching modes
-        selectedImage = null;
-        uploadedImage = null;
-        document.getElementById('insertImageBtn').disabled = true;
-        document.getElementById('imagePreviewSection').style.display = 'none';
-        document.getElementById('imageDescription').value = '';
+            // Activate specific folder button
+            if (folder === 'blog-content') document.getElementById('navBlogContentBtn').classList.add('active');
+            if (folder === 'blog-covers') document.getElementById('navBlogCoversBtn').classList.add('active');
+            if (folder === 'profile') document.getElementById('navProfileBtn').classList.add('active');
+            if (folder === 'system') document.getElementById('navSystemBtn').classList.add('active');
+
+            // Load gallery
+            loadProGallery(folder);
+        }
 
     } catch (error) {
-        console.error('Error setting image mode:', error);
+        console.error('Error setting pro mode:', error);
     }
 }
 
-// Load gallery images
-async function loadGalleryImages() {
+// Load Gallery Images (Pro)
+async function loadProGallery(folder) {
     try {
-        const folderSelect = document.getElementById('galleryFolderSelect');
-        const galleryGrid = document.getElementById('galleryGrid');
-        const selectedFolder = folderSelect.value;
+        const galleryGrid = document.getElementById('proGalleryGrid');
+        if (!galleryGrid) return;
 
-        // Clear existing images
-        galleryGrid.innerHTML = '<div class="gallery-loading">Galeri yükleniyor...</div>';
+        galleryGrid.innerHTML = '<div style="padding: 20px; color: var(--muted); text-align: center; grid-column: 1 / -1;">Yükleniyor...</div>';
 
-        // Simulate loading gallery images (in real implementation, this would fetch from server)
-        const mockImages = getMockGalleryImages(selectedFolder);
+        const response = await fetch(`/api/gallery/${folder}`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
+        });
 
-        if (mockImages.length === 0) {
-            galleryGrid.innerHTML = '<div class="gallery-empty">Bu klasörde resim bulunamadı.</div>';
+        if (!response.ok) throw new Error('Hata: ' + response.status);
+
+        const data = await response.json();
+        const images = data.images || [];
+
+        if (images.length === 0) {
+            galleryGrid.innerHTML = '<div style="padding: 20px; color: var(--muted); text-align: center; grid-column: 1 / -1;">Bu klasörde resim bulunamadı.</div>';
             return;
         }
 
-        // Render gallery images
         galleryGrid.innerHTML = '';
-        mockImages.forEach(image => {
+        images.forEach(imgData => {
             const galleryItem = document.createElement('div');
             galleryItem.className = 'gallery-item';
-            galleryItem.onclick = () => selectGalleryImage(image);
 
-            galleryItem.innerHTML = `
-                <img src="${image.url}" alt="${image.name}" loading="lazy">
-                <div class="item-name">${image.name}</div>
-            `;
+            const url = `../${imgData.url}`;
+            const image = {
+                name: imgData.originalName || imgData.filename,
+                url: url,
+                folder: imgData.folder
+            };
 
+            galleryItem.onclick = (e) => selectGalleryImage(image, e);
+
+            galleryItem.innerHTML = `<img src="${url}" alt="${image.name}" loading="lazy">`;
             galleryGrid.appendChild(galleryItem);
         });
 
     } catch (error) {
         console.error('Error loading gallery images:', error);
-        document.getElementById('galleryGrid').innerHTML = '<div class="gallery-error">Galeri yüklenirken hata oluştu.</div>';
+        if (document.getElementById('proGalleryGrid')) {
+            document.getElementById('proGalleryGrid').innerHTML = '<div style="padding: 20px; color: var(--red); grid-column: 1 / -1;">Galeri yüklenirken hata oluştu.</div>';
+        }
     }
 }
 
-// Get mock gallery images (replace with real API call)
-function getMockGalleryImages(folder) {
-    const mockImages = {
-        'all': [
-            { name: 'elektronikSema.png', url: '../images/blog-covers/elektronikSema.png', folder: 'blog-covers' },
-            { name: 'avatar.jpg', url: '../images/profile/avatar.jpg', folder: 'profile' },
-            { name: 'cedlogo.png', url: '../images/system/cedlogo.png', folder: 'system' }
-        ],
-        'blog-covers': [
-            { name: 'elektronikSema.png', url: '../images/blog-covers/elektronikSema.png', folder: 'blog-covers' }
-        ],
-        'blog-content': [
-            { name: 'cover-1.jpg', url: '../images/blog-content/cover-1 - Kopya - Kopya.jpg', folder: 'blog-content' },
-            { name: 'espnow.jpg', url: '../images/blog-content/espnow - Kopya - Kopya.jpg', folder: 'blog-content' }
-        ],
-        'profile': [
-            { name: 'avatar.jpg', url: '../images/profile/avatar.jpg', folder: 'profile' },
-            { name: 'linkedinpoz.JPG', url: '../images/profile/linkedinpoz.JPG', folder: 'profile' }
-        ],
-        'system': [
-            { name: 'cedlogo.png', url: '../images/system/cedlogo.png', folder: 'system' },
-            { name: 'cedlogo (1).png', url: '../images/system/cedlogo (1).png', folder: 'system' },
-            { name: 'cedlogo (2).png', url: '../images/system/cedlogo (2).png', folder: 'system' }
-        ]
-    };
+// Deprecated/Replaced SetImageMode for backwards compatibility (in case anything else calls it)
+function setImageMode(mode) {
+    setProMode(mode, currentProFolder);
+}
 
-    return mockImages[folder] || [];
+function loadGalleryImages() {
+    // Deprecated. Do nothing, handled by setProMode.
 }
 
 // Select gallery image
-function selectGalleryImage(image) {
+function selectGalleryImage(image, event) {
     try {
-        // Remove previous selection
+        // Clear all selections
         document.querySelectorAll('.gallery-item').forEach(item => {
             item.classList.remove('selected');
         });
 
-        // Add selection to clicked item
-        event.currentTarget.classList.add('selected');
+        if (event && event.currentTarget) {
+            event.currentTarget.classList.add('selected');
+        }
 
+        // Set state
         selectedImage = image;
+        uploadedImage = null; // Clear any pending upload
+
         showSimpleImagePreview(image);
-
         document.getElementById('insertImageBtn').disabled = false;
-
     } catch (error) {
         console.error('Error selecting gallery image:', error);
     }
 }
 
-// Show simple image preview
+// Show Image Details in Right Sidebar
 function showSimpleImagePreview(image) {
     try {
-        const previewSection = document.getElementById('imagePreviewSection');
+        const emptyState = document.getElementById('proEmptyDetails');
+        const contentState = document.getElementById('proImageDetails');
+
         const previewImg = document.getElementById('previewImage');
-        const descriptionInput = document.getElementById('imageDescription');
+        const previewBlur = document.getElementById('previewImageBlur');
+        const metaName = document.getElementById('proMetaName');
+        const descInput = document.getElementById('imageDescription');
 
-        previewImg.src = image.url;
-        previewImg.alt = image.name;
+        // Setup Right Sidebar Data
+        if (previewImg) previewImg.src = image.url;
+        if (previewBlur) previewBlur.src = image.url;
+        if (metaName) metaName.textContent = image.name;
+        if (descInput) descInput.value = image.name;
 
-        // Set default description if empty
-        if (!descriptionInput.value) {
-            descriptionInput.value = image.name;
-        }
-
-        previewSection.style.display = 'block';
+        // Toggle Views
+        if (emptyState) emptyState.classList.remove('active');
+        if (contentState) contentState.classList.add('active');
 
     } catch (error) {
-        console.error('Error showing image preview:', error);
+        console.error('Error showing image details:', error);
     }
 }
 
@@ -1865,10 +2107,10 @@ function showImageSettings() {
     }
 }
 
-// Handle file upload
-function handleFileUpload(files) {
+// Handle file upload selection
+async function handleFileUpload(files) {
     try {
-        if (files.length === 0) return;
+        if (!files || files.length === 0) return;
 
         const file = files[0];
         if (!file.type.startsWith('image/')) {
@@ -1876,67 +2118,38 @@ function handleFileUpload(files) {
             return;
         }
 
-        // Show upload settings only for regular image insertion
-        if (!isCoverPhotoModal) {
-            const uploadSettings = document.getElementById('uploadSettings');
-            if (uploadSettings) {
-                uploadSettings.style.display = 'block';
-            }
-        }
+        // Clear previous gallery selection
+        selectedImage = null;
+        document.querySelectorAll('.gallery-item').forEach(item => item.classList.remove('selected'));
 
-        // Create preview
+        // Use FileReader for preview to be more robust than blob URLs in some contexts
         const reader = new FileReader();
         reader.onload = function (e) {
             uploadedImage = {
                 name: file.name,
                 url: e.target.result,
                 file: file,
-                size: formatFileSize(file.size)
+                size: formatFileSize(file.size),
+                isPendingUpload: true
             };
 
-            showUploadPreview(uploadedImage);
+            showSimpleImagePreview(uploadedImage);
 
-            // Only show format selection and settings for regular image insertion
-            if (!isCoverPhotoModal) {
-                showFormatSelection();
-                showImageSettings();
+            const insertBtn = document.getElementById('insertImageBtn');
+            if (insertBtn) {
+                insertBtn.disabled = false;
+                insertBtn.textContent = 'Görseli Ekle';
             }
-
-            document.getElementById('insertImageBtn').disabled = false;
         };
         reader.readAsDataURL(file);
 
     } catch (error) {
-        console.error('Error handling file upload:', error);
+        console.error('Error handling file selection:', error);
+        alert('Görsel seçilirken bir sorun oluştu. Lütfen tekrar deneyin.');
     }
 }
 
-// Show upload preview
-function showUploadPreview(image) {
-    try {
-        const preview = document.getElementById('imagePreview');
-        const previewImg = document.getElementById('previewImage');
-        const fileName = document.getElementById('previewFileName');
-        const fileSize = document.getElementById('previewFileSize');
 
-        if (previewImg) {
-            previewImg.src = image.url;
-            previewImg.alt = image.name;
-        }
-        if (fileName) {
-            fileName.textContent = image.name;
-        }
-        if (fileSize) {
-            fileSize.textContent = image.size;
-        }
-        if (preview) {
-            preview.style.display = 'block';
-        }
-
-    } catch (error) {
-        console.error('Error showing upload preview:', error);
-    }
-}
 
 // Format file size
 function formatFileSize(bytes) {
@@ -1948,15 +2161,76 @@ function formatFileSize(bytes) {
 }
 
 // Insert selected image
-function insertSelectedImage() {
+async function insertSelectedImage() {
     try {
         console.log('=== INSERT IMAGE DEBUG ===');
 
-        const image = selectedImage || uploadedImage;
+        let image = selectedImage || uploadedImage;
         if (!image) {
             console.log('No image selected');
             alert('Lütfen bir görsel seçin!');
             return;
+        }
+
+        const insertBtn = document.getElementById('insertImageBtn');
+        const originalBtnText = insertBtn ? insertBtn.textContent : 'Görseli Ekle';
+
+        // Check if the image needs to be uploaded first
+        if (image.isPendingUpload) {
+            if (insertBtn) {
+                insertBtn.disabled = true;
+                insertBtn.textContent = 'Sunucuya Yükleniyor...';
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append('image', image.file);
+
+                const targetFolder = currentProFolder;
+                formData.append('folder', targetFolder);
+
+                // Send post title for meaningful filename generation
+                const postTitleEl = document.getElementById('postTitle');
+                if (postTitleEl && postTitleEl.textContent.trim()) {
+                    formData.append('postTitle', postTitleEl.textContent.trim());
+                }
+
+                // Send postSlug for automatic image tagging
+                const { slug } = getPostData();
+                const editSlug = new URLSearchParams(window.location.search).get('edit');
+                const activeSlug = editSlug || slug;
+                if (activeSlug) {
+                    formData.append('postSlug', activeSlug);
+                }
+
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+                    },
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error('Yükleme başarısız: ' + response.status + ' ' + errorText);
+                }
+
+                const result = await response.json();
+
+                // Update image object with server URL
+                image.url = `../${result.url}`;
+                image.isPendingUpload = false;
+
+            } catch (error) {
+                console.error('Error during delayed file upload:', error);
+                alert('Görsel sunucuya yüklenirken hata oluştu. Lütfen tekrar deneyin.');
+                if (insertBtn) {
+                    insertBtn.disabled = false;
+                    insertBtn.textContent = originalBtnText;
+                }
+                return;
+            }
         }
 
         console.log('Selected image:', image);
@@ -2002,75 +2276,155 @@ function insertSelectedImage() {
         // Add image to container
         imageContainer.appendChild(img);
 
-        // Add caption if description is not just the filename
-        if (description && description !== image.name) {
-            const caption = document.createElement('figcaption');
-            caption.textContent = description;
-            caption.style.fontSize = '14px';
-            caption.style.color = 'var(--muted)';
-            caption.style.fontStyle = 'italic';
-            caption.style.textAlign = 'center';
-            caption.style.marginTop = '8px';
-            caption.style.marginBottom = '0';
-            caption.contentEditable = "true"; // Allow editing caption directly
-            imageContainer.appendChild(caption);
-        }
+        // ALWAYS add caption for blog content images
+        const caption = document.createElement('figcaption');
+        caption.textContent = description; // Uses user input or fallback name
+        caption.className = 'image-caption'; // Use a specific class for styling
+        caption.contentEditable = "true"; // Allow editing caption directly
+        caption.setAttribute('placeholder', 'Görsel açıklaması girin...');
 
-        // Insert image directly into editor
+        // Focus the caption if it's just the default name
+        caption.onclick = function () {
+            if (this.textContent === image.name) {
+                // Optional: clear on first click if desired
+            }
+        };
+
+        imageContainer.appendChild(caption);
+
+        // Insert image directly into editor - SAFE INSERTION
         const editor = document.getElementById('editorContent');
-        console.log('Editor found:', editor);
-
-        // Force focus back to editor before inserting
-        editor.focus();
-        console.log('Editor focused, active element:', document.activeElement);
-
-        const selection = window.getSelection();
-        console.log('Selection range count:', selection.rangeCount);
-
-        // Use saved cursor position if available, otherwise use current selection
-        let range;
-        if (savedCursorElement && savedCursorOffset !== null) {
-            // Create new range from saved position
-            range = document.createRange();
-            range.setStart(savedCursorElement, savedCursorOffset);
-            range.setEnd(savedCursorElement, savedCursorOffset);
-            console.log('Using saved cursor position');
-            console.log('Saved element:', savedCursorElement);
-            console.log('Saved offset:', savedCursorOffset);
-            // Don't clear saved position - keep it for multiple images
-        } else if (selection.rangeCount > 0) {
-            range = selection.getRangeAt(0);
-            console.log('Using current cursor position');
-            console.log('Range start container:', range.startContainer);
-            console.log('Range start offset:', range.startOffset);
-        } else {
-            console.log('No cursor position available, appending to end');
-            editor.appendChild(imageContainer);
+        if (!editor) {
+            console.error('CRITICAL: Editor element not found!');
+            alert('Editör bulunamadı!');
             return;
         }
 
-        // Delete any selected content first
-        range.deleteContents();
+        // Helper: check if a node is inside the editor
+        function isInsideEditor(node) {
+            let current = node;
+            while (current) {
+                if (current === editor) return true;
+                current = current.parentNode;
+            }
+            return false;
+        }
 
-        // Insert the image container directly at the cursor position
-        range.insertNode(imageContainer);
-        console.log('Image container inserted at cursor position');
-        console.log('Image container parent:', imageContainer.parentNode);
+        // Helper: Promote figure out of any inline/block parent so it's a direct child of editor
+        // This prevents <figure> from being nested inside <h1>, <p>, <li>, etc.
+        function promoteFigure(figure) {
+            const blockTags = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'LI', 'BLOCKQUOTE', 'SPAN', 'A', 'STRONG', 'EM', 'B', 'I', 'U'];
+            let parent = figure.parentNode;
 
-        // Move cursor after the inserted image container
-        range.setStartAfter(imageContainer);
-        range.setEndAfter(imageContainer);
-        selection.removeAllRanges();
-        selection.addRange(range);
-        console.log('Cursor moved after image container');
+            // Keep promoting until parent is the editor itself
+            while (parent && parent !== editor && blockTags.includes(parent.tagName)) {
+                // Split: move everything after figure into a clone of the parent
+                const afterContent = document.createRange();
+                afterContent.setStartAfter(figure);
+                afterContent.setEnd(parent, parent.childNodes.length);
+                const afterFragment = afterContent.extractContents();
 
-        // Add line break after image container
-        const br = document.createElement('br');
-        if (imageContainer.parentNode) {
-            imageContainer.parentNode.insertBefore(br, imageContainer.nextSibling);
-            console.log('Line break added after image container');
-        } else {
-            console.log('Warning: Image container has no parent node');
+                // Only create the "after" clone if it has real content
+                const afterText = afterFragment.textContent.trim();
+                let afterClone = null;
+                if (afterText || afterFragment.querySelector('img, figure, br')) {
+                    afterClone = parent.cloneNode(false);
+                    afterClone.appendChild(afterFragment);
+                }
+
+                // Remove figure from parent
+                parent.removeChild(figure);
+
+                // Insert figure after parent
+                const grandParent = parent.parentNode;
+                if (grandParent) {
+                    grandParent.insertBefore(figure, parent.nextSibling);
+                    // Insert afterClone after figure
+                    if (afterClone) {
+                        grandParent.insertBefore(afterClone, figure.nextSibling);
+                    }
+                }
+
+                // Remove empty parent if it has no meaningful text
+                if (parent.textContent.trim() === '' && !parent.querySelector('img, figure')) {
+                    if (parent.parentNode) parent.parentNode.removeChild(parent);
+                }
+
+                parent = figure.parentNode;
+            }
+        }
+
+        // Determine a safe insertion point
+        let inserted = false;
+
+        // Strategy 1: Use saved cursor position IF it's inside the editor
+        if (savedCursorElement && savedCursorOffset !== null && isInsideEditor(savedCursorElement)) {
+            try {
+                const range = document.createRange();
+                range.setStart(savedCursorElement, savedCursorOffset);
+                range.setEnd(savedCursorElement, savedCursorOffset);
+                range.deleteContents();
+                range.insertNode(imageContainer);
+
+                // Promote figure out of any block parent
+                promoteFigure(imageContainer);
+
+                // Move cursor after
+                const newRange = document.createRange();
+                newRange.setStartAfter(imageContainer);
+                newRange.collapse(true);
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(newRange);
+                inserted = true;
+                console.log('Image inserted at saved cursor position (inside editor)');
+            } catch (e) {
+                console.warn('Saved cursor insertion failed:', e);
+            }
+        }
+
+        // Strategy 2: Try current selection if it's inside the editor
+        if (!inserted) {
+            editor.focus();
+            const sel = window.getSelection();
+            if (sel.rangeCount > 0) {
+                const range = sel.getRangeAt(0);
+                if (isInsideEditor(range.startContainer)) {
+                    try {
+                        range.deleteContents();
+                        range.insertNode(imageContainer);
+
+                        // Promote figure out of any block parent
+                        promoteFigure(imageContainer);
+
+                        const newRange = document.createRange();
+                        newRange.setStartAfter(imageContainer);
+                        newRange.collapse(true);
+                        sel.removeAllRanges();
+                        sel.addRange(newRange);
+                        inserted = true;
+                        console.log('Image inserted at current cursor position (inside editor)');
+                    } catch (e) {
+                        console.warn('Current selection insertion failed:', e);
+                    }
+                }
+            }
+        }
+
+        // Strategy 3: SAFE FALLBACK - always append to end of editor
+        if (!inserted) {
+            editor.appendChild(imageContainer);
+            inserted = true;
+            console.log('Image appended to end of editor (safe fallback)');
+        }
+
+        // Add spacing after the image
+        const spacer = document.createElement('p');
+        spacer.innerHTML = '<br>';
+        if (imageContainer.nextSibling) {
+            imageContainer.parentNode.insertBefore(spacer, imageContainer.nextSibling);
+        } else if (imageContainer.parentNode) {
+            imageContainer.parentNode.appendChild(spacer);
         }
 
         // Verify image was added
@@ -2131,12 +2485,6 @@ function insertTextAtCursor(text) {
 // Setup image modal event listeners
 function setupImageModalListeners() {
     try {
-        // Gallery folder change
-        const folderSelect = document.getElementById('galleryFolderSelect');
-        if (folderSelect) {
-            folderSelect.addEventListener('change', loadGalleryImages);
-        }
-
         // File input change
         const fileInput = document.getElementById('imageFileInput');
         if (fileInput) {
@@ -2145,8 +2493,8 @@ function setupImageModalListeners() {
             });
         }
 
-        // Drag and drop
-        const uploadArea = document.getElementById('imageUploadArea');
+        // Drag and drop for Pro Media Modal
+        const uploadArea = document.getElementById('proUploadArea'); // Fix ID
         if (uploadArea) {
             uploadArea.addEventListener('dragover', (e) => {
                 e.preventDefault();
@@ -2164,8 +2512,14 @@ function setupImageModalListeners() {
             });
         }
 
-        // Click outside to close modal
+        // Click outside backdrop to close
         const modal = document.getElementById('imageInsertModal');
+        const backdrop = modal ? modal.querySelector('.modal-backdrop') : null;
+        if (backdrop) {
+            backdrop.addEventListener('click', closeImageModal);
+        }
+
+        // Ensure direct click on modal (not content) also closes it
         if (modal) {
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) {

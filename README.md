@@ -5,7 +5,7 @@
 **Bağımsız Arayüz Mimarisi • Derinlemesine Güvenlik • Taşınabilir JSON Altyapısı**
 
 [![Status](https://img.shields.io/badge/Status-Active%20Development-success?style=for-the-badge)]()
-[![Version](https://img.shields.io/badge/Version-v0.1.5.anti-blue?style=for-the-badge)]()
+[![Version](https://img.shields.io/badge/Version-v0.1.6.anti-blue?style=for-the-badge)]()
 [![Node.js](https://img.shields.io/badge/Node.js-v14%2B-green?style=for-the-badge)]()
 [![License](https://img.shields.io/badge/License-MIT-purple?style=for-the-badge)]()
 
@@ -14,7 +14,7 @@ Ağır SPA framework'leri olmadan Vanilla JS ve Express ile %100 SEO uyumlu ve p
 
 <br>
 
-![Ana Sayfa (Light)](./images/demo-homepage-light.png)
+![Ana Sayfa (Dark)](./images/demo-homepage.png)
 
 </div>
 
