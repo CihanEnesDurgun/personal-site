@@ -1,7 +1,7 @@
 # 🛡️ Sistem Güvenlik Mimarisi ve Altyapı Raporu
 
 **Tarih:** Şubat 2026  
-**Versiyon Uyum:** v0.1.6.anti  
+**Versiyon Uyum:** v0.1.7.anti  
 **Kapsam:** Ağ, Veri, İstemci ve Uygulama Güvenliği
 
 ---

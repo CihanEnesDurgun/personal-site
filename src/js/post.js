@@ -216,6 +216,13 @@ async function boot() {
       const alt = img.getAttribute('alt') || '';
       const filename = src.split('/').pop().split('.')[0];
 
+      // Parse width from alt if present
+      let cleanAlt = alt;
+      const widthMatch = alt.match(/(.*?)\s*(?:[=%]\s*(\d+)|(\d+)%)\s*$/);
+      if (widthMatch) {
+        cleanAlt = (widthMatch[1] || "").trim();
+      }
+
       // Create figure wrapper
       const figure = document.createElement('figure');
       figure.style.textAlign = 'center';
@@ -225,6 +232,9 @@ async function boot() {
       const newImg = document.createElement('img');
       newImg.src = src;
       newImg.alt = '';
+      if (widthMatch) {
+        newImg.style.width = `${widthMatch[2] || widthMatch[3]}%`;
+      }
       newImg.style.maxWidth = '100%';
       newImg.style.height = 'auto';
       newImg.style.borderRadius = '6px';
@@ -233,14 +243,14 @@ async function boot() {
       figure.appendChild(newImg);
 
       // Add caption if alt text is meaningful (not just the filename)
-      if (alt && alt.trim() && alt !== filename && alt !== filename + '.' + src.split('.').pop()) {
+      if (cleanAlt && cleanAlt.trim() && cleanAlt !== filename && cleanAlt !== filename + '.' + src.split('.').pop()) {
         const figcaption = document.createElement('figcaption');
         figcaption.style.fontSize = '14px';
         figcaption.style.color = 'var(--muted)';
         figcaption.style.fontStyle = 'italic';
         figcaption.style.textAlign = 'center';
         figcaption.style.marginTop = '8px';
-        figcaption.textContent = alt;
+        figcaption.textContent = cleanAlt;
         figure.appendChild(figcaption);
       }
 

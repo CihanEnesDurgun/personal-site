@@ -73,6 +73,17 @@ async function loadWelcomeContent() {
             const editorContent = document.getElementById('editorContent');
             if (editorContent) {
                 editorContent.innerHTML = htmlContent;
+
+                // Extract widths from alt texts and apply as inline styles
+                editorContent.querySelectorAll('img').forEach(img => {
+                    const alt = img.getAttribute('alt') || '';
+                    const widthMatch = alt.match(/(.*?)\s*(?:[=%]\s*(\d+)|(\d+)%)\s*$/);
+                    if (widthMatch) {
+                        img.setAttribute('alt', (widthMatch[1] || "").trim());
+                        img.style.width = `${widthMatch[2] || widthMatch[3]}%`;
+                    }
+                });
+
                 console.log('Welcome content set to editor');
 
                 // Update stats after loading content
@@ -128,6 +139,17 @@ async function loadPostForEdit(slug) {
             });
             const htmlContent = marked.parse(sanitizedContent);
             editorContent.innerHTML = htmlContent;
+
+            // Extract widths from alt texts and apply as inline styles
+            editorContent.querySelectorAll('img').forEach(img => {
+                const alt = img.getAttribute('alt') || '';
+                const widthMatch = alt.match(/(.*?)\s*(?:[=%]\s*(\d+)|(\d+)%)\s*$/);
+                if (widthMatch) {
+                    img.setAttribute('alt', (widthMatch[1] || "").trim());
+                    img.style.width = `${widthMatch[2] || widthMatch[3]}%`;
+                }
+            });
+
             console.log('Editor content set from API response');
         } else if (editorContent) {
             // If no content, set empty content
@@ -362,8 +384,7 @@ class ThemeManager {
     }
 
     getCurrentTheme() {
-        return localStorage.getItem('theme') ||
-            (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        return localStorage.getItem('theme') || 'dark';
     }
 
     async loadSavedTheme() {
@@ -776,14 +797,24 @@ function updatePreview() {
             // Apply custom image rendering logic from post.html
             html = html.replace(/<img src="([^"]*)" alt="([^"]*)"[^>]*>/g, function (match, src, alt) {
                 const filename = src.split('/').pop().split('.')[0];
-                if (alt && alt.trim() && alt !== filename) {
+
+                // Extract width from alt text if present
+                let widthStyle = 'max-width: 100%';
+                let cleanAlt = alt;
+                const widthMatch = alt.match(/(.*?)\s*(?:[=%]\s*(\d+)|(\d+)%)\s*$/);
+                if (widthMatch) {
+                    cleanAlt = (widthMatch[1] || "").trim();
+                    widthStyle = `width: ${widthMatch[2] || widthMatch[3]}%; max-width: 100%`;
+                }
+
+                if (cleanAlt && cleanAlt.trim() && cleanAlt !== filename) {
                     return `<figure style="text-align: center; margin: 2em 0;">
-                        <img src="${src}" alt="" style="max-width: 100%; height: auto; border-radius: 6px; display: block; margin: 0 auto;">
-                        <figcaption style="font-size: 14px; color: var(--muted); font-style: italic; text-align: center; margin-top: 8px;">${alt}</figcaption>
+                        <img src="${src}" alt="${cleanAlt}" style="${widthStyle}; height: auto; border-radius: 6px; display: block; margin: 0 auto;">
+                        <figcaption style="font-size: 14px; color: var(--muted); font-style: italic; text-align: center; margin-top: 8px;">${cleanAlt}</figcaption>
                     </figure>`;
                 } else {
                     return `<figure style="text-align: center; margin: 2em 0;">
-                        <img src="${src}" alt="" style="max-width: 100%; height: auto; border-radius: 6px; display: block; margin: 0 auto;">
+                        <img src="${src}" alt="" style="${widthStyle}; height: auto; border-radius: 6px; display: block; margin: 0 auto;">
                     </figure>`;
                 }
             });
@@ -984,7 +1015,11 @@ function htmlToMarkdown(html) {
                 case 'IMG': {
                     const src = node.getAttribute('src') || '';
                     const alt = node.getAttribute('alt') || src.split('/').pop().split('.')[0];
-                    return `![${alt}](${src})`;
+                    let widthStr = '';
+                    if (node.style.width && node.style.width.includes('%')) {
+                        widthStr = ` =${node.style.width}`;
+                    }
+                    return `![${alt}${widthStr}](${src})`;
                 }
                 default: return inner;
             }
@@ -1043,8 +1078,15 @@ function htmlToMarkdown(html) {
                 if (caption && placeholders.includes(caption.toLowerCase())) {
                     caption = '';
                 }
+
+                let widthStr = '';
+                if (img.style.width && img.style.width.includes('%')) {
+                    widthStr = ` =${img.style.width}`;
+                }
+
                 // Use caption for alt text, fallback to alt, fallback to filename
-                const imageText = caption || alt || src.split('/').pop().split('.')[0];
+                const baseText = caption || alt || src.split('/').pop().split('.')[0] || 'Görsel';
+                const imageText = baseText.trim() + widthStr;
                 return `![${imageText}](${src})\n\n`;
             }
 
@@ -1052,7 +1094,12 @@ function htmlToMarkdown(html) {
             if (tag === 'IMG') {
                 const src = node.getAttribute('src') || '';
                 const alt = node.getAttribute('alt') || src.split('/').pop().split('.')[0];
-                return `![${alt}](${src})\n\n`;
+                let widthStr = '';
+                if (node.style.width && node.style.width.includes('%')) {
+                    widthStr = ` =${node.style.width}`;
+                }
+                const altText = (alt || src.split('/').pop().split('.')[0] || 'Görsel').trim();
+                return `![${altText}${widthStr}](${src})\n\n`;
             }
 
             // Horizontal rule
@@ -1127,7 +1174,11 @@ function htmlToMarkdown(html) {
                     const alt = img.getAttribute('alt') || '';
                     const pCaption = node.querySelector('p');
                     const caption = pCaption ? pCaption.textContent.trim() : '';
-                    const imageText = caption || alt || src.split('/').pop().split('.')[0];
+                    let widthStr = '';
+                    if (img.style.width && img.style.width.includes('%')) {
+                        widthStr = ` =${img.style.width}`;
+                    }
+                    const imageText = (caption || alt || src.split('/').pop().split('.')[0]) + widthStr;
                     return `![${imageText}](${src})\n\n`;
                 }
                 return Array.from(node.childNodes).map(processNode).join('');
@@ -2014,7 +2065,7 @@ async function loadProGallery(folder) {
 
             const url = `../${imgData.url}`;
             const image = {
-                name: imgData.originalName || imgData.filename,
+                name: imgData.originalName || imgData.filename || 'Görsel',
                 url: url,
                 folder: imgData.folder
             };
@@ -2079,8 +2130,8 @@ function showSimpleImagePreview(image) {
         // Setup Right Sidebar Data
         if (previewImg) previewImg.src = image.url;
         if (previewBlur) previewBlur.src = image.url;
-        if (metaName) metaName.textContent = image.name;
-        if (descInput) descInput.value = image.name;
+        if (metaName) metaName.textContent = image.name || 'Görsel';
+        if (descInput) descInput.value = image.name || '';
 
         // Toggle Views
         if (emptyState) emptyState.classList.remove('active');
@@ -2246,12 +2297,12 @@ async function insertSelectedImage() {
         // Clean description - remove any problematic characters
         let description = descriptionInput.value ? descriptionInput.value.trim() : '';
         if (!description) {
-            description = image.name;
+            description = image.name || 'Görsel';
         }
 
         console.log('Description input value:', descriptionInput.value);
         console.log('Description (cleaned):', description);
-        console.log('Image name (fallback):', image.name);
+        console.log('Image name (fallback):', image.name || 'Görsel');
 
         // Check if description input is focused (this might affect cursor position)
         console.log('Description input focused:', document.activeElement === descriptionInput);
@@ -2533,11 +2584,123 @@ function setupImageModalListeners() {
     }
 }
 
-// Update the existing setupEventListeners function to include image modal
+// ========== IN-EDITOR IMAGE RESIZE TOOLBAR ==========
+
+let activeResizingImage = null;
+
+// Show resize toolbar and position it near the image
+function showImageResizeToolbar(imgElement) {
+    const toolbar = document.getElementById('imageResizeToolbar');
+    if (!toolbar) return;
+
+    activeResizingImage = imgElement;
+
+    // Highlight the image
+    const editorImages = document.querySelectorAll('#editorContent img');
+    editorImages.forEach(img => img.classList.remove('selected-for-resize'));
+    imgElement.classList.add('selected-for-resize');
+
+    // Calculate position
+    const imgRect = imgElement.getBoundingClientRect();
+    const scrollY = window.scrollY || window.pageYOffset;
+    const scrollX = window.scrollX || window.pageXOffset;
+
+    // Position toolbar above the image
+    toolbar.classList.add('visible');
+    const toolbarRect = toolbar.getBoundingClientRect();
+
+    let top = imgRect.top + scrollY - toolbarRect.height - 15;
+    let left = imgRect.left + scrollX + (imgRect.width / 2) - (toolbarRect.width / 2);
+
+    // Make sure it doesn't go off screen
+    if (top < scrollY) top = imgRect.bottom + scrollY + 15; // If too high, show below
+    if (left < scrollX) left = scrollX + 10;
+
+    toolbar.style.top = `${top}px`;
+    toolbar.style.left = `${left}px`;
+
+    // Update active button state
+    updateResizeButtonsState(imgElement.style.width || '100%');
+}
+
+// Hide the resize toolbar
+function hideImageResizeToolbar() {
+    const toolbar = document.getElementById('imageResizeToolbar');
+    if (toolbar) {
+        toolbar.classList.remove('visible');
+    }
+
+    if (activeResizingImage) {
+        activeResizingImage.classList.remove('selected-for-resize');
+        activeResizingImage = null;
+    }
+}
+
+// Handle actual resizing
+window.resizeActiveImage = function (percentage) {
+    if (!activeResizingImage) return;
+
+    activeResizingImage.style.width = `${percentage}%`;
+    activeResizingImage.style.height = 'auto'; // Maintain aspect ratio
+    updateResizeButtonsState(`${percentage}%`);
+
+    // Trigger editor stats update
+    updateAllStats();
+};
+
+// Update active button colors
+function updateResizeButtonsState(currentWidth) {
+    const buttons = document.querySelectorAll('#imageResizeToolbar .resize-btn');
+    buttons.forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.innerText === currentWidth || btn.innerText === currentWidth.replace('%', '')) {
+            btn.classList.add('active');
+        }
+    });
+}
+
+// Setup Editor Click Listeners for Resizing
+function setupEditorImageListeners() {
+    const editor = document.getElementById('editorContent');
+    if (editor) {
+        // Handle clicks inside editor
+        editor.addEventListener('click', function (e) {
+            if (e.target.tagName === 'IMG') {
+                e.stopPropagation(); // Stop document click from hiding it immediately
+                showImageResizeToolbar(e.target);
+            } else {
+                hideImageResizeToolbar();
+            }
+        });
+
+        // Handle input/scroll to hide toolbar if layout changes
+        editor.addEventListener('input', hideImageResizeToolbar);
+        editor.addEventListener('scroll', hideImageResizeToolbar);
+    }
+
+    // Clicking outside the editor hides the toolbar
+    document.addEventListener('click', function (e) {
+        const toolbar = document.getElementById('imageResizeToolbar');
+        if (toolbar && toolbar.classList.contains('visible')) {
+            // Don't hide if clicking on the toolbar itself or an image
+            if (!toolbar.contains(e.target) && e.target.tagName !== 'IMG') {
+                hideImageResizeToolbar();
+            }
+        }
+    });
+
+    // Hide toolbar on window scroll or resize
+    window.addEventListener('scroll', hideImageResizeToolbar);
+    window.addEventListener('resize', hideImageResizeToolbar);
+}
+
+
+// Update the existing setupEventListeners function to include image modal & resize logic
 const originalSetupEventListeners = setupEventListeners;
 setupEventListeners = function () {
     originalSetupEventListeners();
     setupImageModalListeners();
+    setupEditorImageListeners();
 };
 
 console.log('Script loaded successfully');

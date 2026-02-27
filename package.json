@@ -1,6 +1,6 @@
 {
   "name": "personal-site-admin",
-  "version": "0.1.6-anti",
+  "version": "0.1.7-anti",
   "description": "Personal site admin panel with backend API, account management, and security features",
   "main": "server.js",
   "engines": {
@@ -25,12 +25,15 @@
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
+    "dompurify": "^3.3.1",
     "dotenv": "^17.2.1",
     "express": "^4.18.2",
     "express-rate-limit": "^7.5.1",
     "file-type": "^16.5.4",
     "fs-extra": "^11.1.1",
+    "jsdom": "^28.1.0",
     "jsonwebtoken": "^9.0.2",
+    "marked": "^17.0.3",
     "multer": "^1.4.5-lts.1",
     "node-cron": "^4.2.1",
     "sanitize-html": "^2.17.1"

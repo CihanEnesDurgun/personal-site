@@ -162,8 +162,8 @@ class ThemeManager {
       return saved === 'dark' ? 'dark' : 'light';
     }
 
-    // Use system preference as fallback
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    // Default to dark theme
+    return 'dark';
   }
 
   /**
