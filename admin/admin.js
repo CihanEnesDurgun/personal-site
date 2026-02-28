@@ -964,6 +964,11 @@ class BlogManager {
 
     console.log('Chart data:', { labels, data }); // Debug log
 
+    // Create gradient for bars
+    const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400);
+    gradient.addColorStop(0, 'rgba(34, 197, 94, 0.8)');
+    gradient.addColorStop(1, 'rgba(34, 197, 94, 0.1)');
+
     // Create new chart
     this.dailyChart = new Chart(ctx, {
       type: 'bar',
@@ -972,11 +977,14 @@ class BlogManager {
         datasets: [{
           label: 'Günlük Görüntüleme',
           data: data,
-          backgroundColor: 'rgba(34, 197, 94, 0.2)',
+          backgroundColor: gradient,
           borderColor: 'rgba(34, 197, 94, 1)',
           borderWidth: 2,
-          borderRadius: 4,
+          borderRadius: 6,
           borderSkipped: false,
+          hoverBackgroundColor: 'rgba(34, 197, 94, 1)',
+          barPercentage: 0.5,
+          categoryPercentage: 0.8
         }]
       },
       options: {
@@ -987,20 +995,18 @@ class BlogManager {
             display: false
           },
           tooltip: {
-            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-            titleColor: 'white',
-            bodyColor: 'white',
-            borderColor: 'rgba(34, 197, 94, 1)',
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            titleColor: '#1f2937',
+            bodyColor: '#1f2937',
+            borderColor: 'rgba(34, 197, 94, 0.3)',
             borderWidth: 1,
-            cornerRadius: 8,
+            padding: 12,
+            boxPadding: 4,
+            cornerRadius: 10,
             displayColors: false,
             callbacks: {
-              title: function () {
-                return '';
-              },
-              label: function (context) {
-                return `${context.parsed.y} görüntüleme`;
-              }
+              title: (items) => items[0].label,
+              label: (context) => `📈 ${context.parsed.y} görüntüleme`
             }
           }
         },
@@ -1010,27 +1016,35 @@ class BlogManager {
               display: false
             },
             ticks: {
-              color: 'var(--text-color)',
+              color: 'var(--muted)',
               font: {
-                size: 12
-              }
+                size: 11,
+                weight: '500'
+              },
+              padding: 10
             }
           },
           y: {
             beginAtZero: true,
             grid: {
-              color: 'rgba(0, 0, 0, 0.1)'
+              color: 'rgba(0, 0, 0, 0.05)',
+              drawBorder: false
             },
             ticks: {
-              color: 'var(--text-color)',
+              color: 'var(--muted)',
               font: {
-                size: 12
+                size: 11
               },
+              maxTicksLimit: 6,
               callback: function (value) {
-                return value + ' görüntüleme';
+                return value >= 1000 ? (value / 1000) + 'k' : value;
               }
             }
           }
+        },
+        animation: {
+          duration: 1500,
+          easing: 'easeOutQuart'
         },
         interaction: {
           intersect: false,
@@ -1096,12 +1110,15 @@ class BlogManager {
         label: postTitle,
         data: data,
         borderColor: color,
-        backgroundColor: color.replace('1)', '0.1)'),
-        borderWidth: 2,
-        tension: 0.3,
-        fill: false,
-        pointRadius: 3,
-        pointHoverRadius: 5
+        backgroundColor: color.replace('1)', '0.05)'),
+        borderWidth: 3,
+        pointRadius: 0,
+        pointHoverRadius: 6,
+        pointBackgroundColor: color,
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        tension: 0.4,
+        fill: true
       };
     });
 
@@ -1120,42 +1137,61 @@ class BlogManager {
             display: true,
             position: 'bottom',
             labels: {
-              color: 'var(--text-color)',
-              padding: 10,
-              font: { size: 11 }
+              color: 'var(--muted)',
+              padding: 20,
+              usePointStyle: true,
+              pointStyle: 'circle',
+              font: {
+                size: 11,
+                weight: '500'
+              }
             }
           },
           tooltip: {
-            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-            titleColor: 'white',
-            bodyColor: 'white',
-            borderColor: 'rgba(34, 197, 94, 1)',
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            titleColor: '#1f2937',
+            bodyColor: '#1f2937',
+            borderColor: 'rgba(0, 0, 0, 0.05)',
             borderWidth: 1,
-            cornerRadius: 8,
-            displayColors: true,
+            padding: 12,
+            boxPadding: 6,
+            cornerRadius: 10,
+            usePointStyle: true,
             callbacks: {
               label: function (context) {
-                return `${context.dataset.label}: ${context.parsed.y} görüntüleme`;
+                return ` ${context.dataset.label}: ${context.parsed.y} görüntüleme`;
               }
             }
           }
         },
         scales: {
           x: {
-            grid: { display: false },
+            grid: {
+              display: false
+            },
             ticks: {
-              color: 'var(--text-color)',
-              font: { size: 12 }
+              color: 'var(--muted)',
+              font: {
+                size: 11,
+                weight: '500'
+              },
+              padding: 10
             }
           },
           y: {
             beginAtZero: true,
-            grid: { color: 'rgba(0, 0, 0, 0.1)' },
+            grid: {
+              color: 'rgba(0, 0, 0, 0.05)',
+              drawBorder: false
+            },
             ticks: {
-              color: 'var(--text-color)',
-              font: { size: 12 },
+              color: 'var(--muted)',
+              font: {
+                size: 11
+              },
+              maxTicksLimit: 6,
               callback: function (value) {
-                return value + ' görüntüleme';
+                return value >= 1000 ? (value / 1000) + 'k' : value;
               }
             }
           }
@@ -1170,26 +1206,28 @@ class BlogManager {
 
   updateChartTheme() {
     const isDark = document.documentElement.classList.contains('dark');
-    const textColor = isDark ? '#ffffff' : '#374151';
+    const textColor = isDark ? '#94a3b8' : '#64748b';
+    const gridColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)';
+    const tooltipBg = isDark ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.95)';
+    const tooltipBorder = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+    const tooltipTitle = isDark ? '#f1f5f9' : '#1e293b';
+    const tooltipBody = isDark ? '#cbd5e1' : '#334155';
 
-    // Update daily chart
-    if (this.dailyChart) {
-      this.dailyChart.options.scales.x.ticks.color = textColor;
-      this.dailyChart.options.scales.y.ticks.color = textColor;
-      this.dailyChart.options.plugins.tooltip.backgroundColor = isDark ? 'rgba(0, 0, 0, 0.9)' : 'rgba(0, 0, 0, 0.8)';
-      this.dailyChart.options.scales.y.grid.color = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-      this.dailyChart.update();
-    }
-
-    // YENİ: Update post views chart
-    if (this.postViewsChart) {
-      this.postViewsChart.options.scales.x.ticks.color = textColor;
-      this.postViewsChart.options.scales.y.ticks.color = textColor;
-      this.postViewsChart.options.plugins.legend.labels.color = textColor;
-      this.postViewsChart.options.plugins.tooltip.backgroundColor = isDark ? 'rgba(0, 0, 0, 0.9)' : 'rgba(0, 0, 0, 0.8)';
-      this.postViewsChart.options.scales.y.grid.color = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-      this.postViewsChart.update();
-    }
+    [this.dailyChart, this.postViewsChart].forEach(chart => {
+      if (chart) {
+        chart.options.scales.x.ticks.color = textColor;
+        chart.options.scales.y.ticks.color = textColor;
+        chart.options.scales.y.grid.color = gridColor;
+        chart.options.plugins.tooltip.backgroundColor = tooltipBg;
+        chart.options.plugins.tooltip.borderColor = tooltipBorder;
+        chart.options.plugins.tooltip.titleColor = tooltipTitle;
+        chart.options.plugins.tooltip.bodyColor = tooltipBody;
+        if (chart.options.plugins.legend) {
+          chart.options.plugins.legend.labels.color = textColor;
+        }
+        chart.update();
+      }
+    });
   }
 
   filterPosts() {

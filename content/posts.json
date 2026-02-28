@@ -1,5 +1,23 @@
 [
   {
+    "slug": "bloguma-hos-geldin-neden-boyle-bir-yola-girdim",
+    "title": "Blog'uma Hoş Geldin :) Neden Böyle Bir Yola Girdim?",
+    "excerpt": "Hoş geldin. Sosyal medyadan bilinçli bir şekilde uzaklaşıp, düşüncelerimi, öğrendiklerimi ve üretme sürecimi kendime ait bir alanda biriktirme isteğimin hikâyesi. Bu blog'un neden var olduğunu ve nasıl şekillendiğini anlattığım kişisel bir başlangıç yazısı.",
+    "date": "2026-01-02",
+    "cover": "images/blog-covers/img-7956-copy-jpg-2026-02-27-22-22.jpg",
+    "coverCaption": "Kapak Fotoğrafı: Geliştirme Sürecimizden Bir Kare",
+    "tags": [
+      "Tanıtım",
+      "Blog",
+      "Mektup"
+    ],
+    "featured": true,
+    "status": "published",
+    "publishDate": "2026-02-27T22:35:37.555Z",
+    "createdAt": "2026-02-27T22:34:33.091Z",
+    "updatedAt": "2026-02-27T22:36:16.551Z"
+  },
+  {
     "slug": "headtracker-imudan-stabil-takip",
     "title": "Headtracker: IMU'dan Stabil Takip",
     "excerpt": "ESP-NOW protokolü ile cihazlar arası doğrudan iletişim ve IMU tabanlı headtracker sistemi hakkında detaylı rehber.",
