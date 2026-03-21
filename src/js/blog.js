@@ -228,7 +228,7 @@ async function trackPageView(page) {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ page })
+      body: JSON.stringify({ page, source: document.referrer })
     });
   } catch (error) {
     console.log('Failed to track page view:', error);

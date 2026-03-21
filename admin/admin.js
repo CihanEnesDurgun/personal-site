@@ -866,15 +866,49 @@ class BlogManager {
 
       const analytics = await this.apiService.getAnalytics(timeRange);
       console.log('Analytics data received:', analytics); // Debug log
-      this.renderAnalytics(analytics);
+      this.renderAnalytics(analytics, parseInt(timeRange, 10));
     } catch (error) {
       console.error('Error loading analytics:', error);
       this.showNotification('İstatistikler yüklenirken hata oluştu!', 'error');
     }
   }
 
-  renderAnalytics(analytics) {
+  renderAnalytics(analytics, timeRange = 30) {
     console.log('Rendering analytics:', analytics); // Debug log
+
+    // Process dailyStats to fill missing days with 0 views
+    if (analytics.dailyStats) {
+      const filledDailyStats = [];
+      const today = new Date();
+      today.setHours(12, 0, 0, 0); // Avoid timezone offset issues at midnight
+
+      const daysArray = [];
+      for (let i = timeRange - 1; i >= 0; i--) {
+        const d = new Date(today);
+        d.setDate(d.getDate() - i);
+        daysArray.push(d.toISOString().split('T')[0]);
+      }
+
+      const statsMap = new Map();
+      analytics.dailyStats.forEach(stat => {
+        const dateStr = new Date(stat.date).toISOString().split('T')[0];
+        statsMap.set(dateStr, stat);
+      });
+
+      daysArray.forEach(dateStr => {
+        if (statsMap.has(dateStr)) {
+          filledDailyStats.push(statsMap.get(dateStr));
+        } else {
+          filledDailyStats.push({
+            date: new Date(dateStr).toISOString(),
+            totalViews: 0,
+            postViews: {}
+          });
+        }
+      });
+
+      analytics.dailyStats = filledDailyStats;
+    }
 
     // Update general stats
     $('#totalViews').textContent = analytics.totalViews.toLocaleString('tr-TR');
@@ -913,6 +947,111 @@ class BlogManager {
 
     // Render post views chart
     this.renderPostViewsChart(analytics.dailyStats, this.posts);
+
+    // Render traffic sources chart
+    if (analytics.sources) {
+      this.renderTrafficSourcesChart(analytics.sources);
+    }
+
+    // Apply the active theme (dark/light) immediately upon rendering
+    this.updateChartTheme();
+  }
+
+  renderTrafficSourcesChart(sourcesData) {
+    const ctx = document.getElementById('sourcesChart');
+    if (!ctx) return;
+
+    if (this.sourcesChart) {
+      this.sourcesChart.destroy();
+    }
+
+    // Convert sources object into arrays for Chart.js
+    const labels = Object.keys(sourcesData);
+    const data = Object.values(sourcesData);
+
+    // Modern color palette for doughnut chart
+    const colors = [
+      'rgba(8, 203, 119, 0.8)', // Main Brand Green
+      'rgba(26, 115, 232, 0.8)', // Modern Blue (Google)
+      'rgba(0, 119, 181, 0.8)', // LinkedIn Blue
+      'rgba(29, 155, 240, 0.8)', // Twitter Blue
+      'rgba(240, 142, 38, 0.8)', // Orange warning
+      'rgba(144, 91, 255, 0.8)'  // Purple
+    ];
+    
+    // Sort logic to match list & chart
+    const combined = labels.map((label, i) => ({ label, count: data[i] }));
+    combined.sort((a, b) => b.count - a.count); // Highest count first
+
+    const sortedLabels = combined.map(item => item.label);
+    const sortedData = combined.map(item => item.count);
+
+    const isDarkMode = document.body.classList.contains('dark-theme');
+    const textColor = isDarkMode ? '#e2e8f0' : '#475569';
+
+    this.sourcesChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: sortedLabels,
+        datasets: [{
+          data: sortedData,
+          backgroundColor: colors.slice(0, sortedData.length),
+          borderWidth: 0,
+          hoverOffset: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '70%',
+        plugins: {
+          legend: {
+            display: false // We will handle our own custom list underneath
+          },
+          tooltip: {
+            backgroundColor: isDarkMode ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+            titleColor: textColor,
+            bodyColor: textColor,
+            borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+            borderWidth: 1,
+            padding: 12,
+            displayColors: true,
+            cornerRadius: 8,
+            boxPadding: 4,
+            callbacks: {
+              label: function(context) {
+                let label = context.label || '';
+                if (label) {
+                  label += ': ';
+                }
+                if (context.parsed !== null) {
+                  label += context.parsed;
+                }
+                return label;
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // Populate the custom list HTML
+    const sourcesListEl = document.getElementById('sourcesList');
+    if (sourcesListEl) {
+      const topSourcesHTML = combined.map((item, index) => {
+        const color = colors[index % colors.length];
+        return `
+          <div class="source-item">
+            <div style="display: flex; align-items: center; gap: 8px;">
+               <div style="width:12px; height:12px; border-radius:50%; background:${color}; flex-shrink:0;"></div>
+               <div class="source-name">${item.label}</div>
+            </div>
+            <div class="source-count">${item.count}</div>
+          </div>
+        `;
+      }).join('');
+      sourcesListEl.innerHTML = topSourcesHTML || '<p class="muted">Henüz trafik kaynağı verisi yok</p>';
+    }
   }
 
   renderDailyChart(dailyStats) {
@@ -1213,16 +1352,22 @@ class BlogManager {
     const tooltipTitle = isDark ? '#f1f5f9' : '#1e293b';
     const tooltipBody = isDark ? '#cbd5e1' : '#334155';
 
-    [this.dailyChart, this.postViewsChart].forEach(chart => {
+    [this.dailyChart, this.postViewsChart, this.sourcesChart].forEach(chart => {
       if (chart) {
-        chart.options.scales.x.ticks.color = textColor;
-        chart.options.scales.y.ticks.color = textColor;
-        chart.options.scales.y.grid.color = gridColor;
+        if (chart.options.scales) {
+          if (chart.options.scales.x && chart.options.scales.x.ticks) {
+            chart.options.scales.x.ticks.color = textColor;
+          }
+          if (chart.options.scales.y && chart.options.scales.y.ticks) {
+            chart.options.scales.y.ticks.color = textColor;
+            chart.options.scales.y.grid.color = gridColor;
+          }
+        }
         chart.options.plugins.tooltip.backgroundColor = tooltipBg;
         chart.options.plugins.tooltip.borderColor = tooltipBorder;
         chart.options.plugins.tooltip.titleColor = tooltipTitle;
         chart.options.plugins.tooltip.bodyColor = tooltipBody;
-        if (chart.options.plugins.legend) {
+        if (chart.options.plugins.legend && chart.options.plugins.legend.labels) {
           chart.options.plugins.legend.labels.color = textColor;
         }
         chart.update();

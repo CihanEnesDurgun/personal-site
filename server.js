@@ -1105,8 +1105,57 @@ const validateStatsData = async () => {
   }
 };
 
-const incrementPageView = async (page) => {
+const categorizeSource = (referrer) => {
+  if (!referrer || typeof referrer !== 'string' || referrer.trim() === '') return 'Direct';
+
+  try {
+    const url = new URL(referrer);
+    const hostname = url.hostname.toLowerCase();
+
+    if (hostname.includes('linkedin.com')) return 'LinkedIn';
+    if (hostname.includes('google.') || hostname.includes('bing.') || hostname.includes('yahoo.')) return 'Search Engine';
+    if (hostname.includes('twitter.com') || hostname.includes('t.co') || hostname.includes('x.com')) return 'Twitter (X)';
+    if (hostname.includes('github.com')) return 'GitHub';
+    if (hostname.includes('facebook.com') || hostname.includes('fb.com')) return 'Facebook';
+    if (hostname.includes('instagram.com')) return 'Instagram';
+
+    // Ignore self-referrals
+    if (hostname.includes('cihanenesdurgun.com') || hostname.includes('localhost') || hostname.includes('127.0.0.1')) {
+      return 'Internal';
+    }
+
+    return 'Other';
+  } catch (e) {
+    return 'Other'; // Invalid URL parsing
+  }
+};
+
+const incrementPageView = async (page, referrerSource = null) => {
   const stats = await readStatsFile();
+  const sourceCategory = categorizeSource(referrerSource);
+
+  // Initialize global sources if not exists
+  if (!stats.sources) stats.sources = {};
+  
+  // Initialize daily sources for the current day
+  const today = new Date().toISOString().split('T')[0];
+  if (!stats.dailyStats[today]) {
+    stats.dailyStats[today] = {
+      totalViews: 0,
+      pageViews: {},
+      postViews: {},
+      sources: {}
+    };
+  }
+  if (!stats.dailyStats[today].sources) {
+    stats.dailyStats[today].sources = {};
+  }
+
+  // Sadece Internal olmayan tıklamaları kaynak olarak kaydet
+  if (sourceCategory !== 'Internal') {
+    stats.sources[sourceCategory] = (stats.sources[sourceCategory] || 0) + 1;
+    stats.dailyStats[today].sources[sourceCategory] = (stats.dailyStats[today].sources[sourceCategory] || 0) + 1;
+  }
 
   // Increment total views
   stats.totalViews = (stats.totalViews || 0) + 1;
@@ -1115,13 +1164,6 @@ const incrementPageView = async (page) => {
   stats.pageViews[page] = (stats.pageViews[page] || 0) + 1;
 
   // Increment daily stats
-  const today = new Date().toISOString().split('T')[0];
-  if (!stats.dailyStats[today]) {
-    stats.dailyStats[today] = {
-      totalViews: 0,
-      pageViews: {}
-    };
-  }
   stats.dailyStats[today].totalViews++;
   stats.dailyStats[today].pageViews[page] = (stats.dailyStats[today].pageViews[page] || 0) + 1;
 
@@ -1129,8 +1171,32 @@ const incrementPageView = async (page) => {
   return stats;
 };
 
-const incrementPostView = async (slug) => {
+const incrementPostView = async (slug, referrerSource = null) => {
   const stats = await readStatsFile();
+  const sourceCategory = categorizeSource(referrerSource);
+
+  // Initialize global sources
+  if (!stats.sources) stats.sources = {};
+
+  // Initialize daily stats
+  const today = new Date().toISOString().split('T')[0];
+  if (!stats.dailyStats[today]) {
+    stats.dailyStats[today] = {
+      totalViews: 0,
+      pageViews: {},
+      postViews: {},
+      sources: {}
+    };
+  }
+  if (!stats.dailyStats[today].sources) {
+    stats.dailyStats[today].sources = {};
+  }
+
+  // Sadece Internal olmayan tıklamaları kaynak olarak kaydet
+  if (sourceCategory !== 'Internal') {
+    stats.sources[sourceCategory] = (stats.sources[sourceCategory] || 0) + 1;
+    stats.dailyStats[today].sources[sourceCategory] = (stats.dailyStats[today].sources[sourceCategory] || 0) + 1;
+  }
 
   // Increment total views
   stats.totalViews = (stats.totalViews || 0) + 1;
@@ -1138,15 +1204,7 @@ const incrementPostView = async (slug) => {
   // Increment post views
   stats.postViews[slug] = (stats.postViews[slug] || 0) + 1;
 
-  // Increment daily stats
-  const today = new Date().toISOString().split('T')[0];
-  if (!stats.dailyStats[today]) {
-    stats.dailyStats[today] = {
-      totalViews: 0,
-      pageViews: {},
-      postViews: {}  // YENİ: Günlük yazı görüntüleme
-    };
-  }
+  // Increment daily total and post views
   stats.dailyStats[today].totalViews++;
 
   // YENİ: Günlük yazı görüntüleme tracking
@@ -2682,12 +2740,12 @@ app.get('/api/debug/csp', (req, res, next) => {
 // Track page view
 app.post('/api/analytics/track-page', async (req, res, next) => {
   try {
-    const { page } = req.body;
+    const { page, source } = req.body;
     if (!page) {
       return next(new AppError('VAL-2001', 400, 'Sayfa parametresi gereklidir'));
     }
 
-    const stats = await incrementPageView(page);
+    const stats = await incrementPageView(page, source);
     res.json({ success: true, stats });
   } catch (error) {
     Logger.error('Error tracking page view:', error);
@@ -2698,12 +2756,12 @@ app.post('/api/analytics/track-page', async (req, res, next) => {
 // Track post view
 app.post('/api/analytics/track-post', async (req, res, next) => {
   try {
-    const { slug } = req.body;
+    const { slug, source } = req.body;
     if (!slug) {
       return next(new AppError('VAL-2001', 400, 'Slug parametresi gereklidir'));
     }
 
-    const stats = await incrementPostView(slug);
+    const stats = await incrementPostView(slug, source);
     res.json({ success: true, stats });
   } catch (error) {
     Logger.error('Error tracking post view:', error);
@@ -2808,7 +2866,8 @@ app.get('/api/stats/analytics', authenticateToken, async (req, res, next) => {
           date,
           totalViews: data.totalViews,
           pageViews: data.pageViews,
-          postViews: filteredPostViews  // Sadece aktif yazılar
+          postViews: filteredPostViews,  // Sadece aktif yazılar
+          sources: data.sources || {}
         };
       });
 
@@ -2821,6 +2880,7 @@ app.get('/api/stats/analytics', authenticateToken, async (req, res, next) => {
       popularTags,
       totalComments,
       dailyStats,
+      sources: stats.sources || {}, // Global Sources Export
       lastUpdated: stats.lastUpdated
     });
   } catch (error) {

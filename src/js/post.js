@@ -336,7 +336,7 @@ async function trackPostView(slug) {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ slug })
+      body: JSON.stringify({ slug, source: document.referrer })
     });
   } catch (error) {
     console.log('Failed to track post view:', error);
