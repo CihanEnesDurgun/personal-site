@@ -647,74 +647,76 @@ class BlogManager {
         statusClass = 'status-published';
       }
 
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>
-          <a href="../post.html?slug=${post.slug}" class="post-title" target="_blank">
-            ${post.title}
-          </a>
-          ${post.featured ? '<span class="featured-badge">⭐</span>' : ''}
-        </td>
-        <td class="post-date">${formatDate(post.date)}</td>
-        <td>
-          <div class="post-tags">
-            ${post.tags ? post.tags.map(tag => `<span class="tag">${tag}</span>`).join('') : ''}
-          </div>
-        </td>
-        <td>
-          <span class="post-status ${statusClass}">
-            ${statusDisplay}
-          </span>
-        </td>
-        <td class="post-views">
-          <span class="views-count">
-            <svg viewBox="0 0 24 24" width="16" height="16" style="margin-right: 4px;">
-              <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
-            </svg>
-            ${post.views || 0}
-          </span>
-        </td>
-        <td>
-          <div class="post-actions">
-            ${status === 'draft' ? `
-              <button class="btn btn-sm btn-secondary preview-post" data-slug="${post.slug}">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
-                </svg>
-                Önizle
-              </button>
-              <button class="btn btn-sm btn-success publish-post" data-slug="${post.slug}">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                </svg>
-                Yayınla
-              </button>
-              <button class="btn btn-sm btn-warning schedule-post" data-slug="${post.slug}">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
-                </svg>
-                Zamanla
-              </button>
-            ` : ''}
-            <button class="btn btn-sm btn-primary edit-post" data-slug="${post.slug}">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+      const coverSrc = post.cover ? `../${post.cover}` : '';
+      const tagsStr = post.tags ? post.tags.join(', ') : '';
+      const metaStr = [formatDate(post.date), tagsStr].filter(Boolean).join(' • ');
+
+      const card = document.createElement('article');
+      card.className = 'post-card';
+      if (post.featured) card.dataset.featured = 'true';
+      card.innerHTML = `
+        <div class="post-card-thumb${!coverSrc ? ' no-thumb' : ''}">
+          ${coverSrc ? `<img src="${coverSrc}" alt="${post.title}" loading="lazy" onerror="this.parentElement.classList.add('no-thumb'); this.remove();">` : ''}
+          ${post.featured ? '<div class="post-card-featured-badge">Öne Çıkan</div>' : ''}
+          <div class="post-card-thumb-meta">
+            <span class="post-status ${statusClass}">${statusDisplay}</span>
+            <span class="views-count">
+              <svg viewBox="0 0 24 24" width="13" height="13">
+                <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
               </svg>
+              ${post.views || 0}
+            </span>
+          </div>
+        </div>
+        <div class="card-body">
+          <h3 class="post-card-title">
+            <a href="../post.html?slug=${post.slug}" class="post-title" target="_blank">${post.title}</a>
+          </h3>
+          <div class="post-card-meta">${metaStr}</div>
+          ${post.excerpt ? `<p class="post-card-excerpt">${post.excerpt}</p>` : ''}
+        </div>
+        <div class="post-card-footer">
+          <div class="post-actions-bar">
+            <button class="btn btn-sm btn-primary edit-post" data-slug="${post.slug}">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
               Düzenle
             </button>
-            <button class="btn btn-sm ${post.featured ? 'btn-warning' : 'btn-info'} toggle-featured" data-slug="${post.slug}" title="${post.featured ? 'Öne çıkarılmış' : 'Öne çıkarılmamış'}">
-              ${post.featured ? '⭐ Öne Çıkarıldı' : '☆ Öne Çıkar'}
-            </button>
-            <button class="btn btn-sm btn-danger delete-post" data-slug="${post.slug}">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
-              </svg>
-              Sil
-            </button>
+            ${status === 'draft' ? `
+              <button class="btn btn-sm btn-success publish-post" data-slug="${post.slug}">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                Yayınla
+              </button>
+            ` : ''}
+            <div class="post-actions-more">
+              <button class="btn-icon more-menu-toggle" aria-label="Daha fazla seçenek">
+                <svg viewBox="0 0 24 24" width="18" height="18"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+              </button>
+              <div class="more-menu">
+                ${status === 'draft' ? `
+                  <button class="more-menu-item preview-post" data-slug="${post.slug}">
+                    <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+                    Önizle
+                  </button>
+                  <button class="more-menu-item schedule-post" data-slug="${post.slug}">
+                    <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+                    Zamanla
+                  </button>
+                ` : ''}
+                <button class="more-menu-item toggle-featured" data-slug="${post.slug}">
+                  <svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                  ${post.featured ? 'Öne Çıkarmayı Kaldır' : 'Öne Çıkar'}
+                </button>
+                <div class="more-menu-divider"></div>
+                <button class="more-menu-item more-menu-item--danger delete-post" data-slug="${post.slug}">
+                  <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                  Sil
+                </button>
+              </div>
+            </div>
           </div>
-        </td>
+        </div>
       `;
-      tbody.appendChild(row);
+      tbody.appendChild(card);
     });
 
     // Add event listeners to action buttons
@@ -740,6 +742,24 @@ class BlogManager {
 
     $$('.preview-post').forEach(btn => {
       btn.addEventListener('click', () => this.previewPost(btn.dataset.slug));
+    });
+
+    // Three-dot menu toggle
+    $$('.more-menu-toggle').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const menu = btn.nextElementSibling;
+        // Close all other open menus first
+        $$('.more-menu.open').forEach(m => {
+          if (m !== menu) m.classList.remove('open');
+        });
+        menu.classList.toggle('open');
+      });
+    });
+
+    // Close menus on outside click
+    document.addEventListener('click', () => {
+      $$('.more-menu.open').forEach(m => m.classList.remove('open'));
     });
   }
 
@@ -1385,13 +1405,12 @@ class BlogManager {
         (post.tags && post.tags.some(tag => tag.toLowerCase().includes(searchTerm)));
 
       let matchesFilter = true;
-      if (filterValue === 'featured') {
+      if (filterValue === 'draft') {
+        matchesFilter = post.status === 'draft';
+      } else if (filterValue === 'published') {
+        matchesFilter = post.status !== 'draft' && post.status !== 'deleted';
+      } else if (filterValue === 'featured') {
         matchesFilter = post.featured;
-      } else if (filterValue === 'recent') {
-        const postDate = new Date(post.date);
-        const now = new Date();
-        const oneMonthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
-        matchesFilter = postDate >= oneMonthAgo;
       }
 
       return matchesSearch && matchesFilter;
@@ -3887,6 +3906,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Make blogManager globally available for notifications
   window.blogManager = blogManager;
 
+  // Initialize existing functionality
+  initMarkdownEditors();
+
+  // Initialize gallery manager
+  galleryManager = new GalleryManager();
+
+  // Make galleryManager globally available
+  window.galleryManager = galleryManager;
+
+  // Add click outside to close avatar modal
+  document.addEventListener('click', (e) => {
+    const avatarModal = document.getElementById('avatarSelectionModal');
+    if (avatarModal && e.target === avatarModal) {
+      closeAvatarSelectionModal();
+    }
+  });
+
   // Initialize blog manager after homepageEditor is created
   await blogManager.init();
 
@@ -4072,6 +4108,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // ====== Gallery Management System ======
 class GalleryManager {
   constructor() {
+    this.apiService = new ApiService();
     this.currentFolder = 'all';
     this.uploadedFiles = [];
     this.init();
@@ -4178,17 +4215,7 @@ class GalleryManager {
 
   async getFolderImages(folderName) {
     try {
-      const response = await fetch(`${API_BASE_URL}/gallery/${folderName}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: Failed to get images`);
-      }
-
-      const data = await response.json();
+      const data = await this.apiService.request(`/gallery/${folderName}`);
       return data.images || [];
     } catch (error) {
       console.error(`Error getting ${folderName} images:`, error);
@@ -4259,17 +4286,7 @@ class GalleryManager {
     if (!container) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/gallery/deleted`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: Failed to get deleted images`);
-      }
-
-      const data = await response.json();
+      const data = await this.apiService.request('/gallery/deleted');
       this.renderDeletedImages(container, data.images || []);
     } catch (error) {
       console.error('Error loading deleted images:', error);
@@ -4482,10 +4499,16 @@ class GalleryManager {
       const response = await fetch(`${API_BASE_URL}/upload`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+          'Authorization': `Bearer ${this.apiService.token}`
         },
         body: formData
       });
+
+      if (response.status === 401 || response.status === 403) {
+        this.apiService.clearToken();
+        window.location.href = 'login.html';
+        return;
+      }
 
       if (!response.ok) {
         // Try to get error details from response
@@ -4582,17 +4605,9 @@ class GalleryManager {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/gallery/${folderName}/${filename}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
-        }
+      await this.apiService.request(`/gallery/${folderName}/${filename}`, {
+        method: 'DELETE'
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Delete failed');
-      }
 
       // Remove from DOM
       const imageElement = document.querySelector(`[data-filename="${filename}"][data-folder="${folderName}"]`);
@@ -4617,17 +4632,9 @@ class GalleryManager {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/gallery/deleted/${filename}/restore`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
-        }
+      await this.apiService.request(`/gallery/deleted/${filename}/restore`, {
+        method: 'POST'
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Restore failed');
-      }
 
       // Remove from deleted DOM
       const imageElement = document.querySelector(`[data-filename="${filename}"][data-folder="deleted"]`);
@@ -4652,17 +4659,9 @@ class GalleryManager {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/gallery/deleted/${filename}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
-        }
+      await this.apiService.request(`/gallery/deleted/${filename}`, {
+        method: 'DELETE'
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Permanent delete failed');
-      }
 
       // Remove from DOM
       const imageElement = document.querySelector(`[data-filename="${filename}"][data-folder="deleted"]`);
@@ -4694,11 +4693,8 @@ class GalleryManager {
     try {
       const deletePromises = Array.from(deletedItems).map(item => {
         const filename = item.dataset.filename;
-        return fetch(`${API_BASE_URL}/gallery/deleted/${filename}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
-          }
+        return this.apiService.request(`/gallery/deleted/${filename}`, {
+          method: 'DELETE'
         });
       });
 
@@ -4730,11 +4726,8 @@ class GalleryManager {
     try {
       const restorePromises = Array.from(deletedItems).map(item => {
         const filename = item.dataset.filename;
-        return fetch(`${API_BASE_URL}/gallery/deleted/${filename}/restore`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
-          }
+        return this.apiService.request(`/gallery/deleted/${filename}/restore`, {
+          method: 'POST'
         });
       });
 
@@ -4756,19 +4749,10 @@ class GalleryManager {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/set-icon`, {
+      await this.apiService.request('/admin/set-icon', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify({ filename })
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Icon update failed');
-      }
 
       alert('✅ Yeni sistem ikonu başarıyla ayarlandı!\n\nTüm HTML dosyalarındaki favicon referansları güncellendi.');
 
@@ -4849,26 +4833,6 @@ class GalleryManager {
 
 // Initialize gallery manager
 let galleryManager;
-
-// Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-  // Initialize existing functionality
-  initMarkdownEditors();
-
-  // Initialize gallery manager
-  galleryManager = new GalleryManager();
-
-  // Make galleryManager globally available
-  window.galleryManager = galleryManager;
-
-  // Add click outside to close avatar modal
-  document.addEventListener('click', (e) => {
-    const avatarModal = document.getElementById('avatarSelectionModal');
-    if (avatarModal && e.target === avatarModal) {
-      closeAvatarSelectionModal();
-    }
-  });
-});
 
 // Log filtering functions
 let currentLogFilters = {};

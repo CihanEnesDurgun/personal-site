@@ -485,34 +485,318 @@ body {
   border-color: var(--accent);
 }
 
-/* ====== Posts Table ====== */
-.posts-table-container {
-  overflow-x: auto;
+/* ====== Posts Cards Grid ====== */
+.posts-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  padding: 1.5rem;
 }
 
-.posts-table {
+/* Ana site kart tasarımıyla uyumlu */
+.post-card {
+  position: relative;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform .18s, box-shadow .18s, border-color .2s;
+}
+
+.post-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-lg);
+}
+
+.post-card[data-featured="true"] {
+  border: 2px solid color-mix(in srgb, var(--accent) 30%, var(--line));
+  background: color-mix(in srgb, var(--accent) 3%, var(--panel));
+}
+
+/* Thumbnail alanı — ana site oranlarına uygun */
+.post-card-thumb {
+  position: relative;
   width: 100%;
-  border-collapse: collapse;
+  height: clamp(180px, 16vw, 220px);
+  overflow: hidden;
+  background: color-mix(in srgb, var(--bg) 70%, var(--line));
+  flex: 0 0 auto;
 }
 
-.posts-table th {
-  background: color-mix(in srgb, var(--bg) 50%, var(--panel));
-  padding: 1rem 1.5rem;
-  text-align: left;
+.post-card-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform .3s ease;
+}
+
+.post-card:hover .post-card-thumb img {
+  transform: scale(1.04);
+}
+
+/* Görsel yoksa sade placeholder */
+.post-card-thumb.no-thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--accent) 6%, var(--panel)) 0%,
+    color-mix(in srgb, var(--line) 40%, var(--panel)) 100%);
+}
+
+.post-card-thumb.no-thumb::after {
+  content: '';
+  width: 48px;
+  height: 48px;
+  background: var(--muted);
+  opacity: 0.18;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm4 18H6V4h7v5h5v11z'/%3E%3C/svg%3E") center/contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm4 18H6V4h7v5h5v11z'/%3E%3C/svg%3E") center/contain no-repeat;
+}
+
+/* Öne çıkan badge - ana site stili */
+.post-card-featured-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--accent);
+  padding: 5px 10px;
+  border-radius: 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  z-index: 2;
+}
+
+:root.dark .post-card-featured-badge {
+  background: rgba(0, 0, 0, 0.75);
+  color: var(--accent);
+}
+
+/* Thumbnail alt meta (durum + görüntülenme) */
+.post-card-thumb-meta {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 100%);
+  z-index: 2;
+}
+
+.post-card-thumb-meta .post-status {
+  font-size: 0.72rem;
+  padding: 3px 8px;
+}
+
+.post-card-thumb-meta .views-count {
+  color: rgba(255,255,255,0.92);
+  font-size: 0.8rem;
   font-weight: 600;
-  font-size: 0.9rem;
+  gap: 3px;
+}
+
+.post-card-thumb-meta .views-count svg {
+  fill: rgba(255,255,255,0.85);
+}
+
+/* Kart body - ana site ile birebir */
+.post-card .card-body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+}
+
+/* h3 başlık — ana sitedeki .grid>.card h3 ile aynı */
+.post-card-title {
+  margin: 4px 0 6px;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  font-size: 1.17rem; /* browser default h3 = ~18.72px */
+  font-weight: 700;
+  line-height: 1.2;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Global .post-title { font-weight:500 } kuralını ezmek için specificity artırıldı */
+.post-card-title .post-title {
+  color: var(--ink);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: inherit;
+}
+
+.post-card-title .post-title:hover {
+  color: var(--accent);
+}
+
+/* meta satırı — ana sitedeki .grid>.card .meta ile aynı */
+.post-card-meta {
+  font-size: 12px;
   color: var(--muted);
-  border-bottom: 1px solid var(--line);
+  margin: 0 0 6px;
 }
 
-.posts-table td {
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid var(--line);
-  vertical-align: middle;
+/* excerpt — ana sitedeki .grid>.card p ile aynı */
+.post-card-excerpt {
+  margin-top: 4px;
+  font-size: inherit;
+  line-height: 1.65;
+  color: var(--ink);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-.posts-table tr:hover {
-  background: color-mix(in srgb, var(--bg) 30%, var(--panel));
+/* Kart footer - aksiyonlar */
+.post-card-footer {
+  padding: 10px 14px;
+  border-top: 1px solid var(--line);
+  background: color-mix(in srgb, var(--bg) 50%, var(--panel));
+}
+
+.post-card-footer .post-actions {
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+/* Action bar with primary buttons + three-dot menu */
+.post-actions-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.post-actions-bar .btn {
+  flex: 1;
+  justify-content: center;
+}
+
+.post-actions-bar .btn svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+  flex-shrink: 0;
+}
+
+.post-actions-more {
+  position: relative;
+  margin-left: auto;
+}
+
+.btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-icon:hover {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.btn-icon svg {
+  fill: currentColor;
+}
+
+/* Dropdown menu */
+.more-menu {
+  display: none;
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 6px);
+  min-width: 180px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: var(--shadow-lg);
+  padding: 4px;
+  z-index: 100;
+  animation: menuFadeIn 0.15s ease;
+}
+
+.more-menu.open {
+  display: block;
+}
+
+@keyframes menuFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.more-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+  text-align: left;
+}
+
+.more-menu-item svg {
+  width: 16px;
+  height: 16px;
+  fill: var(--muted);
+  flex-shrink: 0;
+}
+
+.more-menu-item:hover {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.more-menu-item:hover svg {
+  fill: var(--accent);
+}
+
+.more-menu-item--danger {
+  color: var(--danger);
+}
+
+.more-menu-item--danger svg {
+  fill: var(--danger);
+}
+
+.more-menu-item--danger:hover {
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+}
+
+.more-menu-divider {
+  height: 1px;
+  background: var(--line);
+  margin: 4px 8px;
 }
 
 .post-title {
@@ -869,9 +1153,14 @@ body {
     width: 100%;
   }
 
-  .posts-table th,
-  .posts-table td {
-    padding: 0.75rem;
+  .posts-cards-grid {
+    grid-template-columns: 1fr;
+    padding: 1rem;
+    gap: 12px;
+  }
+
+  .post-card-thumb {
+    height: 160px;
   }
 
   .form-row {

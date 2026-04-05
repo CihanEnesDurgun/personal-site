@@ -11,12 +11,26 @@ const API_BASE_URL = `${window.location.origin}/api`;
 // Configure marked with a custom renderer for images to support figure/figcaption
 try {
     const renderer = new marked.Renderer();
-    renderer.image = function (href, title, text) {
+    renderer.image = function (hrefOrToken, title, text) {
+        // Support both marked v4 (href, title, text) and v12+ (token object)
+        let rawHref, imgText;
+        if (typeof hrefOrToken === 'object' && hrefOrToken !== null) {
+            rawHref = hrefOrToken.href || '';
+            imgText = hrefOrToken.text || '';
+        } else {
+            rawHref = hrefOrToken || '';
+            imgText = text || '';
+        }
+        // Relative image paths need ../ prefix since editor is at /markdown-editor/
+        let imgSrc = rawHref;
+        if (imgSrc && !imgSrc.startsWith('http') && !imgSrc.startsWith('data:') && !imgSrc.startsWith('/') && !imgSrc.startsWith('../')) {
+            imgSrc = '../' + imgSrc;
+        }
         // Return a structural figure with editable caption
         return `
 <figure style="margin: 2em 0; text-align: center; display: block;">
-  <img src="${href}" alt="${text}" style="max-width: 100%; height: auto; border-radius: 6px; display: block; margin: 0 auto; box-shadow: var(--shadow);">
-  <figcaption class="image-caption" contenteditable="true" placeholder="Görsel açıklaması girin...">${text || 'Görsel açıklaması'}</figcaption>
+  <img src="${imgSrc}" alt="${imgText}" data-original-src="${rawHref}" style="max-width: 100%; height: auto; border-radius: 6px; display: block; margin: 0 auto; box-shadow: var(--shadow);">
+  <figcaption class="image-caption" contenteditable="true" placeholder="Görsel açıklaması girin...">${imgText || 'Görsel açıklaması'}</figcaption>
 </figure>`.trim();
     };
     marked.setOptions({ renderer: renderer });
@@ -140,8 +154,16 @@ async function loadPostForEdit(slug) {
             const htmlContent = marked.parse(sanitizedContent);
             editorContent.innerHTML = htmlContent;
 
-            // Extract widths from alt texts and apply as inline styles
+            // Fix relative image paths and extract widths
             editorContent.querySelectorAll('img').forEach(img => {
+                const src = img.getAttribute('src') || '';
+                // Fix relative paths: editor is at /markdown-editor/, so prefix ../ for root-relative paths
+                if (src && !src.startsWith('http') && !src.startsWith('data:') && !src.startsWith('/') && !src.startsWith('../')) {
+                    img.setAttribute('data-original-src', src);
+                    img.setAttribute('src', '../' + src);
+                }
+
+                // Extract widths from alt texts and apply as inline styles
                 const alt = img.getAttribute('alt') || '';
                 const widthMatch = alt.match(/(.*?)\s*(?:[=%]\s*(\d+)|(\d+)%)\s*$/);
                 if (widthMatch) {
@@ -169,7 +191,10 @@ async function loadPostForEdit(slug) {
         const container = document.getElementById('coverPhotoContainer');
 
         if (post.cover && heroImg) {
-            heroImg.src = post.cover;
+            // post.cover is relative to site root (e.g. "images/blog-covers/photo.jpg")
+            // Editor is at /markdown-editor/, so prefix with ../ to resolve correctly
+            const coverSrc = post.cover.startsWith('http') ? post.cover : `../${post.cover}`;
+            heroImg.src = coverSrc;
             heroImg.alt = post.title;
 
             if (container) {
@@ -1013,7 +1038,7 @@ function htmlToMarkdown(html) {
                 }
                 case 'BR': return '\n';
                 case 'IMG': {
-                    const src = node.getAttribute('src') || '';
+                    const src = node.getAttribute('data-original-src') || node.getAttribute('src') || '';
                     const alt = node.getAttribute('alt') || src.split('/').pop().split('.')[0];
                     let widthStr = '';
                     if (node.style.width && node.style.width.includes('%')) {
@@ -1069,7 +1094,8 @@ function htmlToMarkdown(html) {
             if (tag === 'FIGURE') {
                 const img = node.querySelector('img');
                 if (!img) return '';
-                const src = img.getAttribute('src') || '';
+                // Use data-original-src to preserve original markdown path
+                const src = img.getAttribute('data-original-src') || img.getAttribute('src') || '';
                 const alt = img.getAttribute('alt') || '';
                 const figcaption = node.querySelector('figcaption');
                 let caption = figcaption ? figcaption.textContent.trim() : '';
@@ -1092,7 +1118,7 @@ function htmlToMarkdown(html) {
 
             // Standalone image
             if (tag === 'IMG') {
-                const src = node.getAttribute('src') || '';
+                const src = node.getAttribute('data-original-src') || node.getAttribute('src') || '';
                 const alt = node.getAttribute('alt') || src.split('/').pop().split('.')[0];
                 let widthStr = '';
                 if (node.style.width && node.style.width.includes('%')) {
@@ -1170,7 +1196,7 @@ function htmlToMarkdown(html) {
                 // Check if it's an image container div
                 const img = node.querySelector('img');
                 if (img && node.style.textAlign === 'center') {
-                    const src = img.getAttribute('src') || '';
+                    const src = img.getAttribute('data-original-src') || img.getAttribute('src') || '';
                     const alt = img.getAttribute('alt') || '';
                     const pCaption = node.querySelector('p');
                     const caption = pCaption ? pCaption.textContent.trim() : '';

@@ -261,7 +261,7 @@ app.use((req, res, next) => {
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
       "font-src 'self' data: https://fonts.gstatic.com; " +
       "img-src 'self' data: https:; " +
-      "connect-src 'self' http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:*; " +
+      "connect-src 'self' http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:* https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; " +
       "frame-ancestors 'none'"
     );
   }
