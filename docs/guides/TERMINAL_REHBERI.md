@@ -13,7 +13,7 @@ Terminali (Cmd veya PowerShell) açtıktan sonra sırasıyla şu iki komutu giri
 
 1. Önce projenin klasörüne gidin:
 ```bash
-cd Desktop\personal-site-fix-feb\personal-site
+cd Desktop\personal-site-fix-april\personal-site-fix-april\personal-site
 ```
 
 2. Ardından geliştirici modunda projeyi başlatın:
@@ -137,19 +137,24 @@ Geliştiricilerin terminalde en temel gezinme ve düzenleme komutları:
 
 Kodlarınızda bir değişiklik yaptıktan sonra bunu GitHub'a (Versiyon Kontrol Sistemine) kaydetmek için aşağıdaki sıralamayı takip edebilirsiniz:
 
-1. **Tüm Değişiklikleri Hazırlama (Staging):**
+1. **Değişen dosyaları seçerek hazırlama (Staging):**
 ```bash
-git add .
+git add dosya_adi.js  # Belirli bir dosyayı eklemek için
+git add .             # Tüm değişiklikleri eklemek için (dikkatli kullanın)
 ```
 
 2. **Değişiklikleri Etiketleyip Kaydetme (Commit):**
 ```bash
-git commit -m "Buraya yaptığınız değişikliğin özetini yazın. Örn: Log temizleme scripti eklendi"
+git commit -m "chore(release): vX.X.X.cla - Kısa açıklama"
 ```
+Örnek commit mesajı formatları:
+- `chore(release): v0.1.10.cla - Dashboard yeniden tasarımı`
+- `fix: markdown editöründe görsel kaybı hatası giderildi`
+- `feat: admin panele üç nokta dropdown menü eklendi`
 
 3. **Kodları GitHub'a Gönderme (Push):**
 ```bash
-git push
+git push origin main
 ```
 
 4. *(Opsiyonel)* **Sunucudaki Güncel Kodları Bilgisayara Çekme (Pull):**
@@ -157,6 +162,39 @@ git push
 git pull
 ```
 
+5. *(Opsiyonel)* **Son Commit Geçmişini Görme:**
+```bash
+git log --oneline -10
+```
+
+6. *(Opsiyonel)* **Değişiklikleri Görmek:**
+```bash
+git diff            # Henüz staged olmayan değişiklikler
+git diff --staged   # Staged (hazırlanmış) değişiklikler
+git status          # Genel durum özeti
+```
+
 ---
 
-> 💡 **Önemli İpucu:** Tüm `npm` ve `git` komutlarını çalıştırırken komut satırı yolunuzun projenin ana dizininde (yani `package.json` dosyasını gördüğünüz dizinde) olmasına çok dikkat edin. Aksi halde "no such file or directory" ya da "missing script" hataları alabilirsiniz.
+## 7. 🗂️ Proje Dizin Yapısı (Referans)
+
+Bu projenin klasör hiyerarşisi ve neyin nerede olduğu:
+
+```
+Desktop\
+└── personal-site-fix-april\
+    └── personal-site-fix-april\
+        └── personal-site\          ← package.json burada, tüm npm komutları buradan çalıştırılır
+            ├── admin\              ← Admin paneli arayüzü
+            ├── content\            ← Blog yazıları (.md) ve metadata (posts.json)
+            ├── data\               ← Oturum, yorum ve tema verileri
+            ├── docs\               ← Rehberler, versiyon notları, raporlar
+            ├── images\             ← Yüklenen görseller (blog-covers, blog-content vb.)
+            ├── markdown-editor\    ← Markdown editörü
+            ├── src\                ← Genel JS/CSS kaynakları
+            └── server.js           ← Express sunucu çekirdeği
+```
+
+---
+
+> 💡 **Önemli İpucu:** Tüm `npm` ve `git` komutlarını çalıştırırken komut satırı yolunuzun projenin ana dizininde (yani `package.json` dosyasını gördüğünüz dizinde, `personal-site\` içinde) olmasına çok dikkat edin. Aksi halde "no such file or directory" ya da "missing script" hataları alabilirsiniz.
