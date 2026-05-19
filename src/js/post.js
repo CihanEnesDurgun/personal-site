@@ -127,6 +127,20 @@ async function boot() {
   // Wait for marked.js to be loaded
   await waitForMarked();
 
+  // Footnote (kaynakça) eklentisini etkinleştir
+  try {
+    if (typeof markedFootnote === 'function') {
+      marked.use(markedFootnote());
+    } else if (typeof window !== 'undefined' && window.markedFootnote) {
+      const fn = window.markedFootnote.default || window.markedFootnote;
+      marked.use(fn());
+    } else {
+      console.warn('marked-footnote not loaded — footnotes will render as plain text');
+    }
+  } catch (e) {
+    console.error('Failed to register marked-footnote extension:', e);
+  }
+
   if (typeof marked === 'undefined') {
     renderError('Markdown kütüphanesi yüklenemedi. Lütfen sayfayı yenileyin.');
     return;
@@ -206,6 +220,15 @@ async function boot() {
     // Sonradan image'ları özel şekilde işle — DOM tabanlı
     const tempContainer = document.createElement('div');
     tempContainer.innerHTML = html;
+
+    // Footnote bölümü: eklentinin sr-only İngilizce "Footnotes" başlığını Türkçe görünür "Kaynakça" yap
+    tempContainer.querySelectorAll('section.footnotes h2, section[data-footnotes] h2').forEach(h2 => {
+      if (/footnotes?/i.test(h2.textContent) || h2.classList.contains('sr-only')) {
+        h2.textContent = 'Kaynakça';
+        h2.classList.remove('sr-only');
+        h2.classList.add('footnotes-title');
+      }
+    });
 
     const images = tempContainer.querySelectorAll('img');
     images.forEach(img => {

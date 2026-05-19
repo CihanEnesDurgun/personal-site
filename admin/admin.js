@@ -706,6 +706,12 @@ class BlogManager {
                   <svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
                   ${post.featured ? 'Öne Çıkarmayı Kaldır' : 'Öne Çıkar'}
                 </button>
+                ${status !== 'draft' ? `
+                  <button class="more-menu-item unpublish-post" data-slug="${post.slug}">
+                    <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                    Taslağa Çek
+                  </button>
+                ` : ''}
                 <div class="more-menu-divider"></div>
                 <button class="more-menu-item more-menu-item--danger delete-post" data-slug="${post.slug}">
                   <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
@@ -738,6 +744,10 @@ class BlogManager {
 
     $$('.toggle-featured').forEach(btn => {
       btn.addEventListener('click', () => this.toggleFeatured(btn.dataset.slug));
+    });
+
+    $$('.unpublish-post').forEach(btn => {
+      btn.addEventListener('click', () => this.unpublishPost(btn.dataset.slug));
     });
 
     $$('.preview-post').forEach(btn => {
@@ -1562,6 +1572,22 @@ class BlogManager {
     } catch (error) {
       console.error('Error publishing post:', error);
       this.showNotification(`Blog yazısı yayınlanırken hata oluştu: ${error.message}`, 'error', null, error);
+    }
+  }
+
+  async unpublishPost(slug) {
+    try {
+      await this.apiService.publishPost(slug, { status: 'draft' });
+
+      await this.loadPosts();
+
+      await this.renderDashboard();
+      this.renderPostsTable();
+
+      this.showNotification('Blog yazısı taslağa çekildi!', 'success');
+    } catch (error) {
+      console.error('Error unpublishing post:', error);
+      this.showNotification(`Blog yazısı taslağa çekilirken hata oluştu: ${error.message}`, 'error', null, error);
     }
   }
 
@@ -5237,7 +5263,9 @@ function insertImage() {
       updateAvatarPreview(imagePath);
     }
   } else if (currentImageUploadContext === 'blog-cover') {
-    const coverInput = document.querySelector('#postCover, #editPostCover');
+    const editModal = document.getElementById('editPostModal');
+    const isEditing = editModal && editModal.classList.contains('show');
+    const coverInput = document.getElementById(isEditing ? 'editPostCover' : 'postCover');
     if (coverInput) {
       coverInput.value = imagePath;
     }

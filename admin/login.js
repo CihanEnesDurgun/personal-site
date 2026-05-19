@@ -303,9 +303,27 @@ class AuthManager {
 
   // Check authentication and redirect
   checkAuth() {
+    // Check local session first
     if (this.sessionManager.isAuthenticated()) {
-      // User is authenticated, redirect to admin panel
       window.location.href = 'index.html';
+      return;
+    }
+    // Also check JWT token (admin_token) — if valid, skip login page
+    const token = localStorage.getItem('admin_token');
+    if (token) {
+      try {
+        // JWT uses base64url encoding — replace chars before atob()
+        let base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+        while (base64.length % 4) base64 += '=';
+        const payload = JSON.parse(atob(base64));
+        const now = Date.now() / 1000;
+        if (payload.exp > now) {
+          window.location.href = 'index.html';
+        }
+      } catch (e) {
+        // Invalid token, ignore and show login
+        localStorage.removeItem('admin_token');
+      }
     }
   }
 }
@@ -382,6 +400,7 @@ class LoginUI {
       await apiService.login(username, password);
 
       // Success - redirect to admin panel
+      // Note: We rely on the JWT (admin_token) for auth; no local admin_session needed
       window.location.href = 'index.html';
 
     } catch (error) {

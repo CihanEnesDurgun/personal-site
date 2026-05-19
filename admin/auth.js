@@ -10,13 +10,23 @@ class SessionManager {
   }
 
   // Check if user is authenticated
+  // Decode base64url (JWT uses base64url, not standard base64)
+  decodeJWTPayload(token) {
+    let base64 = token.split('.')[1];
+    // Replace base64url chars with standard base64
+    base64 = base64.replace(/-/g, '+').replace(/_/g, '/');
+    // Add padding if needed
+    while (base64.length % 4) base64 += '=';
+    return JSON.parse(atob(base64));
+  }
+
   async isAuthenticated() {
     const token = this.getToken();
     if (!token) return false;
 
     try {
       // Decode JWT token to check expiration
-      const payload = JSON.parse(atob(token.split('.')[1]));
+      const payload = this.decodeJWTPayload(token);
       const now = Date.now() / 1000;
 
       if (payload.exp < now) {
@@ -98,7 +108,7 @@ class SessionManager {
     if (!token) return null;
 
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
+      const payload = this.decodeJWTPayload(token);
       const now = Date.now() / 1000;
       const timeLeft = (payload.exp - now) * 1000;
 
@@ -255,9 +265,13 @@ class AdminSecurity {
     const sessionInfo = this.authManager.getSessionInfo();
     if (!sessionInfo) return;
 
+    // Guard: if timeLeft is missing/invalid, skip auto-logout to avoid firing immediately
+    const timeLeft = Number(sessionInfo.timeLeft);
+    if (!Number.isFinite(timeLeft) || timeLeft <= 0) return;
+
     // Show warning 5 minutes before session expires
     const warningTime = 5 * 60 * 1000; // 5 minutes
-    const timeUntilWarning = sessionInfo.timeLeft - warningTime;
+    const timeUntilWarning = timeLeft - warningTime;
 
     if (timeUntilWarning > 0) {
       setTimeout(() => {
@@ -268,7 +282,7 @@ class AdminSecurity {
     // Auto logout when session expires
     setTimeout(() => {
       this.authManager.logout();
-    }, sessionInfo.timeLeft);
+    }, timeLeft);
   }
 
   showSessionWarning() {

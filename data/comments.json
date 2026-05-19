@@ -33,7 +33,22 @@
         "depth": 0,
         "reply_to_name": null
       }
+    ],
+    "kontrollerimiz-neden-algoritmalara-kiyasla-daha-kaotik": [
+      {
+        "id": "mpcjw5cr6azsetmfo2x",
+        "name": "cihan",
+        "email": "cihanenesdurgun1410@gmail.com",
+        "content": "test",
+        "date": "2026-05-19T11:29:35.259Z",
+        "approved": true,
+        "ip": "::1",
+        "parent_id": null,
+        "thread_id": "mpcjw5cr6azsetmfo2x",
+        "depth": 0,
+        "reply_to_name": null
+      }
     ]
   },
-  "lastUpdated": "2026-04-05T16:36:45.977Z"
+  "lastUpdated": "2026-05-19T11:29:45.408Z"
 }

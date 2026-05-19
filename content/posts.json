@@ -1,5 +1,36 @@
 [
   {
+    "slug": "kontrollerimiz-neden-algoritmalara-kiyasla-daha-kaotik",
+    "title": "Kontrollerimiz neden algoritmalara kıyasla daha kaotik?",
+    "excerpt": "zz vdşnmkşdnbşkznşa",
+    "date": "2026-05-17",
+    "cover": "images/blog-covers/saksaganlogo.png",
+    "coverCaption": "saksaganlogo.png",
+    "tags": [],
+    "featured": false,
+    "status": "published",
+    "publishDate": "2026-05-19T11:29:18.366Z",
+    "createdAt": "2026-05-17T20:40:41.014Z",
+    "updatedAt": "2026-05-19T11:29:18.366Z"
+  },
+  {
+    "slug": "yapay-zekanin-karar-mercisi-durumuna-gelmesi",
+    "title": "Yapay Zekanın Karar Mercisi Durumuna Gelmesi",
+    "excerpt": "testetstetetetets",
+    "date": "2026-05-05",
+    "cover": "images/blog-covers/image-removebg-preview.png",
+    "coverCaption": "test görseli",
+    "tags": [
+      "markdown",
+      "test"
+    ],
+    "featured": false,
+    "status": "draft",
+    "publishDate": null,
+    "createdAt": "2026-05-05T18:59:38.566Z",
+    "updatedAt": "2026-05-05T19:10:13.339Z"
+  },
+  {
     "slug": "test-yazisi",
     "title": "Test Yazısı",
     "excerpt": "teteteteteteteteteste",
@@ -8,10 +39,11 @@
     "coverCaption": "T3_IHA_Kurs_Tamamlama_Belgesi (1) (2).jpg",
     "tags": [],
     "featured": false,
-    "status": "published",
+    "status": "deleted",
     "publishDate": "2026-04-05T16:36:19.493Z",
     "createdAt": "2026-04-05T16:36:10.610Z",
-    "updatedAt": "2026-04-05T16:36:19.493Z"
+    "updatedAt": "2026-04-05T16:43:44.835Z",
+    "deletedAt": "2026-04-05T16:43:44.835Z"
   },
   {
     "slug": "bloguma-hos-geldin-neden-boyle-bir-yola-girdim",
@@ -46,8 +78,8 @@
     ],
     "featured": false,
     "status": "published",
-    "publishDate": "2024-12-14T10:00:00.000Z",
+    "publishDate": "2026-05-19T11:29:09.202Z",
     "createdAt": "2024-12-14T10:00:00.000Z",
-    "updatedAt": "2026-04-01T17:03:30.722Z"
+    "updatedAt": "2026-05-19T11:29:09.202Z"
   }
 ]

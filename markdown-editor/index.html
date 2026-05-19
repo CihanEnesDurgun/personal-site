@@ -18,6 +18,8 @@
 
   <!-- Markdown dönüştürücü (CDN) -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- Footnote (kaynakça) eklentisi — marked.min.js'den sonra yüklenmeli -->
+  <script src="https://cdn.jsdelivr.net/npm/marked-footnote/dist/index.umd.min.js"></script>
 
   <!-- Editör özel stiller (önce yükle) -->
   <link rel="stylesheet" href="style.css">
@@ -107,6 +109,7 @@
         <button onclick="formatText('code')" class="sidebar-btn" title="Kod">{ }</button>
         <button onclick="formatText('blockquote')" class="sidebar-btn" title="Alıntı">"</button>
         <button onclick="formatText('hr')" class="sidebar-btn" title="Yatay Çizgi">—</button>
+        <button onclick="openFootnoteModal()" class="sidebar-btn" title="Kaynak Ekle (Üst İndis)"><sup>①</sup></button>
       </div>
 
       <div class="toolbar-group">
@@ -271,6 +274,32 @@
         <div class="modal-buttons">
           <button onclick="copyMarkdown()" class="copy-btn">📋 Kopyala</button>
           <button onclick="closePreviewModal()">Kapat</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footnote (Kaynakça) Ekleme Modalı -->
+  <div class="preview-modal" id="footnoteModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>① Kaynak Ekle</h3>
+        <button onclick="closeFootnoteModal()" class="close-btn">×</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin: 0 0 8px 0; color: var(--muted); font-size: 14px;">
+          Kaynak metnini yazın. Markdown desteklenir: <code>**kalın**</code>, <code>*italik*</code>,
+          <code>[bağlantı](https://...)</code>.
+        </p>
+        <textarea id="footnoteInput" class="markdown-textarea"
+          style="min-height: 140px;"
+          placeholder="Örn: Smith, J. (2024). *Test Kitap*, **Bölüm 3**, s. 42. [Kaynak](https://example.com)"></textarea>
+        <p id="footnoteError" style="display: none; color: #ef4444; margin: 8px 0 0; font-size: 13px;"></p>
+      </div>
+      <div class="modal-footer">
+        <div class="modal-buttons">
+          <button onclick="submitFootnote()" class="copy-btn">Ekle</button>
+          <button onclick="closeFootnoteModal()">İptal</button>
         </div>
       </div>
     </div>

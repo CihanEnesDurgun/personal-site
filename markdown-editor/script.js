@@ -34,6 +34,18 @@ try {
 </figure>`.trim();
     };
     marked.setOptions({ renderer: renderer });
+    // Footnote (kaynakça) eklentisini etkinleştir — markdown'da [^1] ve [^1]: ... syntax desteği
+    if (typeof markedFootnote === 'function') {
+        marked.use(markedFootnote());
+        console.log('marked-footnote extension enabled');
+    } else if (typeof window !== 'undefined' && window.markedFootnote) {
+        // UMD bundle bazı sürümlerde default export'u .default altında verir
+        const fn = window.markedFootnote.default || window.markedFootnote;
+        marked.use(fn());
+        console.log('marked-footnote extension enabled (window)');
+    } else {
+        console.warn('marked-footnote not loaded — footnotes will not render');
+    }
     console.log('Marked custom renderer initialized');
 } catch (e) {
     console.error('Error configuring marked renderer:', e);
@@ -205,6 +217,22 @@ async function loadPostForEdit(slug) {
         // Set cover caption
         if (post.coverCaption && heroCaption) {
             heroCaption.textContent = post.coverCaption;
+        }
+
+        // Prefill save-form fields with current post metadata so unchanged values
+        // (excerpt, tags, date) survive a save without retyping.
+        const excerptInput = document.getElementById('postExcerpt');
+        if (excerptInput && post.excerpt) {
+            excerptInput.value = post.excerpt;
+        }
+        const tagsInput = document.getElementById('postTags');
+        if (tagsInput && post.tags) {
+            tagsInput.value = Array.isArray(post.tags) ? post.tags.join(', ') : String(post.tags);
+        }
+        const dateInput = document.getElementById('postDate');
+        if (dateInput && post.date) {
+            const d = new Date(post.date);
+            if (!isNaN(d)) dateInput.value = d.toISOString().split('T')[0];
         }
 
         // Set document title
@@ -845,6 +873,15 @@ function updatePreview() {
             });
 
             previewContent.innerHTML = html;
+
+            // Footnote: eklentinin sr-only İngilizce başlığını Türkçe görünür yap
+            previewContent.querySelectorAll('section.footnotes h2, section[data-footnotes] h2').forEach(h2 => {
+                if (/footnotes?/i.test(h2.textContent) || h2.classList.contains('sr-only')) {
+                    h2.textContent = 'Kaynakça';
+                    h2.classList.remove('sr-only');
+                    h2.classList.add('footnotes-title');
+                }
+            });
         }
     } catch (error) {
         console.error('Update preview error:', error);
@@ -1027,6 +1064,20 @@ function htmlToMarkdown(html) {
                 case 'EM': case 'I': return inner.trim() ? `${prefix}*${inner.trim()}*` : '';
                 case 'U': return inner.trim() ? `${prefix}<u>${inner.trim()}</u>` : '';
                 case 'S': case 'STRIKE': case 'DEL': return inner.trim() ? `${prefix}~~${inner.trim()}~~` : '';
+                case 'SUP': {
+                    // Önce direkt sup üzerindeki data-fn-ref'e bak; yoksa içerideki anchor'dan N'i çıkar.
+                    let n = node.getAttribute('data-fn-ref');
+                    if (!n) {
+                        const innerA = node.querySelector('a[data-footnote-ref], a[id^="footnote-ref-"], a[href^="#footnote-"]');
+                        if (innerA) {
+                            const idMatch = (innerA.getAttribute('id') || '').match(/^footnote-ref-(.+)$/);
+                            const hrefMatch = (innerA.getAttribute('href') || '').match(/^#footnote-(.+)$/);
+                            n = idMatch ? idMatch[1] : (hrefMatch ? hrefMatch[1] : null);
+                        }
+                    }
+                    if (n) return `[^${n}]`;
+                    return inner;
+                }
                 case 'CODE': {
                     let code = node.textContent;
                     code = code.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
@@ -1208,6 +1259,33 @@ function htmlToMarkdown(html) {
                     return `![${imageText}](${src})\n\n`;
                 }
                 return Array.from(node.childNodes).map(processNode).join('');
+            }
+
+            // Kaynakça (footnote) section — her li için [^N]: <inline markdown> üret
+            if (tag === 'SECTION' && (node.classList.contains('footnotes') || node.hasAttribute('data-footnotes'))) {
+                const items = node.querySelectorAll('li[data-fn-id], li[id^="footnote-"]');
+                if (!items.length) return '';
+                const lines = [];
+                items.forEach(li => {
+                    const num = li.getAttribute('data-fn-id') ||
+                        (li.id.match(/^footnote-(.+)$/) ? li.id.match(/^footnote-(.+)$/)[1] : '');
+                    if (!num) return;
+                    // li'nin içinden backref'i geçici olarak ayır, inline markdown üret, sonra geri koy
+                    const clone = li.cloneNode(true);
+                    clone.querySelectorAll('a.footnote-backref, a[data-footnote-backref]').forEach(a => a.remove());
+                    // İçeriği inline markdown'a çevir — li tipik olarak bir <p> içerir
+                    let body = '';
+                    Array.from(clone.childNodes).forEach(child => {
+                        if (child.nodeType === Node.ELEMENT_NODE && child.tagName === 'P') {
+                            body += Array.from(child.childNodes).map(getInlineMarkdown).join('');
+                        } else {
+                            body += getInlineMarkdown(child);
+                        }
+                    });
+                    body = body.trim().replace(/\s+/g, ' ');
+                    lines.push(`[^${num}]: ${body}`);
+                });
+                return '\n' + lines.join('\n') + '\n\n';
             }
 
             // FIGCAPTION — skip (handled by FIGURE)
@@ -1465,6 +1543,10 @@ function getPostData() {
 document.addEventListener('click', (e) => {
     if (e.target.classList.contains('post-form-modal')) {
         closePostForm();
+    }
+    if (e.target.id === 'footnoteModal') {
+        closeFootnoteModal();
+        return;
     }
     if (e.target.classList.contains('preview-modal')) {
         closePreviewModal();
@@ -2728,5 +2810,293 @@ setupEventListeners = function () {
     setupImageModalListeners();
     setupEditorImageListeners();
 };
+
+// ====== Footnote (Kaynakça) Manager ======
+// Yazı içine üst indis kaynak (¹²³) ekler ve en alta otomatik numaralı kaynakça listesi tutar.
+// Markdown formatı: GFM footnote — [^1] referans, [^1]: metin liste.
+
+let savedFootnoteRange = null;
+let footnoteRenumberInFlight = false;
+
+// Editör DOM'unda tüm footnote referans <sup>'larını belge sırasında topla.
+// Eklentinin (data-footnote-ref) ve bizim insert ettiğimiz (data-fn-ref) formatların ikisini de yakalar.
+// Footnotes section içindeki <sup>'lar (varsa, yok) hariç tutulur.
+function collectFootnoteRefs(editor) {
+    if (!editor) return [];
+    const section = editor.querySelector('section.footnotes, section[data-footnotes]');
+    const all = editor.querySelectorAll('sup');
+    return Array.from(all).filter(sup => {
+        if (section && section.contains(sup)) return false;
+        if (sup.hasAttribute('data-fn-ref')) return true;
+        return !!sup.querySelector('a[data-footnote-ref], a[id^="footnote-ref-"], a[href^="#footnote-"]');
+    });
+}
+
+function getFootnoteRefNum(sup) {
+    let n = sup.getAttribute('data-fn-ref');
+    if (n) return n;
+    const a = sup.querySelector('a[data-footnote-ref], a[id^="footnote-ref-"], a[href^="#footnote-"]');
+    if (!a) return null;
+    const idMatch = (a.getAttribute('id') || '').match(/^footnote-ref-(.+)$/);
+    if (idMatch) return idMatch[1];
+    const hrefMatch = (a.getAttribute('href') || '').match(/^#footnote-(.+)$/);
+    if (hrefMatch) return hrefMatch[1];
+    return null;
+}
+
+function openFootnoteModal() {
+    try {
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount > 0) {
+            const range = sel.getRangeAt(0);
+            const editor = document.getElementById('editorContent');
+            if (editor && editor.contains(range.commonAncestorContainer)) {
+                savedFootnoteRange = range.cloneRange();
+            } else {
+                savedFootnoteRange = null;
+            }
+        } else {
+            savedFootnoteRange = null;
+        }
+
+        const modal = document.getElementById('footnoteModal');
+        const input = document.getElementById('footnoteInput');
+        const error = document.getElementById('footnoteError');
+        if (!modal) return;
+        if (input) input.value = '';
+        if (error) { error.style.display = 'none'; error.textContent = ''; }
+        modal.classList.add('show');
+        modal.style.display = 'flex';
+        setTimeout(() => input && input.focus(), 50);
+    } catch (e) {
+        console.error('openFootnoteModal error:', e);
+    }
+}
+
+function closeFootnoteModal() {
+    const modal = document.getElementById('footnoteModal');
+    if (modal) {
+        modal.classList.remove('show');
+        modal.style.display = 'none';
+    }
+}
+
+function submitFootnote() {
+    const input = document.getElementById('footnoteInput');
+    const error = document.getElementById('footnoteError');
+    const text = (input && input.value || '').trim();
+    if (!text) {
+        if (error) { error.textContent = 'Kaynak metni boş olamaz.'; error.style.display = 'block'; }
+        return;
+    }
+    if (/\[\^[^\]]+\]/.test(text)) {
+        if (error) { error.textContent = 'Kaynak metni içinde başka bir kaynak referansı (\[^...\]) olamaz.'; error.style.display = 'block'; }
+        return;
+    }
+    insertFootnote(text);
+    closeFootnoteModal();
+}
+
+function insertFootnote(markdownText) {
+    try {
+        const editor = document.getElementById('editorContent');
+        if (!editor) return;
+
+        // Mevcut footnote ref'lerinden bir sonraki numarayı belirle (renumber zaten sonda çalışacak ama anlık ekleme için lazım)
+        const existingRefs = collectFootnoteRefs(editor);
+        const nextNum = existingRefs.length + 1;
+
+        // 1) Üst indis <sup> oluştur — marked-footnote çıktısıyla bire bir uyumlu HTML
+        const sup = document.createElement('sup');
+        sup.setAttribute('data-fn-ref', String(nextNum));
+        sup.setAttribute('contenteditable', 'false');
+        sup.innerHTML = `<a id="footnote-ref-${nextNum}" href="#footnote-${nextNum}" data-footnote-ref>${nextNum}</a>`;
+
+        // 2) İmleci kaydedilmiş range'e geri taşı; yoksa editörün sonuna
+        let range = savedFootnoteRange;
+        const sel = window.getSelection();
+        if (range && editor.contains(range.commonAncestorContainer)) {
+            sel.removeAllRanges();
+            sel.addRange(range);
+        } else {
+            range = document.createRange();
+            // editörün son metin noktasına git
+            const lastNode = editor.lastChild || editor;
+            range.selectNodeContents(lastNode);
+            range.collapse(false);
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }
+        range.deleteContents();
+        range.insertNode(sup);
+        // İmleci üst indisin hemen sonrasına koy
+        range.setStartAfter(sup);
+        range.setEndAfter(sup);
+        sel.removeAllRanges();
+        sel.addRange(range);
+
+        // 3) Footnotes section'ı bul ya da oluştur
+        let section = editor.querySelector('section.footnotes');
+        let ol;
+        if (!section) {
+            section = document.createElement('section');
+            section.className = 'footnotes';
+            section.setAttribute('data-footnotes', '');
+            const h2 = document.createElement('h2');
+            h2.textContent = 'Kaynakça';
+            h2.className = 'footnotes-title';
+            ol = document.createElement('ol');
+            section.appendChild(h2);
+            section.appendChild(ol);
+            editor.appendChild(section);
+        } else {
+            ol = section.querySelector('ol');
+            if (!ol) {
+                ol = document.createElement('ol');
+                section.appendChild(ol);
+            }
+        }
+
+        // 4) Liste maddesi ekle
+        const li = document.createElement('li');
+        li.id = `footnote-${nextNum}`;
+        li.setAttribute('data-fn-id', String(nextNum));
+        const p = document.createElement('p');
+        // Kaynak metni içeriği — marked ile inline parse, sadece güvenli inline html
+        let inlineHtml;
+        try {
+            // parseInline footnote süzgecini bypass eder, sadece bold/italic/link gibi inline format'lar
+            inlineHtml = marked.parseInline(markdownText);
+        } catch (_) {
+            inlineHtml = markdownText.replace(/</g, '&lt;');
+        }
+        p.innerHTML = inlineHtml +
+            ` <a href="#footnote-ref-${nextNum}" data-footnote-backref class="footnote-backref" contenteditable="false" title="Metne dön" aria-label="Metne dön">↩</a>`;
+        li.appendChild(p);
+        ol.appendChild(li);
+
+        // 5) Numaraları yenile (kullanıcı arada bir yere insert etmiş olabilir; DOM sırasına göre düzelt)
+        renumberFootnotes();
+
+        updateAllStats();
+        editor.focus();
+    } catch (e) {
+        console.error('insertFootnote error:', e);
+    }
+}
+
+function renumberFootnotes() {
+    if (footnoteRenumberInFlight) return;
+    footnoteRenumberInFlight = true;
+    try {
+        const editor = document.getElementById('editorContent');
+        if (!editor) return;
+        let section = editor.querySelector('section.footnotes, section[data-footnotes]');
+
+        // Belge sırasında üst indis ref'lerini topla — footnotes section içindekileri (backref) hariç tut
+        const allRefs = collectFootnoteRefs(editor);
+
+        // Mevcut listeleri eski numaralarıyla map'le
+        const oldLis = new Map();
+        if (section) {
+            section.querySelectorAll('li[id^="footnote-"], li[data-fn-id]').forEach(li => {
+                const oldId = li.getAttribute('data-fn-id') ||
+                    (li.id.match(/^footnote-(.+)$/) ? li.id.match(/^footnote-(.+)$/)[1] : null);
+                if (oldId) oldLis.set(String(oldId), li);
+            });
+        }
+
+        // Yeni sırada hangi eski numara hangi yeni numaraya gidiyor
+        const orderedLis = [];
+        allRefs.forEach((ref, idx) => {
+            const newNum = idx + 1;
+            const oldNum = getFootnoteRefNum(ref);
+            const li = oldNum && oldLis.get(String(oldNum));
+
+            // Ref güncelle — hem data-fn-ref hem standart attribute'lar
+            ref.setAttribute('data-fn-ref', String(newNum));
+            ref.setAttribute('contenteditable', 'false');
+            let a = ref.querySelector('a');
+            if (!a) {
+                a = document.createElement('a');
+                ref.appendChild(a);
+            }
+            a.setAttribute('href', `#footnote-${newNum}`);
+            a.setAttribute('id', `footnote-ref-${newNum}`);
+            a.setAttribute('data-footnote-ref', '');
+            a.textContent = String(newNum);
+
+            if (li) {
+                li.id = `footnote-${newNum}`;
+                li.setAttribute('data-fn-id', String(newNum));
+                const back = li.querySelector('a.footnote-backref, a[data-footnote-backref]');
+                if (back) back.setAttribute('href', `#footnote-ref-${newNum}`);
+                orderedLis.push(li);
+            }
+        });
+
+        if (section) {
+            const ol = section.querySelector('ol');
+            if (ol) {
+                // Ref sayısı kadar li olmasını sağla (li'si silinmiş ref için placeholder ekle)
+                while (orderedLis.length < allRefs.length) {
+                    const missingIdx = orderedLis.length;
+                    const newNum = missingIdx + 1;
+                    const placeholder = document.createElement('li');
+                    placeholder.id = `footnote-${newNum}`;
+                    placeholder.setAttribute('data-fn-id', String(newNum));
+                    const p = document.createElement('p');
+                    p.innerHTML = `<em>(kaynak metni eksik)</em> <a href="#footnote-ref-${newNum}" data-footnote-backref class="footnote-backref" contenteditable="false">↩</a>`;
+                    placeholder.appendChild(p);
+                    orderedLis.push(placeholder);
+                }
+
+                // Kullanılmayan eski li'leri (referansı silinmiş kaynaklar) sil
+                Array.from(section.querySelectorAll('li')).forEach(li => {
+                    if (!orderedLis.includes(li)) {
+                        li.remove();
+                    }
+                });
+
+                // ol'u yeniden dizmek için tümünü sırayla geri ekle
+                orderedLis.forEach(li => ol.appendChild(li));
+            }
+
+            // Eğer hiç ref kalmadıysa kaynakça section'ını tamamen kaldır
+            if (allRefs.length === 0) {
+                section.remove();
+                section = null;
+            }
+
+            // Eklentinin sr-only h2'sini Türkçeleştir ve görünür yap
+            if (section) {
+                const h2 = section.querySelector('h2');
+                if (h2) {
+                    if (/footnotes?/i.test(h2.textContent) || h2.classList.contains('sr-only')) {
+                        h2.textContent = 'Kaynakça';
+                        h2.classList.remove('sr-only');
+                        h2.classList.add('footnotes-title');
+                    }
+                }
+            }
+        }
+    } catch (e) {
+        console.error('renumberFootnotes error:', e);
+    } finally {
+        footnoteRenumberInFlight = false;
+    }
+}
+
+// Editor değişimlerinde footnote senkronizasyonu (kullanıcı bir üst indis sildiğinde otomatik renumber)
+document.addEventListener('DOMContentLoaded', () => {
+    const editor = document.getElementById('editorContent');
+    if (!editor) return;
+    let debounceTimer = null;
+    editor.addEventListener('input', () => {
+        if (footnoteRenumberInFlight) return;
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => renumberFootnotes(), 250);
+    });
+});
 
 console.log('Script loaded successfully');

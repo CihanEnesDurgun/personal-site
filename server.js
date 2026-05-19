@@ -657,7 +657,7 @@ const readSessionsFile = async () => {
     const data = await fs.readFile(SESSIONS_FILE, 'utf8');
     return JSON.parse(data);
   } catch (error) {
-    Logger.error('Error reading sessions file:', error);
+    Logger.error('Error reading sessions file:', { error });
     return { activeSessions: [], loginHistory: [], failedLogins: [] };
   }
 };
@@ -674,6 +674,9 @@ const SESSION_LIMITS = {
 const cleanupSessionData = async () => {
   try {
     const sessions = await readSessionsFile();
+    sessions.activeSessions = sessions.activeSessions || [];
+    sessions.loginHistory = sessions.loginHistory || [];
+    sessions.failedLogins = sessions.failedLogins || [];
     const now = Date.now();
     let cleaned = false;
 
@@ -732,7 +735,7 @@ const cleanupSessionData = async () => {
 
     return sessions;
   } catch (error) {
-    Logger.error('Error during session cleanup:', error);
+    Logger.error('Error during session cleanup:', { error });
     return null;
   }
 };
@@ -2055,7 +2058,7 @@ app.post('/api/posts/:slug/publish', authenticateToken, async (req, res, next) =
     const slug = req.params.slug;
     const { status, publishDate } = req.body;
 
-    if (!status || !['published', 'scheduled'].includes(status)) {
+    if (!status || !['published', 'scheduled', 'draft'].includes(status)) {
       return next(new AppError('VAL-2001', 400, 'Geçersiz durum'));
     }
 
@@ -2071,10 +2074,20 @@ app.post('/api/posts/:slug/publish', authenticateToken, async (req, res, next) =
     }
 
     // Update post status
+    let nextPublishDate;
+    if (status === 'scheduled') {
+      nextPublishDate = publishDate;
+    } else if (status === 'draft') {
+      // Taslağa çekerken mevcut publishDate'i koru (yeniden yayınlandığında referans kalsın)
+      nextPublishDate = posts[postIndex].publishDate;
+    } else {
+      nextPublishDate = new Date().toISOString();
+    }
+
     posts[postIndex] = {
       ...posts[postIndex],
       status,
-      publishDate: status === 'scheduled' ? publishDate : new Date().toISOString(),
+      publishDate: nextPublishDate,
       updatedAt: new Date().toISOString()
     };
 
@@ -3979,7 +3992,7 @@ app.listen(PORT, async () => {
         await cleanupSessionData();
       }
     } catch (e) {
-      Logger.error('Interval session cleanup error', e);
+      Logger.error('Interval session cleanup error', { error: e });
     }
   }, SESSION_LIMITS.CLEANUP_INTERVAL);
 

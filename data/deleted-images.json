@@ -1,1 +1,23 @@
-[]
+[
+  {
+    "filename": "t3-iha-kurs-tamamlama-belgesi-1-2-2026-04-05-16-35.jpg",
+    "originalFolder": "blog-covers",
+    "deletedAt": "2026-04-05T16:43:44.844Z",
+    "originalPath": "images/blog-covers/t3-iha-kurs-tamamlama-belgesi-1-2-2026-04-05-16-35.jpg",
+    "deletedByPost": "test-yazisi"
+  },
+  {
+    "filename": "a-naro-akper-taka-m-organizasyonu-2-2026-03-28-12-32.png",
+    "originalFolder": "blog-content",
+    "deletedAt": "2026-04-05T16:43:44.847Z",
+    "originalPath": "images/blog-content/a-naro-akper-taka-m-organizasyonu-2-2026-03-28-12-32.png",
+    "deletedByPost": "test-yazisi"
+  },
+  {
+    "filename": "t3-iha-kurs-tamamlama-belgesi-1-2-2026-04-05-16-36.jpg",
+    "originalFolder": "blog-content",
+    "deletedAt": "2026-04-05T16:43:44.849Z",
+    "originalPath": "images/blog-content/t3-iha-kurs-tamamlama-belgesi-1-2-2026-04-05-16-36.jpg",
+    "deletedByPost": "test-yazisi"
+  }
+]
