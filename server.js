@@ -154,8 +154,8 @@ const corsOptions = {
     // In production, be extremely strict
     if (process.env.NODE_ENV === 'production') {
       if (!origin) {
-        Logger.warn('🚨 Production: Request blocked - No origin header');
-        return callback(new Error('Production modunda origin header gereklidir'), false);
+        // Same-origin requests (and server-side calls) don't send an Origin header — allow them
+        return callback(null, true);
       }
 
       // Validate origin format in production - allow localhost and 127.0.0.1 for local production testing
