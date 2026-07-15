@@ -222,6 +222,12 @@ const API_BASE_URL = window.location.origin;
 
 // ====== Statistics Tracking ======
 async function trackPageView(page) {
+  // Geliştirme modunda analytics'i atla (scripts.js/post.js ile tutarlı)
+  if (DEVELOPMENT_MODE) {
+    console.log('📊 Analytics skipped in development mode');
+    return;
+  }
+
   try {
     await fetch(`${API_BASE_URL}/api/analytics/track-page`, {
       method: 'POST',

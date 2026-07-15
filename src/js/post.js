@@ -195,6 +195,15 @@ async function boot() {
       return;
     }
 
+    // Güvenlik: taslak/silinmiş veya henüz yayın zamanı gelmemiş yazılar
+    // sadece admin önizleme linkinden (?preview=true) görüntülenebilir.
+    const isPublic = post.status === 'published' ||
+      (post.status === 'scheduled' && post.publishDate && new Date(post.publishDate) <= new Date());
+    if (!isPublic && !isPreview) {
+      q('#postContent').innerHTML = '<p class="muted">Yazı bulunamadı.</p>';
+      return;
+    }
+
     // Markdown dosyasını yükle
     const mdResponse = await fetch(`content/posts/${post.slug}.md`);
     const md = await mdResponse.text();
@@ -564,7 +573,7 @@ function renderCommentWithReplies(comment, slug) {
       </div>
       <div class="comment-content">${escapeHtml(comment.content)}</div>
       <div class="comment-actions">
-        <button class="reply-btn" onclick="showReplyForm('${comment.id}', '${escapeHtml(comment.name)}', '${slug}')">
+        <button class="reply-btn" data-action="reply" data-reply-id="${escapeHtml(comment.id)}" data-reply-name="${escapeHtml(comment.name)}" data-reply-slug="${escapeHtml(slug)}">
           <svg viewBox="0 0 24 24" width="16" height="16">
             <path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/>
           </svg>
@@ -593,7 +602,7 @@ function renderReply(reply, slug) {
         <span class="reply-to-user">@${escapeHtml(reply.reply_to_name)}</span> ${escapeHtml(reply.content)}
       </div>
       <div class="comment-actions">
-        <button class="reply-btn" onclick="showReplyForm('${reply.id}', '${escapeHtml(reply.name)}', '${slug}')">
+        <button class="reply-btn" data-action="reply" data-reply-id="${escapeHtml(reply.id)}" data-reply-name="${escapeHtml(reply.name)}" data-reply-slug="${escapeHtml(slug)}">
           <svg viewBox="0 0 24 24" width="16" height="16">
             <path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/>
           </svg>
@@ -615,12 +624,15 @@ function showReplyForm(parentId, parentName, slug) {
   const commentElement = document.querySelector(`[data-comment-id="${parentId}"]`);
   if (!commentElement) return;
 
+  // XSS koruması: parentName kullanıcı verisidir, innerHTML'e basılmadan escape edilir
+  const safeParentName = escapeHtml(parentName);
+
   // Create reply form
   const replyForm = document.createElement('div');
   replyForm.className = 'reply-form';
   replyForm.innerHTML = `
     <div class="reply-form-content">
-      <h5>${parentName} kullanıcısına yanıt ver</h5>
+      <h5>${safeParentName} kullanıcısına yanıt ver</h5>
       <form class="comment-form reply-comment-form">
         <div class="form-row">
           <div class="form-group">
@@ -634,8 +646,8 @@ function showReplyForm(parentId, parentName, slug) {
         </div>
         <div class="form-group">
           <label for="replyContent">Yanıtınız *</label>
-          <textarea id="replyContent" name="content" rows="3" required 
-                    placeholder="${parentName} kullanıcısına yanıt verin..."></textarea>
+          <textarea id="replyContent" name="content" rows="3" required
+                    placeholder="${safeParentName} kullanıcısına yanıt verin..."></textarea>
         </div>
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">
@@ -859,5 +871,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   const slug = urlParams.get('slug');
   if (slug) {
     initCommentForm(slug);
+  }
+
+  // Yanıtla butonları için delegasyon (inline onclick yerine — XSS güvenli)
+  const commentsList = q('#commentsList');
+  if (commentsList) {
+    commentsList.addEventListener('click', (e) => {
+      const btn = e.target.closest('.reply-btn[data-action="reply"]');
+      if (!btn) return;
+      showReplyForm(btn.dataset.replyId, btn.dataset.replyName, btn.dataset.replySlug);
+    });
   }
 });

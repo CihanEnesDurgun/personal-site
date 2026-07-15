@@ -246,7 +246,7 @@ app.use((req, res, next) => {
   if (process.env.NODE_ENV === 'production') {
     res.setHeader('Content-Security-Policy',
       "default-src 'self'; " +
-      "script-src 'self' 'unsafe-inline'; " +
+      "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " +
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
       "font-src 'self' data: https://fonts.gstatic.com; " +
       "img-src 'self' data: https:; " +
@@ -1266,14 +1266,48 @@ const generateCommentId = () => {
   return Date.now().toString(36) + Math.random().toString(36).substr(2);
 };
 
+// Bir yazının halka açık görünür olup olmadığını belirler.
+// Scheduled yazılar sadece publishDate geçmişse (yayın zamanı geldiyse) görünür.
+const isPublicPost = (post) => {
+  if (!post || post.status === 'deleted' || post.status === 'draft') return false;
+  if (post.status === 'scheduled') {
+    return !!post.publishDate && new Date(post.publishDate) <= new Date();
+  }
+  return post.status === 'published';
+};
+
+// Yayın zamanı gelmiş scheduled yazıları otomatik olarak published'a çeker.
+const publishScheduledPosts = async () => {
+  try {
+    const posts = await readPostsFile();
+    const now = new Date();
+    let changed = false;
+
+    posts.forEach(post => {
+      if (post.status === 'scheduled' && post.publishDate && new Date(post.publishDate) <= now) {
+        post.status = 'published';
+        post.updatedAt = new Date().toISOString();
+        changed = true;
+        Logger.info(`[SYS-2017] Zamanlanmis yazi otomatik yayinlandi: ${post.slug}`);
+      }
+    });
+
+    if (changed) {
+      await writePostsFile(posts); // RSS + sitemap otomatik yeniden üretilir
+    }
+  } catch (error) {
+    Logger.error('Error auto-publishing scheduled posts:', error);
+  }
+};
+
 // ====== RSS Generation Function ======
 const generateRSS = async () => {
   try {
     const posts = await readPostsFile();
 
-    // Filter only published posts and sort by date (newest first)
+    // Sadece halka açık (yayın zamanı gelmiş) yazıları al, tarihe göre sırala (en yeni önce)
     const publishedPosts = posts
-      .filter(post => post.status !== 'deleted' && post.status !== 'draft')
+      .filter(isPublicPost)
       .sort((a, b) => new Date(b.date) - new Date(a.date))
       .slice(0, 10); // Limit to 10 most recent posts
 
@@ -1318,9 +1352,9 @@ const generateSitemap = async () => {
   try {
     const posts = await readPostsFile();
 
-    // Filter only published posts
+    // Sadece halka açık (yayın zamanı gelmiş) yazıları dahil et
     const publishedPosts = posts
-      .filter(post => post.status !== 'deleted' && post.status !== 'draft')
+      .filter(isPublicPost)
       .sort((a, b) => new Date(b.date) - new Date(a.date));
 
     // Base URLs
@@ -1437,6 +1471,61 @@ const cleanupPostAssets = async (post, content) => {
     }
   } catch (error) {
     Logger.error('cleanupPostAssets hatası:', error);
+  }
+};
+
+// Bir yazıyı (zaten 'deleted' durumunda olmalı) kalıcı olarak siler: posts.json'dan
+// çıkarır, ilişkili görselleri temizler ve markdown dosyasını kaldırır.
+// /api/posts/:slug/permanent route'u ve otomatik trash temizleyici tarafından ortak kullanılır.
+const permanentlyDeletePost = async (slug) => {
+  const posts = await readPostsFile();
+  const postIndex = posts.findIndex(p => p.slug === slug);
+  if (postIndex === -1) return false;
+
+  const post = posts[postIndex];
+  posts.splice(postIndex, 1);
+  await writePostsFile(posts);
+
+  const markdownPath = path.join(CONTENT_DIR, `${slug}.md`);
+  try {
+    let content = '';
+    if (await fs.pathExists(markdownPath)) {
+      content = await fs.readFile(markdownPath, 'utf8');
+    }
+    await cleanupPostAssets(post, content);
+    if (await fs.pathExists(markdownPath)) {
+      await fs.remove(markdownPath);
+    }
+  } catch (cleanupError) {
+    Logger.error(`Kalıcı silme asset temizliği sırasında hata (Slug: ${slug}):`, cleanupError);
+  }
+
+  await cleanupStatsData();
+  return true;
+};
+
+// 30 günden eski (deletedAt) trash'teki yazıları otomatik kalıcı olarak siler.
+const TRASH_RETENTION_DAYS = 30;
+const purgeExpiredTrash = async () => {
+  try {
+    const posts = await readPostsFile();
+    const now = Date.now();
+    const expiredSlugs = posts.filter(p => {
+      if (p.status !== 'deleted' || !p.deletedAt) return false;
+      const ageDays = (now - new Date(p.deletedAt).getTime()) / (1000 * 60 * 60 * 24);
+      return ageDays >= TRASH_RETENTION_DAYS;
+    }).map(p => p.slug);
+
+    for (const slug of expiredSlugs) {
+      await permanentlyDeletePost(slug);
+      Logger.info(`[FILE-8014] Cop kutusunda ${TRASH_RETENTION_DAYS} gunu asan yazi otomatik kalici silindi: ${slug}`);
+    }
+
+    if (expiredSlugs.length > 0) {
+      await generateRSS();
+    }
+  } catch (error) {
+    Logger.error('Error purging expired trash:', error);
   }
 };
 
@@ -2211,13 +2300,11 @@ app.delete('/api/posts/:slug/permanent', authenticateToken, async (req, res, nex
   try {
     const slug = req.params.slug;
     const posts = await readPostsFile();
+    const post = posts.find(p => p.slug === slug);
 
-    const postIndex = posts.findIndex(p => p.slug === slug);
-    if (postIndex === -1) {
+    if (!post) {
       return next(new AppError('RES-6001', 404, 'Blog yazısı bulunamadı'));
     }
-
-    const post = posts[postIndex];
 
     // Check if post is actually deleted
     if (post.status !== 'deleted') {
@@ -2225,41 +2312,9 @@ app.delete('/api/posts/:slug/permanent', authenticateToken, async (req, res, nex
       return next(new AppError('VAL-2001', 400, 'Blog yazısı geri dönüşüm kutusunda değil'));
     }
 
-    // Log what we're about to delete
     Logger.info(`Permanently deleting post: ${slug} (${post.title}) with status: ${post.status}`);
 
-    // Remove from posts array permanently
-    posts.splice(postIndex, 1);
-
-    // Save posts.json
-    const saved = await writePostsFile(posts);
-    if (!saved) {
-      return next(new AppError('SYS-3001', 500, 'Blog yazıları metadata kaydedilirken hata oluştu'));
-    }
-
-    // --- Asset Temizleme Operasyonu ---
-    const markdownPath = path.join(CONTENT_DIR, `${slug}.md`);
-    try {
-      let content = '';
-      if (await fs.pathExists(markdownPath)) {
-        content = await fs.readFile(markdownPath, 'utf8');
-      }
-
-      // Önce görselleri temizle (Shared check dahil)
-      await cleanupPostAssets(post, content);
-
-      // Sonra markdown dosyasını sil
-      if (await fs.pathExists(markdownPath)) {
-        await fs.remove(markdownPath);
-        Logger.info(`[FILE-8004] Markdown dosyası kalıcı olarak silindi: ${markdownPath}`);
-      }
-    } catch (cleanupError) {
-      Logger.error(`Kalıcı silme asset temizliği sırasında hata (Slug: ${slug}):`, cleanupError);
-    }
-    // ----------------------------------
-
-    // Clean up stats data for permanently deleted post
-    await cleanupStatsData();
+    await permanentlyDeletePost(slug);
 
     // Generate RSS feed after permanent post deletion
     await generateRSS();
@@ -2737,7 +2792,7 @@ app.get('/api/version', (req, res, next) => {
 // Debug endpoint to check CSP settings
 app.get('/api/debug/csp', (req, res, next) => {
   const cspHeader = process.env.NODE_ENV === 'production'
-    ? "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self'; frame-ancestors 'none'"
+    ? "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self'; frame-ancestors 'none'"
     : "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:*; frame-ancestors 'none'";
 
   res.json({
@@ -3946,11 +4001,34 @@ app.post('/api/webhook/deploy', async (req, res, next) => {
   }
 });
 
-// Serve static files after API routes
-app.use(express.static('.'));
+// ====== Static File Serving (Güvenlik: Allowlist) ======
+// GÜVENLİK: express.static('.') tüm proje kökünü (server.js, data/, lib/, logs/,
+// .git/, package.json vb.) herkese açardı. Sadece public varlıklar servis edilir.
+const staticOptions = { dotfiles: 'deny', index: false, redirect: false };
+app.use('/src', express.static(path.join(__dirname, 'src'), staticOptions));
+app.use('/images', express.static(path.join(__dirname, 'images'), staticOptions));
+app.use('/content', express.static(path.join(__dirname, 'content'), staticOptions));
+app.use('/admin', express.static(path.join(__dirname, 'admin'), staticOptions));
+app.use('/markdown-editor', express.static(path.join(__dirname, 'markdown-editor'), staticOptions));
+
+// Kök dizindeki public dosyalar (kesin whitelist). rss.xml/sitemap.xml kendi
+// route'larıyla yukarıda zaten sunuluyor.
+const PUBLIC_ROOT_FILES = new Set([
+  'index.html', 'blog.html', 'post.html',
+  'favicon.png', 'favicon.ico', 'robots.txt'
+]);
+app.get(['/', '/:file'], (req, res, next) => {
+  const requested = req.params.file || 'index.html';
+  if (!PUBLIC_ROOT_FILES.has(requested)) {
+    return next(); // Whitelist dışı → 404 handler'a düşer
+  }
+  res.sendFile(path.join(__dirname, requested), err => {
+    if (err) next();
+  });
+});
 
 // Start server
-app.listen(PORT, async () => {
+const server = app.listen(PORT, async () => {
   try {
     // Validate and clean up stats data on startup
     Logger.info('[SYS-2008] Istatistik verileri dogrulaniyor...');
@@ -3978,11 +4056,43 @@ app.listen(PORT, async () => {
   }
 
   try {
+    // Zamanlanmış (scheduled) yazılardan yayın zamanı gelenleri yayınla
+    await publishScheduledPosts();
+  } catch (error) {
+    Logger.error('❌ Error publishing scheduled posts on startup:', error.message);
+  }
+
+  try {
+    // Çöp kutusunda 30 günü aşan yazıları kalıcı olarak temizle
+    await purgeExpiredTrash();
+  } catch (error) {
+    Logger.error('❌ Error purging expired trash on startup:', error.message);
+  }
+
+  try {
     // Generate initial RSS feed
     await generateRSS();
   } catch (error) {
     Logger.error('❌ Error generating RSS feed:', error.message);
   }
+
+  // Zamanlanmış yazıları periyodik kontrol et (her dakika)
+  setInterval(async () => {
+    try {
+      await publishScheduledPosts();
+    } catch (e) {
+      Logger.error('Interval scheduled-post publish error', { error: e });
+    }
+  }, 60 * 1000);
+
+  // Çöp kutusu temizliğini periyodik kontrol et (her 6 saatte bir)
+  setInterval(async () => {
+    try {
+      await purgeExpiredTrash();
+    } catch (e) {
+      Logger.error('Interval trash purge error', { error: e });
+    }
+  }, 6 * 60 * 60 * 1000);
 
   // Set up automatic session cleanup scheduler
   setInterval(async () => {
@@ -4024,6 +4134,9 @@ app.listen(PORT, async () => {
   // Logger.info(`   POST /api/admin/logs - Save console logs (admin)`);
   // Logger.info(`   GET  /api/admin/logs - Get console logs (admin)`);
 });
+
+// Yakalanmamış hata / promise reddi durumunda düzgün loglayıp kapanmayı sağla
+setupProcessErrorHandlers(server);
 
 // ====== Console Log Management ======
 // Save client console logs to server
