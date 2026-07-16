@@ -104,12 +104,20 @@
     <section class="dashboard-section">
       <div class="dashboard-header">
         <h2>Dashboard</h2>
-        <a href="../markdown-editor/index.html?new=true" class="btn btn-primary">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
-          </svg>
-          Yeni Blog Yazısı
-        </a>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <a href="../markdown-editor/index.html?new=true" class="btn btn-primary">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+            </svg>
+            Yeni Blog Yazısı
+          </a>
+          <a href="../markdown-editor/index.html?type=project&new=true" class="btn btn-primary">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+            </svg>
+            Yeni Proje Yazısı
+          </a>
+        </div>
       </div>
 
       <div class="stats-grid">
@@ -164,6 +172,26 @@
       </div>
     </section>
 
+    <!-- Projects Management -->
+    <section class="posts-section">
+      <div class="section-header">
+        <h2>Projeler</h2>
+        <div class="filters">
+          <input type="text" id="searchProjects" placeholder="Proje ara..." class="search-input">
+          <select id="filterProjectStatus" class="filter-select">
+            <option value="all">Tümü</option>
+            <option value="draft">Taslaklar</option>
+            <option value="published">Yayındakiler</option>
+            <option value="featured">Öne Çıkan</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="posts-cards-grid" id="projectsTableBody">
+        <!-- Projects will be loaded here -->
+      </div>
+    </section>
+
     <!-- Analytics Section -->
     <section id="analytics-section" class="analytics-section" style="display: none;">
       <div class="section-header">
@@ -202,6 +230,38 @@
           <div class="analytics-content">
             <div id="popularPosts" class="popular-posts">
               <!-- Popular posts will be loaded here -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Proje İstatistikleri (bloglardan ayrı) -->
+        <div class="analytics-card">
+          <div class="analytics-header">
+            <h3>Proje İstatistikleri</h3>
+          </div>
+          <div class="analytics-content">
+            <div class="stat-item">
+              <span class="stat-label">Toplam Proje Görüntüleme</span>
+              <span class="stat-value" id="totalProjectViews">0</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Toplam Proje</span>
+              <span class="stat-value" id="statTotalProjects">0</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Yayında / Taslak</span>
+              <span class="stat-value" id="statProjectStatus">0 / 0</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="analytics-card">
+          <div class="analytics-header">
+            <h3>Popüler Projeler</h3>
+          </div>
+          <div class="analytics-content">
+            <div id="popularProjects" class="popular-posts">
+              <!-- Popular projects will be loaded here -->
             </div>
           </div>
         </div>

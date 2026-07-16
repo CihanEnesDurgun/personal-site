@@ -1,0 +1,85 @@
+[
+  {
+    "slug": "lora-telemetri-modulu",
+    "title": "LoRa Telemetri Modülü",
+    "excerpt": "Uzun menzilli LoRa haberlesmesi ile IHA telemetrisi: 10 km menzil, dusuk guc tuketimi ve stabil veri aktarimi.",
+    "date": "2025-06-15",
+    "cover": "",
+    "coverCaption": "Görsel açıklaması",
+    "tags": [
+      "lora",
+      "rf",
+      "telemetri"
+    ],
+    "featured": false,
+    "status": "published",
+    "publishDate": "2026-07-16T16:34:21.857Z",
+    "languages": [
+      {
+        "name": "C",
+        "percent": 72,
+        "color": "#555555"
+      },
+      {
+        "name": "Python",
+        "percent": 28,
+        "color": "#3572a5"
+      }
+    ],
+    "gallery": [
+      "images/blog-covers/elektronikSema.png"
+    ],
+    "githubUrl": "https://github.com/espressif/esp-idf",
+    "codeSample": {
+      "language": "c",
+      "code": "void lora_send(uint8_t *data, size_t len) {\n  lora_write_reg(REG_FIFO_ADDR, 0);\n  lora_write_fifo(data, len);\n  lora_set_mode(MODE_TX);\n}"
+    },
+    "createdAt": "2026-07-16T16:23:00.344Z",
+    "updatedAt": "2026-07-16T16:34:21.857Z"
+  },
+  {
+    "slug": "esp32-headtracker",
+    "title": "ESP32 Kablosuz Headtracker",
+    "excerpt": "IMU sensöründen alınan baş hareketlerini ESP-NOW protokolüyle düşük gecikmeyle ileten, oyun ve simülasyon için kablosuz bir headtracker sistemi.",
+    "date": "2025-03-10",
+    "cover": "images/blog-covers/elektronikSema.png",
+    "coverCaption": "Headtracker devre şeması",
+    "tags": [
+      "esp32",
+      "imu",
+      "esp-now",
+      "elektronik"
+    ],
+    "featured": true,
+    "status": "published",
+    "publishDate": "2025-03-10T10:00:00.000Z",
+    "languages": [
+      {
+        "name": "C++",
+        "percent": 68,
+        "color": "#f34b7d"
+      },
+      {
+        "name": "Python",
+        "percent": 22,
+        "color": "#3572A5"
+      },
+      {
+        "name": "C",
+        "percent": 10,
+        "color": "#555555"
+      }
+    ],
+    "gallery": [
+      "images/blog-covers/elektronikSema.png",
+      "images/blog-covers/img-7956-copy-jpg-2026-02-27-22-22.jpg"
+    ],
+    "githubUrl": "https://github.com/espressif/arduino-esp32",
+    "codeSample": {
+      "language": "cpp",
+      "code": "#include <esp_now.h>\n#include <WiFi.h>\n\n// Alici MAC adresi\nuint8_t receiverMac[] = {0x24, 0x6F, 0x28, 0xAA, 0xBB, 0xCC};\n\ntypedef struct {\n  float yaw;\n  float pitch;\n  float roll;\n} HeadData;\n\nHeadData head;\n\nvoid setup() {\n  WiFi.mode(WIFI_STA);\n  esp_now_init();\n  esp_now_peer_info_t peer = {};\n  memcpy(peer.peer_addr, receiverMac, 6);\n  esp_now_add_peer(&peer);\n}\n\nvoid loop() {\n  readIMU(&head);\n  esp_now_send(receiverMac, (uint8_t*)&head, sizeof(head));\n  delay(10); // ~100 Hz guncelleme\n}"
+    },
+    "createdAt": "2025-03-10T10:00:00.000Z",
+    "updatedAt": "2025-03-10T10:00:00.000Z"
+  }
+]

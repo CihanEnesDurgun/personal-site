@@ -120,6 +120,41 @@ class ApiService {
     });
   }
 
+  // Projects endpoints (blog paraleli)
+  async getProjects() {
+    return await this.request('/projects');
+  }
+
+  async getProject(slug) {
+    return await this.request(`/projects/${slug}`);
+  }
+
+  async deleteProject(slug) {
+    return await this.request(`/projects/${slug}`, { method: 'DELETE' });
+  }
+
+  async publishProject(slug, data) {
+    return await this.request(`/projects/${slug}/publish`, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  }
+
+  async restoreProject(slug) {
+    return await this.request(`/projects/${slug}/restore`, { method: 'POST' });
+  }
+
+  async permanentDeleteProject(slug) {
+    return await this.request(`/projects/${slug}/permanent`, { method: 'DELETE' });
+  }
+
+  async toggleProjectFeatured(slug, featured) {
+    return await this.request(`/projects/${slug}/featured`, {
+      method: 'PATCH',
+      body: JSON.stringify({ featured })
+    });
+  }
+
   // Site configuration endpoints
   async getSiteConfig() {
     return await this.request('/site-config');

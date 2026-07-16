@@ -283,6 +283,8 @@ const JWT_SECRET = process.env.JWT_SECRET;
 // File paths
 const POSTS_FILE = path.join(__dirname, 'content', 'posts.json');
 const CONTENT_DIR = path.join(__dirname, 'content', 'posts');
+const PROJECTS_FILE = path.join(__dirname, 'content', 'projects.json'); // Projeler metadata
+const PROJECTS_DIR = path.join(__dirname, 'content', 'projects');        // Proje markdown içerikleri
 const STATS_FILE = path.join(__dirname, 'data', 'stats.json');
 const COMMENTS_FILE = path.join(__dirname, 'data', 'comments.json'); // NEW
 const SESSIONS_FILE = path.join(__dirname, 'data', 'sessions.json'); // Security & Sessions
@@ -290,6 +292,7 @@ const THEME_FILE = path.join(__dirname, 'data', 'theme.json'); // Theme settings
 
 // Ensure directories exist
 fs.ensureDirSync(CONTENT_DIR);
+fs.ensureDirSync(PROJECTS_DIR);
 fs.ensureDirSync(path.join(__dirname, 'data'));
 
 // ====== File Upload Security Configuration ======
@@ -963,6 +966,40 @@ const writePostsFile = async (posts) => {
   }
 };
 
+// ====== Projeler (Projects) Helper Fonksiyonları ======
+const readProjectsFile = async () => {
+  try {
+    const data = await fs.readFile(PROJECTS_FILE, 'utf8');
+    return JSON.parse(data);
+  } catch (error) {
+    // Dosya yoksa boş liste döndür
+    return [];
+  }
+};
+
+const writeProjectsFile = async (projects) => {
+  try {
+    await fs.writeFile(PROJECTS_FILE, JSON.stringify(projects, null, 2));
+    // Projeler sitemap'e dahil edildiği için güncelle
+    setImmediate(async () => {
+      await generateSitemap();
+    });
+    return true;
+  } catch (error) {
+    Logger.error('Error writing projects file:', error);
+    return false;
+  }
+};
+
+// Bir projenin halka açık görünür olup olmadığını belirler (isPublicPost paraleli)
+const isPublicProject = (project) => {
+  if (!project || project.status === 'deleted' || project.status === 'draft') return false;
+  if (project.status === 'scheduled') {
+    return !!project.publishDate && new Date(project.publishDate) <= new Date();
+  }
+  return project.status === 'published';
+};
+
 const generateSlug = (title) => {
   // Türkçe karakterleri İngilizce karşılıklarına çevir
   const turkishToEnglish = {
@@ -1383,6 +1420,31 @@ const generateSitemap = async () => {
   <url>
     <loc>${baseUrl}/post.html?slug=${post.slug}</loc>
     <lastmod>${postDate}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>`;
+    });
+
+    // Projeler sayfası
+    sitemapContent += `
+  <url>
+    <loc>${baseUrl}/projects.html</loc>
+    <lastmod>${currentDate}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>`;
+
+    // Halka açık projeleri sitemap'e ekle
+    const projects = await readProjectsFile();
+    const publishedProjects = projects
+      .filter(isPublicProject)
+      .sort((a, b) => new Date(b.date) - new Date(a.date));
+    publishedProjects.forEach(project => {
+      const projectDate = new Date(project.updatedAt || project.date).toISOString().split('T')[0];
+      sitemapContent += `
+  <url>
+    <loc>${baseUrl}/project.html?slug=${project.slug}</loc>
+    <lastmod>${projectDate}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>`;
@@ -2361,7 +2423,7 @@ app.post('/api/upload', authenticateToken, (req, res, next) => {
 
       // Get target folder from request
       const targetFolder = req.body.folder || 'blog-content';
-      const validFolders = ['system', 'profile', 'blog-covers', 'blog-content'];
+      const validFolders = ['system', 'profile', 'blog-covers', 'blog-content', 'project-covers', 'project-gallery', 'project-content'];
 
       if (!validFolders.includes(targetFolder)) {
         return next(new AppError('VAL-2001', null, `Geçersiz klasör. Geçerli klasörler: ${validFolders.join(', ')}`));
@@ -2474,7 +2536,7 @@ app.get('/api/gallery/deleted', authenticateToken, async (req, res, next) => {
 app.get('/api/gallery/:folder', authenticateToken, async (req, res, next) => {
   try {
     const { folder } = req.params;
-    const validFolders = ['system', 'profile', 'blog-covers', 'blog-content'];
+    const validFolders = ['system', 'profile', 'blog-covers', 'blog-content', 'project-covers', 'project-gallery', 'project-content'];
 
     if (!validFolders.includes(folder)) {
       return next(new AppError('VAL-2001', 400, 'Invalid folder', `Geçerli klasörler: ${validFolders.join(', ')}`));
@@ -2617,7 +2679,7 @@ app.delete('/api/gallery/deleted/:filename', authenticateToken, async (req, res,
 app.delete('/api/gallery/:folder/:filename', authenticateToken, async (req, res, next) => {
   try {
     const { folder, filename } = req.params;
-    const validFolders = ['system', 'profile', 'blog-covers', 'blog-content'];
+    const validFolders = ['system', 'profile', 'blog-covers', 'blog-content', 'project-covers', 'project-gallery', 'project-content'];
 
     if (!validFolders.includes(folder)) {
       return next(new AppError('VAL-2001', 400, 'Invalid folder', `Geçerli klasörler: ${validFolders.join(', ')}`));
@@ -2753,11 +2815,24 @@ app.get('/api/stats', authenticateToken, async (req, res, next) => {
     });
     const totalTags = allTags.size;
 
+    // Proje sayaçları (blog/proje ayrımı için)
+    const projects = await readProjectsFile();
+    const activeProjects = projects.filter(p => p.status !== 'deleted');
+    const totalProjects = activeProjects.length;
+    const featuredProjects = activeProjects.filter(p => p.featured).length;
+    const publishedProjects = activeProjects.filter(p => p.status === 'published').length;
+    const draftProjects = activeProjects.filter(p => p.status === 'draft').length;
+
     res.json({
       totalPosts,
       featuredPosts,
       recentPosts,
-      totalTags
+      totalTags,
+      // Projeler
+      totalProjects,
+      featuredProjects,
+      publishedProjects,
+      draftProjects
     });
   } catch (error) {
     next(new AppError('SYS-3001', 500, 'İstatistikler yüklenirken hata oluştu'));
@@ -2877,6 +2952,22 @@ app.get('/api/stats/analytics', authenticateToken, async (req, res, next) => {
     const popularBlogPost = activePostViews
       .sort(([, a], [, b]) => b - a)[0];
 
+    // ====== Proje istatistikleri (blog/proje ayrımı) ======
+    const projects = await readProjectsFile();
+    const activeProjects = projects.filter(p => p.status === 'published');
+    const activeProjectSlugs = new Set(activeProjects.map(p => p.slug));
+    const projectViews = stats.projectViews || {};
+
+    const popularProjects = activeProjects.map(project => ({
+      slug: project.slug,
+      title: project.title,
+      views: projectViews[project.slug] || 0
+    })).sort((a, b) => b.views - a.views).slice(0, 3);
+
+    const totalProjectViews = Object.entries(projectViews)
+      .filter(([slug]) => activeProjectSlugs.has(slug))
+      .reduce((total, [, views]) => total + views, 0);
+
     // Get total comments count
     const totalComments = Object.values(commentsData.comments || {})
       .flat()
@@ -2949,7 +3040,10 @@ app.get('/api/stats/analytics', authenticateToken, async (req, res, next) => {
       totalComments,
       dailyStats,
       sources: stats.sources || {}, // Global Sources Export
-      lastUpdated: stats.lastUpdated
+      lastUpdated: stats.lastUpdated,
+      // ====== Projeler (blog'dan ayrı) ======
+      totalProjectViews,
+      popularProjects
     });
   } catch (error) {
     Logger.error('Error getting analytics:', error);
@@ -3286,6 +3380,473 @@ app.delete('/api/admin/comments/:commentId', authenticateToken, async (req, res,
   } catch (error) {
     Logger.error('Error deleting comment:', error);
     next(new AppError('SYS-3001', 500, 'Yorum silinirken hata oluştu'));
+  }
+});
+
+// ====== Projeler (Projects) API Routes ======
+// Blog route'larının projelere özel paraleli. Proje-özel alanlar:
+// languages [{name, percent, color}], gallery [imagePath], githubUrl, codeSample {language, code}
+
+// Proje istatistik görüntüleme artırıcı (incrementPostView paraleli)
+const incrementProjectView = async (slug, referrerSource = null) => {
+  const stats = await readStatsFile();
+  const sourceCategory = categorizeSource(referrerSource);
+
+  if (!stats.projectViews) stats.projectViews = {};
+  if (!stats.sources) stats.sources = {};
+
+  const today = new Date().toISOString().split('T')[0];
+  if (!stats.dailyStats[today]) {
+    stats.dailyStats[today] = { totalViews: 0, pageViews: {}, postViews: {}, projectViews: {}, sources: {} };
+  }
+  if (!stats.dailyStats[today].projectViews) stats.dailyStats[today].projectViews = {};
+  if (!stats.dailyStats[today].sources) stats.dailyStats[today].sources = {};
+
+  if (sourceCategory !== 'Internal') {
+    stats.sources[sourceCategory] = (stats.sources[sourceCategory] || 0) + 1;
+    stats.dailyStats[today].sources[sourceCategory] = (stats.dailyStats[today].sources[sourceCategory] || 0) + 1;
+  }
+
+  stats.totalViews = (stats.totalViews || 0) + 1;
+  stats.projectViews[slug] = (stats.projectViews[slug] || 0) + 1;
+  stats.dailyStats[today].totalViews++;
+  stats.dailyStats[today].projectViews[slug] = (stats.dailyStats[today].projectViews[slug] || 0) + 1;
+
+  await writeStatsFile(stats);
+  return stats;
+};
+
+// Proje verisini normalize eden yardımcı (body'den güvenli obje kur)
+const buildProjectFields = (body) => {
+  const { languages, gallery, githubUrl, codeSample } = body;
+
+  // languages: [{name, percent, color}] — güvenli parse
+  let safeLanguages = [];
+  if (Array.isArray(languages)) {
+    safeLanguages = languages
+      .filter(l => l && typeof l.name === 'string' && l.name.trim())
+      .map(l => ({
+        name: String(l.name).trim().substring(0, 40),
+        percent: Math.max(0, Math.min(100, Number(l.percent) || 0)),
+        color: (typeof l.color === 'string' && /^#[0-9a-fA-F]{3,8}$/.test(l.color)) ? l.color : '#A67B5B'
+      }));
+  }
+
+  // gallery: [imagePath] — sadece string yollar
+  let safeGallery = [];
+  if (Array.isArray(gallery)) {
+    safeGallery = gallery.filter(g => typeof g === 'string' && g.trim()).map(g => g.trim());
+  }
+
+  // codeSample: {language, code}
+  let safeCodeSample = null;
+  if (codeSample && typeof codeSample === 'object' && typeof codeSample.code === 'string' && codeSample.code.trim()) {
+    safeCodeSample = {
+      language: (typeof codeSample.language === 'string' ? codeSample.language.trim() : 'text').substring(0, 30),
+      code: String(codeSample.code)
+    };
+  }
+
+  const safeGithubUrl = (typeof githubUrl === 'string' && /^https?:\/\/(www\.)?github\.com\//i.test(githubUrl.trim()))
+    ? githubUrl.trim()
+    : '';
+
+  return { languages: safeLanguages, gallery: safeGallery, githubUrl: safeGithubUrl, codeSample: safeCodeSample };
+};
+
+// Tüm projeleri getir (görüntülenme sayılarıyla)
+app.get('/api/projects', authenticateToken, async (req, res, next) => {
+  try {
+    const projects = await readProjectsFile();
+    const stats = await readStatsFile();
+    const projectsWithViews = projects.map(project => ({
+      ...project,
+      views: (stats.projectViews && stats.projectViews[project.slug]) || 0
+    }));
+    res.json(projectsWithViews);
+  } catch (error) {
+    next(new AppError('SYS-3001', 500, 'Projeler yüklenirken hata oluştu'));
+  }
+});
+
+// Tek proje getir (markdown içeriğiyle)
+app.get('/api/projects/:slug', authenticateToken, async (req, res, next) => {
+  try {
+    const projects = await readProjectsFile();
+    const project = projects.find(p => p.slug === req.params.slug);
+    if (!project) {
+      return next(new AppError('RES-6001', 404, 'Proje bulunamadı'));
+    }
+    const markdownPath = path.join(PROJECTS_DIR, `${project.slug}.md`);
+    let content = '';
+    try {
+      content = await fs.readFile(markdownPath, 'utf8');
+    } catch (error) {
+      Logger.info('Proje markdown dosyası bulunamadı, boş içerik kullanılıyor');
+    }
+    res.json({ ...project, content });
+  } catch (error) {
+    next(new AppError('SYS-3001', 500, 'Proje yüklenirken hata oluştu'));
+  }
+});
+
+// Yeni proje oluştur
+app.post('/api/projects', authenticateToken, async (req, res, next) => {
+  try {
+    const { title, slug: bodySlug, excerpt, date, cover, coverCaption, tags, content, featured, status, publishDate } = req.body;
+
+    validateRequired(req.body, ['title', 'excerpt', 'content'], {
+      endpoint: '/api/projects', method: 'POST', user: req.user?.username
+    });
+
+    if (title.length < 3) {
+      const error = new Error('Başlık en az 3 karakter olmalıdır');
+      error.code = 'VALIDATION_ERROR';
+      error.details = { field: 'title', minLength: 3 };
+      throw error;
+    }
+    if (excerpt.length < 10) {
+      const error = new Error('Özet en az 10 karakter olmalıdır');
+      error.code = 'VALIDATION_ERROR';
+      error.details = { field: 'excerpt', minLength: 10 };
+      throw error;
+    }
+    if (content.length < 50) {
+      const error = new Error('İçerik en az 50 karakter olmalıdır');
+      error.code = 'VALIDATION_ERROR';
+      error.details = { field: 'content', minLength: 50 };
+      throw error;
+    }
+
+    let slug = bodySlug || generateSlug(title);
+    const projects = await readProjectsFile();
+    if (projects.find(p => p.slug === slug)) {
+      slug = `${slug}-${Math.random().toString(36).substring(2, 8)}`;
+    }
+
+    const newProject = {
+      slug,
+      title,
+      excerpt,
+      date: date || new Date().toISOString(),
+      cover: cover || '',
+      coverCaption: coverCaption || '',
+      tags: tags ? tags.split(',').map(tag => tag.trim()) : [],
+      featured: featured || false,
+      status: status || 'draft',
+      publishDate: publishDate || null,
+      ...buildProjectFields(req.body),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    projects.unshift(newProject);
+    const saved = await writeProjectsFile(projects);
+    if (!saved) {
+      return next(new AppError('SYS-3001', 500, 'Proje metadata kaydedilirken hata oluştu'));
+    }
+
+    const markdownPath = path.join(PROJECTS_DIR, `${slug}.md`);
+    await fs.writeFile(markdownPath, content);
+
+    res.json({ success: true, project: newProject });
+  } catch (error) {
+    Logger.error('Error creating project:', error);
+    if (error.code === 'VALIDATION_ERROR') {
+      return res.status(400).json({ error: error.message, details: error.details });
+    }
+    next(new AppError('SYS-3001', 500, 'Proje oluşturulurken hata oluştu'));
+  }
+});
+
+// Projeyi güncelle
+app.put('/api/projects/:slug', authenticateToken, async (req, res, next) => {
+  try {
+    const { title, slug: bodySlug, excerpt, date, cover, coverCaption, tags, content, featured, status, publishDate } = req.body;
+    const originalSlug = req.params.slug;
+
+    if (!title || !excerpt || !content) {
+      return next(new AppError('VAL-2001', 400, 'Eksik gerekli alanlar'));
+    }
+
+    let newSlug = bodySlug || generateSlug(title);
+    const projects = await readProjectsFile();
+    const projectIndex = projects.findIndex(p => p.slug === originalSlug);
+    if (projectIndex === -1) {
+      return next(new AppError('RES-6001', 404, 'Proje bulunamadı'));
+    }
+
+    if (originalSlug !== newSlug && projects.find(p => p.slug === newSlug)) {
+      newSlug = `${newSlug}-${Math.random().toString(36).substring(2, 8)}`;
+    }
+
+    const updatedProject = {
+      ...projects[projectIndex],
+      slug: newSlug,
+      title,
+      excerpt,
+      date: date || projects[projectIndex].date,
+      cover: cover || '',
+      coverCaption: coverCaption || '',
+      tags: tags ? tags.split(',').map(tag => tag.trim()) : [],
+      featured: featured || false,
+      status: status || projects[projectIndex].status,
+      publishDate: publishDate !== undefined ? publishDate : projects[projectIndex].publishDate,
+      ...buildProjectFields(req.body),
+      updatedAt: new Date().toISOString()
+    };
+
+    projects[projectIndex] = updatedProject;
+    const saved = await writeProjectsFile(projects);
+    if (!saved) {
+      return next(new AppError('SYS-3001', 500, 'Proje metadata kaydedilirken hata oluştu'));
+    }
+
+    const markdownPath = path.join(PROJECTS_DIR, `${newSlug}.md`);
+    await fs.writeFile(markdownPath, content);
+
+    if (originalSlug !== newSlug) {
+      const oldMarkdownPath = path.join(PROJECTS_DIR, `${originalSlug}.md`);
+      try { await fs.remove(oldMarkdownPath); } catch (e) { Logger.info('Eski proje markdown dosyası bulunamadı'); }
+    }
+
+    res.json({ success: true, project: updatedProject });
+  } catch (error) {
+    Logger.error('Error updating project:', error);
+    next(new AppError('SYS-3001', 500, 'Proje güncellenirken hata oluştu'));
+  }
+});
+
+// Öne çıkarma durumunu değiştir
+app.patch('/api/projects/:slug/featured', authenticateToken, async (req, res, next) => {
+  try {
+    const { featured } = req.body;
+    if (typeof featured !== 'boolean') {
+      return next(new AppError('VAL-2001', 400, 'Öne çıkarılan durumu boolean olmalıdır'));
+    }
+    const projects = await readProjectsFile();
+    const projectIndex = projects.findIndex(p => p.slug === req.params.slug);
+    if (projectIndex === -1) {
+      return next(new AppError('RES-6001', 404, 'Proje bulunamadı'));
+    }
+    projects[projectIndex] = { ...projects[projectIndex], featured, updatedAt: new Date().toISOString() };
+    const saved = await writeProjectsFile(projects);
+    if (!saved) {
+      return next(new AppError('SYS-3001', 500, 'Proje metadata kaydedilirken hata oluştu'));
+    }
+    res.json({ success: true, message: `Project ${featured ? 'featured' : 'unfeatured'} successfully`, project: projects[projectIndex] });
+  } catch (error) {
+    Logger.error('Error toggling project featured status:', error);
+    next(new AppError('SYS-3001', 500, 'Öne çıkarılan durum güncellenirken hata oluştu'));
+  }
+});
+
+// Yayınla / zamanla / taslağa çek
+app.post('/api/projects/:slug/publish', authenticateToken, async (req, res, next) => {
+  try {
+    const { status, publishDate } = req.body;
+    if (!status || !['published', 'scheduled', 'draft'].includes(status)) {
+      return next(new AppError('VAL-2001', 400, 'Geçersiz durum'));
+    }
+    if (status === 'scheduled' && !publishDate) {
+      return next(new AppError('VAL-2001', 400, 'Zamanlanmış projeler için yayın tarihi gereklidir'));
+    }
+    const projects = await readProjectsFile();
+    const projectIndex = projects.findIndex(p => p.slug === req.params.slug);
+    if (projectIndex === -1) {
+      return next(new AppError('RES-6001', 404, 'Proje bulunamadı'));
+    }
+    let nextPublishDate;
+    if (status === 'scheduled') nextPublishDate = publishDate;
+    else if (status === 'draft') nextPublishDate = projects[projectIndex].publishDate;
+    else nextPublishDate = new Date().toISOString();
+
+    projects[projectIndex] = { ...projects[projectIndex], status, publishDate: nextPublishDate, updatedAt: new Date().toISOString() };
+    const saved = await writeProjectsFile(projects);
+    if (!saved) {
+      return next(new AppError('SYS-3001', 500, 'Proje metadata kaydedilirken hata oluştu'));
+    }
+    res.json({ success: true, message: status === 'published' ? 'Project published' : 'Project updated', project: projects[projectIndex] });
+  } catch (error) {
+    Logger.error('Error publishing project:', error);
+    next(new AppError('SYS-3001', 500, 'Proje yayınlanırken hata oluştu'));
+  }
+});
+
+// Çöpe taşı (soft delete)
+app.delete('/api/projects/:slug', authenticateToken, async (req, res, next) => {
+  try {
+    const projects = await readProjectsFile();
+    const projectIndex = projects.findIndex(p => p.slug === req.params.slug);
+    if (projectIndex === -1) {
+      return next(new AppError('RES-6001', 404, 'Proje bulunamadı'));
+    }
+    projects[projectIndex] = { ...projects[projectIndex], status: 'deleted', deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+    const saved = await writeProjectsFile(projects);
+    if (!saved) {
+      return next(new AppError('SYS-3001', 500, 'Proje metadata kaydedilirken hata oluştu'));
+    }
+    res.json({ success: true, message: 'Project moved to trash successfully' });
+  } catch (error) {
+    Logger.error('Error deleting project:', error);
+    next(new AppError('SYS-3001', 500, 'Proje silinirken hata oluştu'));
+  }
+});
+
+// Çöpten geri yükle (taslak durumuna)
+app.post('/api/projects/:slug/restore', authenticateToken, async (req, res, next) => {
+  try {
+    const projects = await readProjectsFile();
+    const projectIndex = projects.findIndex(p => p.slug === req.params.slug);
+    if (projectIndex === -1) {
+      return next(new AppError('RES-6001', 404, 'Proje bulunamadı'));
+    }
+    projects[projectIndex] = { ...projects[projectIndex], status: 'draft', deletedAt: null, updatedAt: new Date().toISOString() };
+    const saved = await writeProjectsFile(projects);
+    if (!saved) {
+      return next(new AppError('SYS-3001', 500, 'Proje metadata kaydedilirken hata oluştu'));
+    }
+    res.json({ success: true, message: 'Project restored successfully', project: projects[projectIndex] });
+  } catch (error) {
+    Logger.error('Error restoring project:', error);
+    next(new AppError('SYS-3001', 500, 'Proje geri yüklenirken hata oluştu'));
+  }
+});
+
+// Kalıcı sil
+app.delete('/api/projects/:slug/permanent', authenticateToken, async (req, res, next) => {
+  try {
+    const projects = await readProjectsFile();
+    const projectIndex = projects.findIndex(p => p.slug === req.params.slug);
+    if (projectIndex === -1) {
+      return next(new AppError('RES-6001', 404, 'Proje bulunamadı'));
+    }
+    const project = projects[projectIndex];
+    if (project.status !== 'deleted') {
+      return next(new AppError('VAL-2001', 400, 'Proje geri dönüşüm kutusunda değil'));
+    }
+    projects.splice(projectIndex, 1);
+    const saved = await writeProjectsFile(projects);
+    if (!saved) {
+      return next(new AppError('SYS-3001', 500, 'Proje metadata kaydedilirken hata oluştu'));
+    }
+    const markdownPath = path.join(PROJECTS_DIR, `${project.slug}.md`);
+    try {
+      if (await fs.pathExists(markdownPath)) await fs.remove(markdownPath);
+    } catch (e) {
+      Logger.error(`Proje markdown silme hatası (${project.slug}):`, e);
+    }
+    res.json({ success: true, message: 'Project permanently deleted' });
+  } catch (error) {
+    Logger.error('Error permanently deleting project:', error);
+    next(new AppError('SYS-3001', 500, 'Proje kalıcı olarak silinirken hata oluştu'));
+  }
+});
+
+// Proje görüntüleme takibi (public)
+app.post('/api/analytics/track-project', async (req, res, next) => {
+  try {
+    const { slug, source } = req.body;
+    if (!slug) {
+      return next(new AppError('VAL-2001', 400, 'Slug parametresi gereklidir'));
+    }
+    const stats = await incrementProjectView(slug, source);
+    res.json({ success: true, stats });
+  } catch (error) {
+    Logger.error('Error tracking project view:', error);
+    next(new AppError('SYS-3001', 500, 'Proje görüntüleme takip edilemedi'));
+  }
+});
+
+// ====== GitHub Repo Önizleme Proxy ======
+// CSP connect-src 'self' olduğundan client doğrudan api.github.com'a erişemez.
+// Sunucu proxy'si GitHub API'yi çağırır (rate limit sunucu IP'sinde), 10dk cache'ler.
+const githubPreviewCache = new Map(); // key: owner/repo -> { data, timestamp }
+const GITHUB_CACHE_TTL = 10 * 60 * 1000;
+
+const httpsGetJson = (url) => new Promise((resolve, reject) => {
+  const https = require('https');
+  const options = { headers: { 'User-Agent': 'personal-site-server', 'Accept': 'application/vnd.github+json' } };
+  if (process.env.GITHUB_TOKEN) options.headers['Authorization'] = `Bearer ${process.env.GITHUB_TOKEN}`;
+  https.get(url, options, (resp) => {
+    let data = '';
+    resp.on('data', chunk => data += chunk);
+    resp.on('end', () => {
+      try {
+        resolve({ status: resp.statusCode, body: JSON.parse(data) });
+      } catch (e) {
+        resolve({ status: resp.statusCode, body: null });
+      }
+    });
+  }).on('error', reject);
+});
+
+app.get('/api/github/repo-preview', async (req, res, next) => {
+  try {
+    const repoUrl = req.query.url;
+    if (!repoUrl || typeof repoUrl !== 'string') {
+      return next(new AppError('VAL-2001', 400, 'GitHub repo URL gereklidir'));
+    }
+    // github.com/owner/repo formatını ayrıştır
+    const match = repoUrl.match(/github\.com\/([^\/]+)\/([^\/#?]+)/i);
+    if (!match) {
+      return next(new AppError('VAL-2001', 400, 'Geçersiz GitHub repo URL'));
+    }
+    const owner = match[1];
+    const repo = match[2].replace(/\.git$/, '');
+    const cacheKey = `${owner}/${repo}`;
+
+    const cached = githubPreviewCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < GITHUB_CACHE_TTL) {
+      return res.json({ success: true, cached: true, ...cached.data });
+    }
+
+    // Repo meta + diller + README paralel çek
+    const [repoResp, langResp, readmeResp] = await Promise.all([
+      httpsGetJson(`https://api.github.com/repos/${owner}/${repo}`),
+      httpsGetJson(`https://api.github.com/repos/${owner}/${repo}/languages`),
+      httpsGetJson(`https://api.github.com/repos/${owner}/${repo}/readme`)
+    ]);
+
+    if (repoResp.status === 404) {
+      return next(new AppError('RES-6001', 404, 'GitHub reposu bulunamadı veya özel'));
+    }
+    if (repoResp.status !== 200 || !repoResp.body) {
+      return next(new AppError('SYS-3001', 502, 'GitHub verisi alınamadı (limit veya hata)'));
+    }
+
+    const r = repoResp.body;
+    let readmeContent = '';
+    if (readmeResp.status === 200 && readmeResp.body && readmeResp.body.content) {
+      try {
+        readmeContent = Buffer.from(readmeResp.body.content, 'base64').toString('utf8');
+      } catch (e) { readmeContent = ''; }
+    }
+
+    const data = {
+      owner,
+      repo,
+      fullName: r.full_name,
+      description: r.description || '',
+      htmlUrl: r.html_url,
+      homepage: r.homepage || '',
+      stars: r.stargazers_count || 0,
+      forks: r.forks_count || 0,
+      watchers: r.subscribers_count || 0,
+      openIssues: r.open_issues_count || 0,
+      defaultBranch: r.default_branch || 'main',
+      license: r.license ? r.license.spdx_id : null,
+      topics: r.topics || [],
+      updatedAt: r.updated_at,
+      languages: (langResp.status === 200 && langResp.body) ? langResp.body : {},
+      readme: readmeContent
+    };
+
+    githubPreviewCache.set(cacheKey, { data, timestamp: Date.now() });
+    res.json({ success: true, cached: false, ...data });
+  } catch (error) {
+    Logger.error('Error fetching GitHub preview:', error);
+    next(new AppError('SYS-3001', 502, 'GitHub önizlemesi alınamadı'));
   }
 });
 
@@ -4014,7 +4575,7 @@ app.use('/markdown-editor', express.static(path.join(__dirname, 'markdown-editor
 // Kök dizindeki public dosyalar (kesin whitelist). rss.xml/sitemap.xml kendi
 // route'larıyla yukarıda zaten sunuluyor.
 const PUBLIC_ROOT_FILES = new Set([
-  'index.html', 'blog.html', 'post.html',
+  'index.html', 'blog.html', 'post.html', 'projects.html', 'project.html',
   'favicon.png', 'favicon.ico', 'robots.txt'
 ]);
 app.get(['/', '/:file'], (req, res, next) => {

@@ -1546,6 +1546,29 @@ body.has-particles {
   background: transparent;
 }
 
+/* ====== Dil / Teknoloji Çubuğu (global — kartlar ve önizlemeler) ====== */
+.lang-wrap { margin-top: auto; padding-top: 12px; }
+.lang-bar {
+  display: flex;
+  width: 100%;
+  height: 8px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--line);
+}
+.lang-seg { height: 100%; min-width: 2px; }
+.lang-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin-top: 9px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.lang-item { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.lang-dot { width: 9px; height: 9px; border-radius: 50%; flex: 0 0 auto; }
+.lang-pct { opacity: .7; }
+
 /* ====== Footnote (Kaynakça) ====== */
 sup.footnote-ref {
   font-size: 0.75em;

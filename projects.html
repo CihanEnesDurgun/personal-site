@@ -4,15 +4,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Tüm Yazılar - Cihan Enes Durgun</title>
+  <title>Projelerim - Cihan Enes Durgun</title>
+  <meta name="description"
+    content="Cihan Enes Durgun'un mühendislik ve yazılım projeleri: İHA, gömülü sistemler, kablosuz haberleşme ve daha fazlası. Kullanılan teknolojiler ve kaynak kodlarıyla." />
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="images/system/cedlogov0.1.5.png" />
 
   <!-- Global temel stiller -->
   <link href="src/css/styles.css" rel="stylesheet" />
-  <!-- Bloga özel minik ekler -->
-  <link href="src/css/blogstyle.css" rel="stylesheet" />
+  <!-- Projelere özel ekler -->
+  <link href="src/css/projectstyle.css" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
   <script src="src/js/theme-manager.js" type="module"></script>
 
@@ -21,21 +23,13 @@
 </head>
 
 <body>
-  <!-- Skip to content link for screen readers -->
-
-
-  <!-- Üst kapsül (mevcut topbar tasarımın aynısı) -->
+  <!-- Üst kapsül -->
   <header class="topbar">
     <div class="wrap topbar-row">
       <nav class="pill-nav" aria-label="Ana menü">
-        <!-- PRODUCTION MODE -->
-        <!-- <a href="https://cihanenesdurgun.com">Ana Sayfa</a> -->
-        <!-- <a href="https://cihanenesdurgun.com/blog.html" class="active">Blog</a> -->
-        <!-- <a href="https://cihanenesdurgun.com#contact">İletişim</a> -->
-        <!-- DEVELOPMENT MODE -->
         <a href="index.html">Ana Sayfa</a>
-        <a href="blog.html" class="active">Blogum</a>
-        <a href="projects.html">Projelerim</a>
+        <a href="blog.html">Blogum</a>
+        <a href="projects.html" class="active">Projelerim</a>
         <a href="index.html#contact">İletişim</a>
       </nav>
       <button id="themeToggle" class="theme-chip" aria-label="Tema değiştir" title="Tema değiştir"></button>
@@ -45,19 +39,20 @@
   <main id="main-content" class="wrap section">
     <header class="section-head">
       <div>
-        <h2>Tüm Yazılar</h2>
-        <p class="muted">Ara, filtrele ve oku • En yeni yazılar üstte</p>
+        <h2>Projelerim</h2>
+        <p class="muted">İncele, filtrele ve keşfet • Kullanılan teknolojilerle</p>
       </div>
     </header>
 
     <!-- Filtre barı -->
     <div class="filterbar">
-      <input id="blogSearch" type="search" placeholder="Yazı, özet, etiket veya içerik ara..." autocomplete="off" />
-      <div id="tagChips" class="tags" aria-label="Etiketler"></div>
+      <input id="projectSearch" type="search" placeholder="Proje, açıklama, etiket veya teknoloji ara..."
+        autocomplete="off" />
+      <div id="projectTagChips" class="tags" aria-label="Etiketler"></div>
     </div>
 
     <!-- Sonuçlar -->
-    <div id="blogResults" class="grid"></div>
+    <div id="projectResults" class="grid"></div>
   </main>
 
   <footer>
@@ -67,7 +62,7 @@
           © <span id="year"></span> Cihan Enes Durgun. Tüm hakları saklıdır.
         </div>
         <div class="footer-right">
-          <span class="version-info">v0.1.9.anti</span>
+          <span class="version-info">v0.1.11.cla</span>
           <a href="rss.xml" class="footer-link" aria-label="RSS Feed">RSS</a>
         </div>
       </div>
@@ -76,8 +71,7 @@
 
   <!-- Theme Manager Module (must load first) -->
   <script src="src/js/theme-manager.js"></script>
-  <!-- Sadece bloga özel JS; ana sayfadaki scripts.js'i BU sayfada yüklemeyin -->
-  <script src="src/js/blog.js" defer></script>
+  <script src="src/js/projects.js" defer></script>
   <script src="src/js/version.js"></script>
 </body>
 

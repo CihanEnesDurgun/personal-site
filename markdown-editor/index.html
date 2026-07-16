@@ -212,7 +212,7 @@
   <div id="postFormModal" class="post-form-modal">
     <div class="post-form-content">
       <div class="post-form-header">
-        <h3>📝 Blog Yazısı Bilgileri</h3>
+        <h3 id="postFormHeaderTitle">📝 Blog Yazısı Bilgileri</h3>
         <button class="post-form-close" onclick="closePostForm()">&times;</button>
       </div>
 
@@ -245,6 +245,33 @@
           <div class="form-group">
             <label for="postTags">Etiketler (virgülle ayırın)</label>
             <input type="text" id="postTags" placeholder="ESP32, RC, Wireless">
+          </div>
+        </div>
+
+        <!-- PROJEYE ÖZEL ALANLAR (sadece ?type=project modunda görünür) -->
+        <div id="projectFields" style="display:none;">
+          <div class="form-group">
+            <label for="projectGithub">GitHub Repo Linki</label>
+            <input type="url" id="projectGithub" placeholder="https://github.com/kullanici/repo">
+          </div>
+
+          <div class="form-group">
+            <label>Kullanılan Diller / Teknolojiler <span style="color: var(--muted); font-size: 0.9em;">(yüzde ve renk)</span></label>
+            <div id="languageRows"></div>
+            <button type="button" class="form-btn secondary" onclick="addLanguageRow()" style="margin-top:8px;">+ Dil Ekle</button>
+          </div>
+
+          <div class="form-group">
+            <label for="codeSampleLangInput">Kod Örneği</label>
+            <input type="text" id="codeSampleLangInput" placeholder="Dil (örn: cpp, python, javascript)" style="margin-bottom:8px;">
+            <textarea id="codeSampleCodeInput" rows="6" placeholder="Kod örneğini buraya yapıştırın..." style="font-family: 'Consolas', monospace; font-size: 13px;"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Proje Galerisi <span style="color: var(--muted); font-size: 0.9em;">(kayar fotoğraflar)</span></label>
+            <div id="galleryThumbs" class="gallery-thumbs"></div>
+            <input type="file" id="galleryFileInput" accept="image/*" multiple style="display:none;" onchange="uploadGalleryImages(this.files)">
+            <button type="button" class="form-btn secondary" onclick="document.getElementById('galleryFileInput').click()" style="margin-top:8px;">+ Görsel Yükle</button>
           </div>
         </div>
 

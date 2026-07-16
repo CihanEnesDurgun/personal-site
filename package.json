@@ -1,6 +1,6 @@
 {
   "name": "personal-site-admin",
-  "version": "0.1.12-cla",
+  "version": "0.1.13-cla",
   "description": "Personal site admin panel with backend API, account management, and security features",
   "main": "server.js",
   "engines": {

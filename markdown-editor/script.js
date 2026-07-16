@@ -58,15 +58,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Initialize theme manager
     themeManager = new ThemeManager();
 
+    // Proje modu kurulumu (?type=project)
+    if (IS_PROJECT) {
+        setupProjectMode();
+    }
+
     // Check if we're in edit mode
     const urlParams = new URLSearchParams(window.location.search);
     const editSlug = urlParams.get('edit');
 
     if (editSlug) {
-        // Load existing post for editing
+        // Load existing post/project for editing
         await loadPostForEdit(editSlug);
     } else {
-        // Load welcome content for new post
+        // Load welcome content for new post/project
         loadWelcomeContent();
     }
 
@@ -131,8 +136,9 @@ async function loadPostForEdit(slug) {
     try {
         console.log('Loading post for edit:', slug);
 
-        // Fetch post data (includes markdown content)
-        const response = await fetch(`../api/posts/${slug}`, {
+        // Fetch post/project data (includes markdown content)
+        const fetchBase = IS_PROJECT ? '../api/projects/' : '../api/posts/';
+        const response = await fetch(`${fetchBase}${slug}`, {
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
             }
@@ -233,6 +239,11 @@ async function loadPostForEdit(slug) {
         if (dateInput && post.date) {
             const d = new Date(post.date);
             if (!isNaN(d)) dateInput.value = d.toISOString().split('T')[0];
+        }
+
+        // Proje modunda proje-özel alanları doldur
+        if (IS_PROJECT) {
+            populateProjectFields(post);
         }
 
         // Set document title
@@ -1366,21 +1377,24 @@ async function submitPost() {
         const editSlug = urlParams.get('edit');
 
         const isEditMode = !!editSlug;
-        const url = isEditMode ? `${API_BASE_URL}/posts/${editSlug}` : `${API_BASE_URL}/posts`;
+        const resourcePath = IS_PROJECT ? 'projects' : 'posts';
+        const url = isEditMode ? `${API_BASE_URL}/${resourcePath}/${editSlug}` : `${API_BASE_URL}/${resourcePath}`;
         const method = isEditMode ? 'PUT' : 'POST';
 
         console.log('Token exists:', !!token);
         console.log('Submitting to:', url);
         console.log('Method:', method);
-        console.log('Edit mode:', isEditMode);
+        console.log('Edit mode:', isEditMode, '| Project mode:', IS_PROJECT);
 
-        // In edit mode, preserve the existing post status; for new posts, default to draft
+        // In edit mode, preserve the existing status; for new items, default to draft
         const postStatus = isEditMode && editingPostStatus ? editingPostStatus : 'draft';
 
         const requestBody = {
             ...postData,
             content: content,
-            status: postStatus
+            status: postStatus,
+            // Proje modunda proje-özel alanları ekle
+            ...(IS_PROJECT ? getProjectFields() : {})
         };
 
         console.log('Request body:', requestBody);
@@ -1403,23 +1417,26 @@ async function submitPost() {
             const result = await response.json();
             console.log('Post saved successfully:', result);
 
-            // Trigger auto-tagging for images in this post
-            const savedSlug = editSlug || (result.post && result.post.slug);
-            if (savedSlug) {
-                try {
-                    await fetch(`${API_BASE_URL}/posts/${savedSlug}/tag-images`, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
-                        }
-                    });
-                    console.log('Images tagged successfully for post:', savedSlug);
-                } catch (tagErr) {
-                    console.error('Failed to tag images, but post was saved:', tagErr);
+            // Blog için görsel otomatik etiketleme (projelerde yok)
+            if (!IS_PROJECT) {
+                const savedSlug = editSlug || (result.post && result.post.slug);
+                if (savedSlug) {
+                    try {
+                        await fetch(`${API_BASE_URL}/posts/${savedSlug}/tag-images`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+                            }
+                        });
+                        console.log('Images tagged successfully for post:', savedSlug);
+                    } catch (tagErr) {
+                        console.error('Failed to tag images, but post was saved:', tagErr);
+                    }
                 }
             }
 
-            alert(isEditMode ? 'Blog yazısı başarıyla güncellendi!' : 'Blog yazısı başarıyla taslak olarak kaydedildi!');
+            const itemLabel = IS_PROJECT ? 'Proje' : 'Blog yazısı';
+            alert(isEditMode ? `${itemLabel} başarıyla güncellendi!` : `${itemLabel} başarıyla taslak olarak kaydedildi!`);
             window.location.href = '../admin/index.html';
         } else {
             let errorMessage = 'Kaydetme sırasında hata oluştu!';
@@ -1537,6 +1554,138 @@ function getPostData() {
             document.getElementById('postTags').value.split(',').map(tag => tag.trim()).join(',') : '',
         featured: false
     };
+}
+
+// ====== PROJE MODU (?type=project) ======
+const IS_PROJECT = new URLSearchParams(window.location.search).get('type') === 'project';
+window.projectGallery = [];
+
+// Proje modunda UI'yi ayarla
+function setupProjectMode() {
+    const pf = document.getElementById('projectFields');
+    if (pf) pf.style.display = '';
+
+    const header = document.getElementById('postFormHeaderTitle');
+    if (header) header.textContent = '🚀 Proje Bilgileri';
+
+    const saveBtn = document.querySelector('.top-save-btn');
+    if (saveBtn) saveBtn.innerHTML = saveBtn.innerHTML.replace('Blog Kaydet', 'Proje Kaydet');
+
+    const titleEl = document.getElementById('postTitle');
+    if (titleEl && titleEl.textContent.trim() === 'Yeni Blog Yazısı') {
+        titleEl.textContent = 'Yeni Proje';
+    }
+    // Kaydet butonu metni ("Taslak Olarak Kaydet") aynı kalır
+    if (!document.title.startsWith('Düzenle')) document.title = 'Proje Editörü';
+}
+
+// Dinamik dil satırı ekle
+function addLanguageRow(name = '', percent = '', color = '#A67B5B') {
+    const rows = document.getElementById('languageRows');
+    if (!rows) return;
+    const row = document.createElement('div');
+    row.className = 'language-row';
+    row.innerHTML = `
+        <input type="text" class="lang-name" placeholder="Dil (örn: C++)" value="${escapeAttr(name)}">
+        <input type="number" class="lang-percent" placeholder="%" min="0" max="100" value="${percent}">
+        <input type="color" class="lang-color" value="${/^#[0-9a-fA-F]{6}$/.test(color) ? color : '#A67B5B'}">
+        <button type="button" class="lang-remove" title="Kaldır" onclick="this.parentElement.remove()">×</button>
+    `;
+    rows.appendChild(row);
+}
+
+function escapeAttr(s) {
+    return String(s == null ? '' : s).replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// Formdan proje alanlarını topla
+function getProjectFields() {
+    const languages = [...document.querySelectorAll('#languageRows .language-row')].map(r => ({
+        name: r.querySelector('.lang-name').value.trim(),
+        percent: Number(r.querySelector('.lang-percent').value) || 0,
+        color: r.querySelector('.lang-color').value
+    })).filter(l => l.name);
+
+    const github = (document.getElementById('projectGithub').value || '').trim();
+    const codeLang = (document.getElementById('codeSampleLangInput').value || '').trim();
+    const codeCode = document.getElementById('codeSampleCodeInput').value || '';
+    const codeSample = codeCode.trim() ? { language: codeLang || 'text', code: codeCode } : null;
+
+    return {
+        languages,
+        gallery: window.projectGallery.slice(),
+        githubUrl: github,
+        codeSample
+    };
+}
+
+// Düzenleme modunda proje alanlarını doldur
+function populateProjectFields(project) {
+    const gh = document.getElementById('projectGithub');
+    if (gh) gh.value = project.githubUrl || '';
+
+    const rows = document.getElementById('languageRows');
+    if (rows) {
+        rows.innerHTML = '';
+        (project.languages || []).forEach(l => addLanguageRow(l.name, l.percent, l.color));
+    }
+
+    if (project.codeSample) {
+        const cl = document.getElementById('codeSampleLangInput');
+        const cc = document.getElementById('codeSampleCodeInput');
+        if (cl) cl.value = project.codeSample.language || '';
+        if (cc) cc.value = project.codeSample.code || '';
+    }
+
+    window.projectGallery = Array.isArray(project.gallery) ? project.gallery.slice() : [];
+    renderGalleryThumbs();
+}
+
+function renderGalleryThumbs() {
+    const wrap = document.getElementById('galleryThumbs');
+    if (!wrap) return;
+    wrap.innerHTML = window.projectGallery.map((src, i) => `
+        <div class="gallery-thumb">
+            <img src="../${escapeAttr(src)}" alt="">
+            <button type="button" title="Kaldır" onclick="removeGalleryImage(${i})">×</button>
+        </div>
+    `).join('');
+}
+
+function removeGalleryImage(i) {
+    window.projectGallery.splice(i, 1);
+    renderGalleryThumbs();
+}
+
+// Galeri görsellerini yükle (project-gallery klasörüne)
+async function uploadGalleryImages(files) {
+    if (!files || !files.length) return;
+    const token = localStorage.getItem('admin_token');
+    if (!token) { alert('Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.'); return; }
+
+    for (const file of files) {
+        const fd = new FormData();
+        fd.append('folder', 'project-gallery'); // dosyadan önce (multer sırası)
+        fd.append('image', file);
+        try {
+            const resp = await fetch(`${API_BASE_URL}/upload`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: fd
+            });
+            const data = await resp.json();
+            if (data.success && data.url) {
+                window.projectGallery.push(data.url);
+            } else {
+                console.error('Galeri yükleme başarısız:', data);
+            }
+        } catch (e) {
+            console.error('Galeri yükleme hatası:', e);
+        }
+    }
+    renderGalleryThumbs();
+    const input = document.getElementById('galleryFileInput');
+    if (input) input.value = '';
 }
 
 // Close modal when clicking outside

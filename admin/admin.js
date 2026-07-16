@@ -127,6 +127,47 @@ class ApiService {
     });
   }
 
+  // ====== Projects endpoints (blog paraleli) ======
+  async getProjects() {
+    return await this.request('/projects');
+  }
+
+  async getProject(slug) {
+    return await this.request(`/projects/${slug}`);
+  }
+
+  async deleteProject(slug) {
+    return await this.request(`/projects/${slug}`, {
+      method: 'DELETE'
+    });
+  }
+
+  async publishProject(slug, data) {
+    return await this.request(`/projects/${slug}/publish`, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  }
+
+  async restoreProject(slug) {
+    return await this.request(`/projects/${slug}/restore`, {
+      method: 'POST'
+    });
+  }
+
+  async permanentDeleteProject(slug) {
+    return await this.request(`/projects/${slug}/permanent`, {
+      method: 'DELETE'
+    });
+  }
+
+  async toggleProjectFeatured(slug, featured) {
+    return await this.request(`/projects/${slug}/featured`, {
+      method: 'PATCH',
+      body: JSON.stringify({ featured })
+    });
+  }
+
   // Site configuration endpoints
   async getSiteConfig() {
     return await this.request('/site-config');
@@ -494,6 +535,8 @@ class BlogManager {
     this.filteredPosts = [];
     this.deletedPosts = []; // Initialize deletedPosts
     this.filteredDeletedPosts = []; // Initialize filteredDeletedPosts
+    this.projects = []; // Projeler
+    this.filteredProjects = []; // Filtrelenmiş projeler
     this.homepageEditor = null; // Will be set after HomepageEditor is created
     this.galleryManager = null; // Will be set after GalleryManager is created
   }
@@ -516,10 +559,12 @@ class BlogManager {
 
     try {
       await this.loadPosts();
+      await this.loadProjects(); // Projeleri yükle
       await this.loadTrash(); // Load trash data immediately
       await this.loadComments(); // Load comments data immediately
       this.renderDashboard();
       this.renderPostsTable();
+      this.renderProjectsTable(); // Projeleri render et
       this.initEventListeners();
 
       // Load user info for account settings
@@ -773,6 +818,243 @@ class BlogManager {
     });
   }
 
+  // ====== PROJE YÖNETİMİ ======
+  async loadProjects() {
+    try {
+      this.projects = await this.apiService.getProjects();
+      this.filteredProjects = [...this.projects];
+      console.log(`Loaded ${this.projects.length} projects from API`);
+    } catch (error) {
+      console.error('Project API Error, trying fallback:', error);
+      try {
+        const response = await fetch('../content/projects.json');
+        if (response.ok) {
+          this.projects = await response.json();
+          this.filteredProjects = [...this.projects];
+        } else {
+          this.projects = [];
+          this.filteredProjects = [];
+        }
+      } catch (fallbackError) {
+        this.projects = [];
+        this.filteredProjects = [];
+      }
+    }
+  }
+
+  filterProjects() {
+    const searchEl = $('#searchProjects');
+    const filterEl = $('#filterProjectStatus');
+    const searchTerm = searchEl ? searchEl.value.toLowerCase() : '';
+    const statusFilter = filterEl ? filterEl.value : 'all';
+
+    this.filteredProjects = this.projects.filter(project => {
+      if (project.status === 'deleted') return false;
+      const matchesSearch = !searchTerm ||
+        project.title.toLowerCase().includes(searchTerm) ||
+        (project.excerpt || '').toLowerCase().includes(searchTerm) ||
+        (project.tags || []).some(t => t.toLowerCase().includes(searchTerm)) ||
+        (project.languages || []).some(l => l.name.toLowerCase().includes(searchTerm));
+
+      let matchesStatus = true;
+      if (statusFilter === 'draft') matchesStatus = project.status === 'draft';
+      else if (statusFilter === 'published') matchesStatus = project.status !== 'draft';
+      else if (statusFilter === 'featured') matchesStatus = project.featured === true;
+
+      return matchesSearch && matchesStatus;
+    });
+
+    this.renderProjectsTable();
+  }
+
+  renderProjectsTable() {
+    const tbody = $('#projectsTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    const activeProjects = this.filteredProjects.filter(p => p.status !== 'deleted');
+
+    if (activeProjects.length === 0) {
+      tbody.innerHTML = '<p class="muted" style="padding:20px; text-align:center;">Henüz proje yok. "Yeni Proje Yazısı" ile ekleyin.</p>';
+      return;
+    }
+
+    const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const safeHex = (c) => (typeof c === 'string' && /^#[0-9a-fA-F]{3,8}$/.test(c)) ? c : '#A67B5B';
+
+    activeProjects.forEach(project => {
+      const status = project.status || 'published';
+      const publishDate = project.publishDate ? new Date(project.publishDate) : null;
+      const isScheduled = status === 'scheduled' && publishDate && publishDate > new Date();
+
+      let statusDisplay = '✅ Yayında';
+      let statusClass = 'status-published';
+      if (status === 'draft') { statusDisplay = '📝 Taslak'; statusClass = 'status-draft'; }
+      else if (isScheduled) { statusDisplay = `⏰ Zamanlanmış (${formatDate(project.publishDate)})`; statusClass = 'status-scheduled'; }
+
+      const coverSrc = project.cover ? `../${project.cover}` : '';
+      const tagsStr = project.tags ? project.tags.join(', ') : '';
+      const metaStr = [formatDate(project.date), tagsStr].filter(Boolean).join(' • ');
+
+      // Dil çubuğu (inline stilli — admin.css'e bağımsız)
+      const langs = Array.isArray(project.languages) ? project.languages : [];
+      let langBar = '';
+      if (langs.length) {
+        const segs = langs.map(l => `<span style="width:${Math.max(0, Math.min(100, Number(l.percent) || 0))}%;background:${safeHex(l.color)};display:block;height:100%;"></span>`).join('');
+        const legend = langs.map(l => `${esc(l.name)} %${Number(l.percent) || 0}`).join(' · ');
+        langBar = `
+          <div style="display:flex;height:7px;border-radius:5px;overflow:hidden;background:var(--line);margin:10px 0 6px;">${segs}</div>
+          <div style="font-size:11px;color:var(--muted);">${legend}</div>`;
+      }
+
+      const card = document.createElement('article');
+      card.className = 'post-card';
+      if (project.featured) card.dataset.featured = 'true';
+      card.innerHTML = `
+        <div class="post-card-thumb${!coverSrc ? ' no-thumb' : ''}">
+          ${coverSrc ? `<img src="${coverSrc}" alt="${esc(project.title)}" loading="lazy" onerror="this.parentElement.classList.add('no-thumb'); this.remove();">` : ''}
+          ${project.featured ? '<div class="post-card-featured-badge">Öne Çıkan</div>' : ''}
+          <div class="post-card-thumb-meta">
+            <span class="post-status ${statusClass}">${statusDisplay}</span>
+            <span class="views-count">
+              <svg viewBox="0 0 24 24" width="13" height="13"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+              ${project.views || 0}
+            </span>
+          </div>
+        </div>
+        <div class="card-body">
+          <h3 class="post-card-title">
+            <a href="../project.html?slug=${project.slug}" class="post-title" target="_blank">${esc(project.title)}</a>
+          </h3>
+          <div class="post-card-meta">${metaStr}</div>
+          ${project.excerpt ? `<p class="post-card-excerpt">${esc(project.excerpt)}</p>` : ''}
+          ${langBar}
+        </div>
+        <div class="post-card-footer">
+          <div class="post-actions-bar">
+            <button class="btn btn-sm btn-primary edit-project" data-slug="${project.slug}">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+              Düzenle
+            </button>
+            ${status === 'draft' ? `
+              <button class="btn btn-sm btn-success publish-project" data-slug="${project.slug}">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                Yayınla
+              </button>
+            ` : ''}
+            <div class="post-actions-more">
+              <button class="btn-icon more-menu-toggle-project" aria-label="Daha fazla seçenek">
+                <svg viewBox="0 0 24 24" width="18" height="18"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+              </button>
+              <div class="more-menu">
+                ${status === 'draft' ? `
+                  <button class="more-menu-item preview-project" data-slug="${project.slug}">
+                    <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+                    Önizle
+                  </button>
+                ` : ''}
+                <button class="more-menu-item toggle-featured-project" data-slug="${project.slug}">
+                  <svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                  ${project.featured ? 'Öne Çıkarmayı Kaldır' : 'Öne Çıkar'}
+                </button>
+                ${status !== 'draft' ? `
+                  <button class="more-menu-item unpublish-project" data-slug="${project.slug}">
+                    <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                    Taslağa Çek
+                  </button>
+                ` : ''}
+                <div class="more-menu-divider"></div>
+                <button class="more-menu-item more-menu-item--danger delete-project" data-slug="${project.slug}">
+                  <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                  Sil
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      tbody.appendChild(card);
+    });
+
+    // Proje aksiyon event'leri
+    $$('.edit-project').forEach(btn => btn.addEventListener('click', () => this.editProject(btn.dataset.slug)));
+    $$('.delete-project').forEach(btn => btn.addEventListener('click', () => this.deleteProject(btn.dataset.slug)));
+    $$('.publish-project').forEach(btn => btn.addEventListener('click', () => this.publishProject(btn.dataset.slug)));
+    $$('.unpublish-project').forEach(btn => btn.addEventListener('click', () => this.unpublishProject(btn.dataset.slug)));
+    $$('.toggle-featured-project').forEach(btn => btn.addEventListener('click', () => this.toggleProjectFeatured(btn.dataset.slug)));
+    $$('.preview-project').forEach(btn => btn.addEventListener('click', () => this.previewProject(btn.dataset.slug)));
+
+    // Üç-nokta menü toggle (projeye özel class)
+    $$('.more-menu-toggle-project').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const menu = btn.nextElementSibling;
+        $$('.more-menu.open').forEach(m => { if (m !== menu) m.classList.remove('open'); });
+        menu.classList.toggle('open');
+      });
+    });
+  }
+
+  editProject(slug) {
+    window.location.href = `../markdown-editor/index.html?type=project&edit=${slug}`;
+  }
+
+  previewProject(slug) {
+    window.open(`../project.html?slug=${slug}&preview=true`, '_blank');
+  }
+
+  async deleteProject(slug) {
+    if (!confirm('Bu projeyi çöp kutusuna taşımak istediğinize emin misiniz?')) return;
+    try {
+      await this.apiService.deleteProject(slug);
+      this.showNotification('Proje çöp kutusuna taşındı', 'success');
+      await this.loadProjects();
+      this.renderProjectsTable();
+    } catch (error) {
+      console.error('Error deleting project:', error);
+      this.showNotification('Proje silinirken hata oluştu', 'error');
+    }
+  }
+
+  async publishProject(slug) {
+    try {
+      await this.apiService.publishProject(slug, { status: 'published' });
+      this.showNotification('Proje yayınlandı', 'success');
+      await this.loadProjects();
+      this.renderProjectsTable();
+    } catch (error) {
+      console.error('Error publishing project:', error);
+      this.showNotification('Proje yayınlanırken hata oluştu', 'error');
+    }
+  }
+
+  async unpublishProject(slug) {
+    if (!confirm('Bu projeyi taslağa çekmek istediğinize emin misiniz? Yayından kaldırılacak.')) return;
+    try {
+      await this.apiService.publishProject(slug, { status: 'draft' });
+      this.showNotification('Proje taslağa çekildi', 'success');
+      await this.loadProjects();
+      this.renderProjectsTable();
+    } catch (error) {
+      console.error('Error unpublishing project:', error);
+      this.showNotification('Proje taslağa çekilirken hata oluştu', 'error');
+    }
+  }
+
+  async toggleProjectFeatured(slug) {
+    const project = this.projects.find(p => p.slug === slug);
+    if (!project) return;
+    try {
+      await this.apiService.toggleProjectFeatured(slug, !project.featured);
+      this.showNotification(project.featured ? 'Öne çıkarma kaldırıldı' : 'Proje öne çıkarıldı', 'success');
+      await this.loadProjects();
+      this.renderProjectsTable();
+    } catch (error) {
+      console.error('Error toggling project featured:', error);
+      this.showNotification('İşlem sırasında hata oluştu', 'error');
+    }
+  }
+
   initEventListeners() {
     // Search functionality
     $('#searchPosts').addEventListener('input', (e) => {
@@ -839,6 +1121,12 @@ class BlogManager {
     $('#emptyTrashBtn').addEventListener('click', () => {
       this.emptyTrash();
     });
+
+    // Proje arama ve filtre
+    const searchProjectsEl = $('#searchProjects');
+    if (searchProjectsEl) searchProjectsEl.addEventListener('input', () => this.filterProjects());
+    const filterProjectStatusEl = $('#filterProjectStatus');
+    if (filterProjectStatusEl) filterProjectStatusEl.addEventListener('change', () => this.filterProjects());
   }
 
   switchTab(tabName) {
@@ -970,6 +1258,32 @@ class BlogManager {
       </div>
     `).join('') : '';
     $('#popularTags').innerHTML = popularTagsHTML || '<p class="muted">Henüz etiket kullanılmamış</p>';
+
+    // ====== Proje istatistikleri (bloglardan ayrı) ======
+    const totalProjectViewsEl = $('#totalProjectViews');
+    if (totalProjectViewsEl) {
+      totalProjectViewsEl.textContent = (analytics.totalProjectViews || 0).toLocaleString('tr-TR');
+    }
+
+    const popularProjectsEl = $('#popularProjects');
+    if (popularProjectsEl) {
+      const escP = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const popularProjectsHTML = (analytics.popularProjects || []).map(project => `
+        <div class="popular-post-item">
+          <div class="popular-post-title">${escP(project.title)}</div>
+          <div class="popular-post-views">${project.views}</div>
+        </div>
+      `).join('');
+      popularProjectsEl.innerHTML = popularProjectsHTML || '<p class="muted">Henüz proje görüntülemesi yok</p>';
+    }
+
+    // Proje sayaçları (dashboard stats endpoint'inden)
+    this.apiService.getStats().then(stats => {
+      const statTotalProjectsEl = $('#statTotalProjects');
+      if (statTotalProjectsEl) statTotalProjectsEl.textContent = stats.totalProjects || 0;
+      const statProjectStatusEl = $('#statProjectStatus');
+      if (statProjectStatusEl) statProjectStatusEl.textContent = `${stats.publishedProjects || 0} / ${stats.draftProjects || 0}`;
+    }).catch(e => console.warn('Proje sayaçları alınamadı:', e));
 
     // Render daily chart
     console.log('Calling renderDailyChart with:', analytics.dailyStats); // Debug log

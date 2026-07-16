@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Proje • Cihan Enes Durgun</title>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="images/system/cedlogov0.1.5.png" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;700;800;900&family=Nunito+Sans:opsz,wght@6..12,400;6..12,500;6..12,600;6..12,700&display=swap"
+    rel="stylesheet">
+
+  <!-- Markdown dönüştürücü (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+
+  <!-- Global temel stiller -->
+  <link href="src/css/styles.css" rel="stylesheet" />
+  <!-- Post metin/markdown stilleri (blog ile aynı görünüm) -->
+  <link rel="stylesheet" href="src/css/post.css" />
+  <!-- Projeye özel: galeri, kod örneği, github kartı -->
+  <link rel="stylesheet" href="src/css/project.css" />
+
+  <!-- RSS Feed -->
+  <link rel="alternate" type="application/rss+xml" title="RSS Feed" href="rss.xml" />
+</head>
+
+<body class="antialiased">
+  <!-- Okuma İlerleme Çubuğu -->
+  <div id="progressBar"></div>
+
+  <!-- Üst kapsül -->
+  <header class="topbar">
+    <div class="wrap topbar-row">
+      <nav class="pill-nav" aria-label="Ana menü">
+        <a href="index.html">Ana Sayfa</a>
+        <a href="blog.html">Blogum</a>
+        <a href="projects.html">Projelerim</a>
+        <a href="index.html#contact">İletişim</a>
+      </nav>
+      <button id="themeToggle" class="theme-chip" aria-label="Tema değiştir" title="Tema değiştir"></button>
+    </div>
+  </header>
+
+  <!-- Ana Konteyner -->
+  <div class="wrap" style="padding-top: 48px; padding-bottom: 48px;">
+    <main class="max-w-3xl mx-auto">
+      <article>
+        <!-- Proje Başlığı ve Meta Bilgileri -->
+        <div class="mb-8 text-center">
+          <h1 id="projectTitle">Proje Başlığı</h1>
+          <div class="flex justify-center items-center space-x-4">
+            <span>Cihan Enes Durgun</span>
+            <span>•</span>
+            <span id="projectDate">Tarih</span>
+          </div>
+        </div>
+
+        <!-- Ana Görsel -->
+        <figure id="projectHero">
+          <img id="heroImg" src="https://placehold.co/1200x600/A67B5B/FFFFFF?text=Proje+Görseli" alt="Proje görseli"
+            onerror="this.onerror=null;this.src='https://placehold.co/1200x600/cccccc/ffffff?text=Görsel+Yüklenemedi';">
+          <figcaption id="heroCaption"></figcaption>
+        </figure>
+
+        <!-- KAYAR GALERİ (proje fotoğrafları) -->
+        <section id="galerySection" class="project-gallery" style="display:none;" aria-label="Proje galerisi">
+          <div class="gallery-viewport">
+            <div class="gallery-track" id="galleryTrack"></div>
+          </div>
+          <button class="gallery-nav gallery-prev" id="galleryPrev" aria-label="Önceki fotoğraf">
+            <svg viewBox="0 0 24 24" width="24" height="24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+          </button>
+          <button class="gallery-nav gallery-next" id="galleryNext" aria-label="Sonraki fotoğraf">
+            <svg viewBox="0 0 24 24" width="24" height="24"><path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/></svg>
+          </button>
+          <div class="gallery-dots" id="galleryDots" aria-label="Galeri göstergeleri"></div>
+        </section>
+
+        <!-- DİL / TEKNOLOJİ ÇUBUĞU -->
+        <section id="langSection" class="project-lang-section" style="display:none;">
+          <h3 class="project-section-title">Kullanılan Teknolojiler</h3>
+          <div class="lang-wrap">
+            <div class="lang-bar" id="projectLangBar" role="img" aria-label="Kullanılan teknolojiler"></div>
+            <div class="lang-legend" id="projectLangLegend"></div>
+          </div>
+        </section>
+
+        <!-- Proje İçeriği (markdown) -->
+        <div id="projectContent" class="blog-content">
+          <div class="loading-state">
+            <div class="loading-spinner"></div>
+            <p>İçerik yükleniyor…</p>
+          </div>
+        </div>
+
+        <!-- KOD ÖRNEĞİ -->
+        <section id="codeSection" class="code-sample-section" style="display:none;">
+          <h3 class="project-section-title">Kod Örneği</h3>
+          <div class="code-sample-card">
+            <div class="code-sample-header">
+              <span class="code-sample-lang" id="codeSampleLang">code</span>
+              <button class="code-expand-btn" id="codeExpandBtn" aria-label="Kodu büyüt">
+                <svg viewBox="0 0 24 24" width="16" height="16"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+                Büyüt
+              </button>
+            </div>
+            <pre class="code-sample-pre"><code id="codeSampleCode"></code></pre>
+          </div>
+        </section>
+
+        <!-- Kod büyütme modalı -->
+        <div class="code-modal" id="codeModal" style="display:none;" role="dialog" aria-modal="true" aria-label="Kod örneği">
+          <div class="code-modal-backdrop" id="codeModalBackdrop"></div>
+          <div class="code-modal-content">
+            <div class="code-modal-header">
+              <span class="code-sample-lang" id="codeModalLang">code</span>
+              <button class="code-modal-close" id="codeModalClose" aria-label="Kapat">✕</button>
+            </div>
+            <pre class="code-modal-pre"><code id="codeModalCode"></code></pre>
+          </div>
+        </div>
+
+        <!-- GITHUB ÖNİZLEME KARTI -->
+        <section id="githubSection" class="github-section" style="display:none;">
+          <h3 class="project-section-title">GitHub Deposu</h3>
+          <div class="github-card" id="githubCard">
+            <div class="github-loading">
+              <div class="loading-spinner"></div>
+              <p>GitHub bilgileri yükleniyor…</p>
+            </div>
+          </div>
+        </section>
+      </article>
+    </main>
+  </div>
+
+  <footer>
+    <div class="wrap">
+      <div class="footer-content">
+        <div class="footer-left">
+          © <span id="year"></span> <span id="owner">Cihan Enes Durgun</span>. Tüm hakları saklıdır.
+        </div>
+        <div class="footer-right">
+          <span class="version-info">v0.1.11.cla</span>
+          <a href="rss.xml" class="footer-link" aria-label="RSS Feed">RSS</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Theme Manager Module (must load first) -->
+  <script src="src/js/theme-manager.js"></script>
+  <script src="src/js/project.js" defer></script>
+  <script src="src/js/version.js"></script>
+</body>
+
+</html>

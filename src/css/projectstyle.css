@@ -1,0 +1,309 @@
+/* ===== Projeler sayfası: filtre barı, çipler ve dil çubuğu ===== */
+
+/* ========== SPIN ANIMATION ========== */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Projeler sayfası için özel padding */
+#main-content {
+  padding-top: 112px;
+}
+
+.filterbar{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  margin:14px 0 6px;
+}
+
+#projectSearch{
+  width:100%;
+  max-width:980px;
+  padding:12px 14px;
+  border-radius:12px;
+  border:1px solid var(--line);
+  background:var(--panel);
+  color:var(--ink);
+  box-shadow:var(--shadow);
+  outline:none;
+  font-size: 16px;
+}
+#projectSearch:focus{
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+}
+
+.tags{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.chip{
+  padding:8px 12px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:color-mix(in srgb, var(--bg) 75%, #fff);
+  cursor:pointer;
+  user-select:none;
+  font-weight:500;
+  font-size:0.875rem;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  letter-spacing: -0.01em;
+  transition:transform .12s, border-color .2s, background .2s;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  color: var(--ink) !important;
+  text-decoration: none !important;
+}
+.chip:hover{ transform:translateY(-1px) }
+.chip.active{
+  background:color-mix(in srgb, var(--accent) 20%, var(--panel));
+  border-color:color-mix(in srgb, var(--accent) 60%, var(--line));
+  color: var(--ink) !important;
+}
+
+/* ===== PROJE KARTLARI ===== */
+#projectResults.grid {
+  display: grid;
+  gap: var(--grid-gap);
+  margin-top: 22px;
+  grid-template-columns: 1fr;
+  align-items: stretch;
+}
+
+#projectResults .card {
+  position: relative;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  transition: transform .18s, box-shadow .18s, border-color .2s;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: var(--grid-card-h);
+}
+
+#projectResults .card:hover {
+  transform: translateY(-6px);
+}
+
+#projectResults .card-link {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  color: inherit;
+  text-decoration: none;
+  min-height: 44px;
+}
+
+#projectResults .card-link:focus { outline: none; }
+#projectResults .card-link:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, #000);
+  outline-offset: -4px;
+}
+
+#projectResults .card-link .thumb {
+  width: 100%;
+  height: var(--grid-thumb-h);
+  object-fit: cover;
+  flex: 0 0 auto;
+  display: block;
+}
+
+#projectResults .card-link .card-body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+}
+
+#projectResults .card-link h3 {
+  margin: 4px 0 6px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+#projectResults .card-link .meta {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0 0 6px;
+}
+
+#projectResults .card-link p {
+  margin-top: 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ===== DİL / TEKNOLOJİ ÇUBUĞU (GitHub linguist tarzı) ===== */
+.lang-wrap {
+  margin-top: auto;      /* kart body içinde en alta hizala */
+  padding-top: 12px;
+}
+.lang-bar {
+  display: flex;
+  width: 100%;
+  height: 8px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--line);
+}
+.lang-seg {
+  height: 100%;
+  min-width: 2px;         /* çok küçük yüzdelerde bile görünür */
+  transition: opacity .2s;
+}
+.lang-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin-top: 9px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.lang-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+.lang-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+.lang-pct { opacity: .7; }
+
+/* ===== MOBİL OPTİMİZASYONLAR ===== */
+@media (max-width: 679.98px) {
+  #main-content { padding-top: 80px; }
+  .filterbar { gap: 6px; margin: 8px 0 2px; }
+  #projectSearch { padding: 12px 14px; font-size: 16px; min-height: 48px; }
+  .chip { padding: 8px 12px; font-size: 0.8rem; min-height: 44px; color: var(--ink) !important; text-decoration: none !important; }
+  .tags { gap: 4px; }
+
+  #projectResults.grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  /* Mobilde kartları yatay/kompakt yap (blog sayfasıyla aynı davranış) */
+  #projectResults .card {
+    height: auto !important;
+    border-radius: 12px;
+    display: flex !important;
+    flex-direction: row !important;
+    min-height: 120px;
+    max-height: 150px;
+  }
+  #projectResults .card-link {
+    position: relative !important;
+    inset: auto !important;
+    display: flex !important;
+    flex-direction: row !important;
+    height: 100% !important;
+    padding: 0 !important;
+  }
+  #projectResults .card-link .thumb {
+    width: 120px !important;
+    height: 100% !important;
+    flex: 0 0 120px !important;
+    object-fit: cover;
+    border-radius: 12px 0 0 12px !important;
+  }
+  #projectResults .card-link .card-body {
+    flex: 1 1 auto !important;
+    padding: 12px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+  }
+  #projectResults .card-link h3 {
+    font-size: 0.95rem !important;
+    margin: 0 0 4px !important;
+    line-height: 1.3 !important;
+    -webkit-line-clamp: 2 !important;
+    line-clamp: 2 !important;
+    display: -webkit-box !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+  }
+  #projectResults .card-link .meta {
+    font-size: 9px !important;
+    margin: 0 0 4px !important;
+    color: var(--muted);
+  }
+  #projectResults .card-link p {
+    font-size: 0.8rem !important;
+    margin: 0 0 6px !important;
+    line-height: 1.4 !important;
+    -webkit-line-clamp: 2 !important;
+    line-clamp: 2 !important;
+    display: -webkit-box !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+  }
+
+  /* Mobil kompakt kartta legend'i gizle, sadece ince çubuğu göster */
+  .lang-wrap { padding-top: 6px; margin-top: 4px; }
+  .lang-legend { display: none; }
+  .lang-bar { height: 6px; }
+
+  .section-head {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+    text-align: left !important;
+  }
+  .section-head h2 { font-size: 1.5rem; margin-bottom: 8px !important; }
+  .section-head h2::after { left: 0 !important; bottom: -4px !important; width: 48px !important; height: 2px !important; }
+  .section-head p { font-size: 0.9rem; margin: 0; }
+  .wrap { padding: 0 12px; }
+}
+
+/* Çok küçük ekranlar */
+@media (max-width: 479.98px) {
+  #main-content { padding-top: 70px; }
+  .wrap { padding: 0 8px; }
+  .section-head h2 { font-size: 1.25rem; }
+  #projectResults .card { min-height: 100px !important; max-height: 130px !important; }
+  #projectResults .card-link .thumb { width: 100px !important; flex: 0 0 100px !important; }
+  #projectResults .card-link .card-body { padding: 8px !important; }
+  #projectResults .card-link h3 { font-size: 0.9rem !important; margin: 0 0 3px !important; }
+  #projectResults .card-link p { font-size: 0.75rem !important; }
+  #projectResults .card-link .meta { font-size: 8px !important; margin: 0 0 3px !important; }
+}
+
+/* Tablet */
+@media (min-width: 680px) and (max-width: 1023.98px) {
+  #main-content { padding-top: 90px; }
+  #projectResults.grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+}
+
+/* Desktop 3 kolon */
+@media (min-width: 1040px) {
+  #projectResults.grid { grid-template-columns: repeat(3, 1fr); gap: 20px; }
+}
+
+/* Touch cihazlar */
+@media (hover: none) and (pointer: coarse) {
+  .chip:hover { transform: none; }
+  #projectResults .card:hover { transform: none; }
+  .chip:active { transform: scale(0.95); background: color-mix(in srgb, var(--accent) 10%, var(--panel)); }
+  #projectResults .card:active { transform: scale(0.98); }
+}

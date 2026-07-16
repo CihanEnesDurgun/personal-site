@@ -199,6 +199,49 @@ function cardHTML(p, { coverUrl, readingMins, isFeatured = false }) {
     </article>`;
 }
 
+/* ===== Proje kartı (dil çubuğu dahil) ===== */
+const safeHex = (c) => (typeof c === "string" && /^#[0-9a-fA-F]{3,8}$/.test(c)) ? c : "#A67B5B";
+
+function projectLangBarHTML(languages) {
+  if (!Array.isArray(languages) || languages.length === 0) return "";
+  const segs = languages.map(l =>
+    `<span class="lang-seg" data-percent="${Number(l.percent) || 0}" data-color="${safeHex(l.color)}"></span>`
+  ).join("");
+  const legend = languages.map(l =>
+    `<span class="lang-item"><span class="lang-dot" data-color="${safeHex(l.color)}"></span>${esc(l.name)} <span class="lang-pct">%${Number(l.percent) || 0}</span></span>`
+  ).join("");
+  return `<div class="lang-wrap"><div class="lang-bar">${segs}</div><div class="lang-legend">${legend}</div></div>`;
+}
+
+function applyLangBars(root = document) {
+  root.querySelectorAll(".lang-seg").forEach(seg => {
+    const pct = Math.max(0, Math.min(100, Number(seg.dataset.percent) || 0));
+    seg.style.width = pct + "%";
+    seg.style.background = safeHex(seg.dataset.color);
+  });
+  root.querySelectorAll(".lang-dot").forEach(dot => {
+    dot.style.background = safeHex(dot.dataset.color);
+  });
+}
+
+function projectCardHTML(p) {
+  const tags = p.tags && p.tags.length ? ` • ${p.tags.join(", ")}` : "";
+  const featuredBadge = p.featured ? `<div class="featured-badge">Öne Çıkan</div>` : "";
+  return `
+    <article class="card reveal" ${p.featured ? 'data-featured="true"' : ''}>
+      ${featuredBadge}
+      <a class="card-link" href="project.html?slug=${encodeURIComponent(p.slug)}" aria-label="${esc(p.title)}">
+        ${p.cover ? `<img class="thumb" src="${esc(p.cover)}" alt="${esc(p.title)}" loading="lazy">` : ""}
+        <div class="card-body">
+          <h3>${esc(p.title)}</h3>
+          <div class="meta">${fmt(p.date)}${tags}</div>
+          <p>${esc(p.excerpt)}</p>
+          ${projectLangBarHTML(p.languages)}
+        </div>
+      </a>
+    </article>`;
+}
+
 
 
 /* ===== Boot ===== */
@@ -253,6 +296,28 @@ document.addEventListener("DOMContentLoaded", async () => {
     })
   );
   $("#blog-grid").innerHTML = blogHTML.join("");
+
+  // ===== Projeler önizlemesi =====
+  try {
+    const projects = await fetch("content/projects.json").then((r) => r.json()).catch(() => []);
+    const publishedProjects = projects.filter((p) => {
+      const status = p.status || 'published';
+      if (status === 'deleted') return false;
+      if (status === 'scheduled') return new Date(p.publishDate) <= new Date();
+      return status === 'published';
+    });
+    const featuredP = publishedProjects.filter((p) => p.featured).sort((a, b) => new Date(b.date) - new Date(a.date));
+    const othersP = publishedProjects.filter((p) => !p.featured).sort((a, b) => new Date(b.date) - new Date(a.date));
+    const allProjects = [...featuredP, ...othersP].slice(0, 6);
+
+    const projectsGrid = $("#projects-grid");
+    if (projectsGrid) {
+      projectsGrid.innerHTML = allProjects.map(projectCardHTML).join("");
+      applyLangBars(projectsGrid);
+    }
+  } catch (e) {
+    console.warn("Projeler yüklenemedi:", e);
+  }
 
   initReveal();
   initNavTracking();
