@@ -36,9 +36,9 @@ cPanel → **Setup Node.js App** → Create Application:
 
 | Alan | Değer |
 |---|---|
-| Node.js version | **20 veya 22** (14/16/18 OLMAZ — `jsdom` en az 20.19, `marked` en az 20 ister) |
+| Node.js version | **20.20.2** (kurulu). 14/16/18 OLMAZ — `jsdom` en az 20.19, `marked` en az 20 ister |
 | Application mode | **Production** |
-| Application root | `personal-site` |
+| Application root | `site` (mevcut kurulumda bu değer) |
 | Application URL | domain'in (cihanenesdurgun.com) |
 | Application startup file | `server.js` |
 
@@ -50,8 +50,8 @@ cPanel → **Setup Node.js App** → Create Application:
 Repo kökündeki `.cpanel.yml` dosyasında sadece iki satır:
 
 ```yaml
-- export APP_DIR=$HOME/personal-site     # Application root ile aynı
-- export NODE_VER=22                     # seçtiğin Node sürümü
+- export APP_DIR=$HOME/site              # Application root ile aynı
+- export NODE_VER=20                     # Node sürümünün ANA numarası
 ```
 
 ### 3. SSH anahtarını yetkilendir
@@ -173,8 +173,8 @@ npm run content:push
 cPanel → **Terminal** (veya SSH):
 
 ```bash
-cd ~/personal-site
-source ~/nodevenv/personal-site/22/bin/activate
+cd ~/site
+source ~/nodevenv/site/20/bin/activate
 npm run setup:users
 ```
 
@@ -226,7 +226,7 @@ git add content images && git commit -m "content: sunucudan senkron" && git push
 ### Uygulamayı yeniden başlatma
 
 ```bash
-touch ~/personal-site/tmp/restart.txt
+touch ~/site/tmp/restart.txt
 ```
 
 `pkill` / `nohup node server.js` **kullanma** — Passenger uygulamayı kendisi yönetir, çakışır.
@@ -244,4 +244,7 @@ touch ~/personal-site/tmp/restart.txt
 | Panelden yayınlanan yazı kayboldu | Biri `content/`'i `.cpanel.yml` kopyalama listesine eklemiş — çıkar |
 | Değişiklik sitede görünmüyor | Dosya önbelleği 5 dakika; `touch tmp/restart.txt` ile anında yenilenir |
 
-Log'lar: cPanel → Setup Node.js App → uygulamanın log dosyası, ve `~/personal-site/logs/`.
+Log'lar: cPanel → Setup Node.js App → uygulamanın log dosyası, ve `~/site/logs/`.
+
+> Not: `repositories/personal-site` (git deposu) ile `~/site` (uygulamanın çalıştığı
+> klasör) farklı yerlerdir. Deploy, birinden diğerine kopyalar.

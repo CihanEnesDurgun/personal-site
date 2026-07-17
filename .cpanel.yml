@@ -10,16 +10,18 @@
 #   bir sonraki deploy'da repo'daki eski sürümle ezilir ve KAYBOLUR.
 #   İçerik alışverişi için: npm run content:pull / npm run content:push
 #
-# İLK KURULUMDAN ÖNCE AŞAĞIDAKİ 2 DEĞERİ KENDİ SUNUCUNA GÖRE AYARLA:
-#   APP_DIR  : cPanel > Setup Node.js App ekranındaki "Application root"
-#   NODE_VER : aynı ekranda seçtiğin Node sürümü (jsdom/marked için 20+ olmalı)
+# Bu değerler cPanel > Setup Node.js App ekranından alınmıştır:
+#   Application root : site      -> $HOME/site
+#   Node.js version  : 20.20.2   -> nodevenv yolunda yalnızca ana sürüm (20) kullanılır
+# Uygulamayı yeniden oluşturursan bu üç satırı güncellemeyi unutma.
+# (Kullanıcı adı/sunucu bilgisi bilerek yazılmadı — repo public, $HOME yeterli.)
 
 deployment:
   tasks:
     # ==== AYARLAR ====
-    - export APP_DIR=$HOME/personal-site
-    - export APP_NAME=personal-site
-    - export NODE_VER=22
+    - export APP_DIR=$HOME/site
+    - export APP_NAME=site
+    - export NODE_VER=20
 
     # ==== 1) Kod dosyalarını uygulama klasörüne kopyala ====
     - /bin/mkdir -p $APP_DIR
