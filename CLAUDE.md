@@ -11,9 +11,10 @@ tüm veri JSON dosyalarında.
 | `npm start` | Production başlatma |
 | `npm run setup` | Production hazırlık kontrolleri (NODE_ENV, sır sızıntısı) |
 | `npm run setup:users` | `.env`'deki `DEFAULT_ADMIN_PASSWORD` ile admin oluşturur |
-| `npm run content:pull` | Sunucudaki içeriği yerele indirir |
-| `npm run content:push` | Yereldeki içeriği sunucuya gönderir |
-| `npm run backup:data` | Sunucudaki `data/` yedeğini alır |
+| `npm run content:pull` | Sunucudaki içeriği HTTP üzerinden yerele indirir |
+
+Deploy sunucuda yapılır (SSH yok, yalnızca cPanel Terminal):
+`bash ~/repositories/personal-site/scripts/server-deploy.sh`
 
 ## Yapı
 
@@ -31,16 +32,23 @@ docs/              Dokümantasyon
 
 ## Değişmez kurallar
 
-**1. Repo public — hiçbir sır git'e girmez.**
+**1. Hiçbir sır git'e girmez.**
 Gerçek değerler yalnızca `.env` içinde yaşar. `env.example`'a, dokümana, koda, commit
 mesajına asla gerçek `JWT_SECRET`/şifre yazma. Bir sır bir kez commit'lendiyse geçmişten
-silmek yetmez, **rotate edilmesi** gerekir.
+silmek yetmez, **rotate edilmesi** gerekir. (Repo uzun süre public kaldı; geçmişteki
+değerler yanmış sayılır — hepsi rotate edildi.)
 
 **2. Deploy yalnızca kodu taşır.**
 `content/`, `images/`, `data/`, `rss.xml`, `sitemap.xml` çalışma anında admin paneli
 tarafından yazılır ve yalnızca sunucuda yaşar. `.cpanel.yml`'deki kopyalama listesine
 bunları **ekleme** — eklersen her deploy panelden yayınlanan içeriği eski sürümle ezer.
-İçerik alışverişi `content:pull` / `content:push` ile yapılır.
+Sunucudan içerik almak için `npm run content:pull` (HTTP üzerinden; SSH yok).
+
+**2b. Yayınlanmamış içerik sunucuda filtrelenir.**
+`/content/posts.json` ve `/content/*/*.md` rotaları statik middleware'den ÖNCE tanımlıdır
+ve yetkisiz isteklerde taslakları ayıklar (`server.js`). İstemci tarafı filtreleme
+(`blog.js`) güvenlik sınırı değildir; `?preview=true` de kimlik doğrulaması değildir —
+önizleme `admin_token` ile yapılır. Bu rotaları statik sunumun arkasına alma.
 
 **3. Passenger'ı elle yönetme.**
 Sunucuda restart = `touch ~/site/tmp/restart.txt`. `pkill` / `nohup node server.js`
@@ -63,7 +71,7 @@ Passenger'ın yönettiği süreçle çakışır.
 
 ## Adlandırma
 
-- Dosya adları: **kebab-case** (`content-pull.sh`, `error-registry.md`)
+- Dosya adları: **kebab-case** (`content-pull.js`, `error-registry.md`)
 - `lib/` içindeki modüller: **camelCase** (mevcut yapıyla uyum için)
 - Sayfa varlıkları sayfa adıyla eşleşir: `blog.html` → `src/css/blog.css`, `src/js/blog.js`
 - Global varlıklar: `styles.css`, `scripts.js`

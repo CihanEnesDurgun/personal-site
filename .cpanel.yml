@@ -8,13 +8,13 @@
 #   rss.xml, sitemap.xml ve .env bilerek listede YOKTUR; çünkü bunları admin paneli
 #   çalışma anında yazar. Listeye eklersen, panelden yayınladığın yazılar/görseller
 #   bir sonraki deploy'da repo'daki eski sürümle ezilir ve KAYBOLUR.
-#   İçerik alışverişi için: npm run content:pull / npm run content:push
+#   Sunucudan içerik almak için: npm run content:pull (SSH yok, HTTP üzerinden)
 #
 # Bu değerler cPanel > Setup Node.js App ekranından alınmıştır:
 #   Application root : site      -> $HOME/site
 #   Node.js version  : 20.20.2   -> nodevenv yolunda yalnızca ana sürüm (20) kullanılır
 # Uygulamayı yeniden oluşturursan bu üç satırı güncellemeyi unutma.
-# (Kullanıcı adı/sunucu bilgisi bilerek yazılmadı — repo public, $HOME yeterli.)
+# (Kullanıcı adı/sunucu bilgisi bilerek yazılmadı — $HOME zaten doğru yere çözülür.)
 
 deployment:
   tasks:

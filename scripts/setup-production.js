@@ -74,7 +74,6 @@ function checkSensitiveFiles() {
 
     const mustNotBeTracked = [
         '.env',
-        'deploy.config',
         'data/users.json',
         'data/sessions.json'
     ];

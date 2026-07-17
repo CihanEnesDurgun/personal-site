@@ -3,7 +3,18 @@
 Bu site bir **Node.js/Express uygulaması** (statik site değil). Dosyaları `public_html`'e
 atmak çalışmaz; cPanel'in **Setup Node.js App** özelliği ile Passenger altında koşar.
 
-Deploy otomatiktir: `git push` → cPanel `.cpanel.yml`'i çalıştırır → site güncellenir.
+## Akış
+
+Paylaşımlı pakette **SSH kapalı** (hosting teyit etti), yalnızca cPanel içinden erişilen
+**Terminal** var. Bu yüzden "yerelden sunucuya push" değil, **sunucudan GitHub'dan pull**
+akışı kullanılır:
+
+```
+sen: git push                      → GitHub
+sen: cPanel > Terminal > tek komut → sunucu GitHub'dan çeker + deploy
+```
+
+Deploy adımlarının tamamı [`.cpanel.yml`](../../.cpanel.yml) içindedir.
 
 ---
 
@@ -16,104 +27,73 @@ Admin paneli çalışma anında şu dosyalara yazar:
 | `content/` | blog yazıları, projeler, site ayarları |
 | `images/` | yüklediğin görseller |
 | `data/` | yorumlar, istatistikler, tema, admin kullanıcısı |
-| `rss.xml`, `sitemap.xml` | otomatik üretilir |
+| `rss.xml`, `sitemap.xml` | otomatik üretilir (git'te tutulmaz) |
 
-Bunlar `.cpanel.yml`'deki kopyalama listesinde **bilerek yok**. Yani deploy bunlara
-asla dokunmaz ve panelden yayınladığın hiçbir şey kaybolmaz.
+Bunlar `.cpanel.yml`'deki kopyalama listesinde **bilerek yok**. Deploy bunlara asla
+dokunmaz; panelden yayınladığın hiçbir şey kaybolmaz.
 
-**Listeye bu klasörleri eklemeyin.** Eklersen, her deploy repo'daki eski sürümü
-sunucuya yazar ve panelden yayınladığın yazılar/yorumlar silinir.
-
-Yerelde yazı yazmak istersen → aşağıdaki "İçerik senkronizasyonu" bölümüne bak.
+**Listeye bu klasörleri eklemeyin.** Eklersen her deploy repo'daki eski sürümü sunucuya
+yazar ve panelden yayınladığın yazılar/yorumlar silinir.
 
 ---
 
 ## İlk kurulum (tek seferlik)
 
-### 1. Node.js uygulamasını oluştur
+### 1. Node.js uygulaması
 
-cPanel → **Setup Node.js App** → Create Application:
+cPanel → **Setup Node.js App** (mevcut kurulum):
 
 | Alan | Değer |
 |---|---|
-| Node.js version | **20.20.2** (kurulu). 14/16/18 OLMAZ — `jsdom` en az 20.19, `marked` en az 20 ister |
-| Application mode | **Production** |
-| Application root | `site` (mevcut kurulumda bu değer) |
-| Application URL | domain'in (cihanenesdurgun.com) |
+| Node.js version | **20.20.2** — 18 ve altı OLMAZ (`jsdom` ≥20.19, `marked` ≥20 ister) |
+| Application mode | Production |
+| Application root | `site` → `/home/KULLANICI/site` |
 | Application startup file | `server.js` |
 
-> "Application root" değerini not et — `.cpanel.yml` içindeki `APP_DIR` ve
-> `deploy.config` içindeki `CPANEL_APP_DIR` bununla aynı olmalı.
+### 2. GitHub erişimi (private repo)
 
-### 2. `.cpanel.yml`'i sunucuna göre ayarla
+Repo private olduğu için sunucunun GitHub'dan okuyabilmesi gerekir.
 
-Repo kökündeki `.cpanel.yml` dosyasında sadece iki satır:
+**Fine-grained personal access token** oluştur: GitHub → Settings → Developer settings →
+Personal access tokens → Fine-grained tokens → Generate new token:
 
-```yaml
-- export APP_DIR=$HOME/site              # Application root ile aynı
-- export NODE_VER=20                     # Node sürümünün ANA numarası
-```
+- Repository access: **Only select repositories** → `personal-site`
+- Permissions → Repository permissions → **Contents: Read-only**
+- Başka hiçbir yetki verme. Süre: 1 yıl (takvimine not al).
 
-### 3. SSH anahtarını yetkilendir
+> Neden bu kadar dar: sunucu ele geçirilirse token'la yapılabilecek en kötü şey bu
+> repo'yu okumak olur — yazma yok, başka repo'lara erişim yok.
 
-Bilgisayarında anahtar yoksa üret:
-
-```bash
-ssh-keygen -t ed25519 -C "cpanel-deploy"     # sorulara Enter yeterli
-cat ~/.ssh/id_ed25519.pub                     # ciktiyi kopyala
-```
-
-cPanel → **SSH Access** → Manage SSH Keys → **Import Key** → Public Key alanına yapıştır
-→ kaydet → listede anahtarın yanındaki **Manage** → **Authorize**.
-
-Test et:
+cPanel → **Terminal**'de kimlik bilgisini kaydet:
 
 ```bash
-ssh -p PORT KULLANICI@SUNUCU "echo baglanti-ok"
+git config --global credential.helper store
 ```
 
-### 4. cPanel'de BOŞ git reposu oluştur
+Bir sonraki `git pull` kullanıcı adı ve şifre sorar:
+- **Username:** GitHub kullanıcı adın
+- **Password:** yukarıda ürettiğin **token** (GitHub şifren DEĞİL)
+
+Kaydedildikten sonra izinleri kıs:
+
+```bash
+chmod 600 ~/.git-credentials
+```
+
+### 3. cPanel'de repoyu oluştur
 
 cPanel → **Git Version Control** → **Create**:
 
 | Alan | Değer |
 |---|---|
-| Clone a Repository | **KAPALI** (toggle'ı açma) |
+| Clone a Repository | **AÇIK** |
+| Clone URL | `https://github.com/CihanEnesDurgun/personal-site.git` |
 | Repository Path | `repositories/personal-site` |
-| Repository Name | `personal-site` |
 
-> **Neden GitHub'dan klonlamıyoruz?** Böylece cPanel'in GitHub ile hiç işi olmaz.
-> Repo'yu private yapsan da deploy çalışmaya devam eder — deploy'u tetikleyen şey
-> GitHub değil, senin cPanel'e SSH ile yaptığın push.
+### 4. Sunucuda `.env` oluştur
 
-Oluşunca **Manage** ekranındaki **Clone URL (SSH)** değerini kopyala; şuna benzer:
-`ssh://KULLANICI@SUNUCU:PORT/home/KULLANICI/repositories/personal-site`
-
-### 5. Bilgisayarından cPanel'i remote olarak ekle
-
-```bash
-# cPanel'i ayri bir remote olarak ekle
-git remote add cpanel ssh://KULLANICI@SUNUCU/home/KULLANICI/repositories/personal-site
-
-# Tek `git push` ile hem GitHub'a hem cPanel'e gitsin:
-git remote set-url --add --push origin https://github.com/CihanEnesDurgun/personal-site.git
-git remote set-url --add --push origin ssh://KULLANICI@SUNUCU/home/KULLANICI/repositories/personal-site
-
-# Kontrol: `git remote -v` ciktisinda origin icin 2 adet (push) satiri gormelisin
-```
-
-İlk gönderim:
-
-```bash
-git push cpanel main
-```
-
-### 6. Sunucuda `.env` oluştur
-
-`.env` git'te **yok** ve olmamalı. Sunucuda elle oluştur:
-
-cPanel → File Manager → Application root → (Settings'ten "Show hidden files" açık olmalı)
-→ `.env` adında dosya oluştur:
+`.env` git'te **yok** ve olmamalı. cPanel → File Manager → `site` klasörü →
+(Settings'ten "Show hidden files" açık olmalı) → `.env` oluştur:
 
 ```bash
 JWT_SECRET=<BURAYA-YENI-URET>
@@ -127,50 +107,48 @@ RATE_LIMIT_MAX=1000
 DEFAULT_ADMIN_PASSWORD=<BURAYA-YENI-URET>
 ```
 
-İki değeri de **yeni** üret (yereldekini kopyalama, production ayrı olsun):
+İki değeri de **yeni** üret — yereldekini kopyalama:
 
 ```bash
-# JWT_SECRET
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-
-# DEFAULT_ADMIN_PASSWORD
-node -e "console.log(require('crypto').randomBytes(18).toString('base64url'))"
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"       # JWT_SECRET
+node -e "console.log(require('crypto').randomBytes(18).toString('base64url'))" # sifre
 ```
 
-Sonra izinleri kıs: File Manager → `.env` → Permissions → **600**.
+İzinleri kıs: File Manager → `.env` → Permissions → **600**.
 
-> **`NODE_ENV=production` şart.** Aksi halde rate limiting tamamen kapalı ve CSP
-> gevşek modda çalışır. (Not: `dotenv` mevcut ortam değişkenlerini ezmez — cPanel
-> arayüzünden de bir değer girersen o kazanır. Karışıklık olmasın diye tek yerden,
-> `.env`'den yönet.)
+> **`NODE_ENV=production` şart.** Aksi halde rate limiting kapalı, CSP gevşek modda çalışır.
 
-### 7. İlk deploy
+### 5. İlk deploy
+
+Bilgisayarında:
 
 ```bash
-git push
+git push origin main
 ```
 
-cPanel → Git Version Control → **Manage** → Pull or Deploy → **Deploy HEAD Commit**
-(ilk seferde elle tetiklemek gerekebilir; sonrakiler otomatik).
-
-### 8. İçerik ve veriyi bir kez yükle
-
-`content/`, `images/`, `data/` deploy'a dahil değil — ilk seferde elle yüklenmeli:
+cPanel → **Terminal**'de:
 
 ```bash
-# deploy.config'i hazırla
-cp deploy.config.example deploy.config   # değerleri doldur
-
-# içeriği gönder
-npm run content:push
+bash ~/repositories/personal-site/scripts/server-deploy.sh
 ```
 
-`data/` için: File Manager ile `data/` klasörünü yükle **ama `users.json`'ı değil**
-(admin'i sunucuda üreteceğiz).
+Script `git pull` yapar, sonra cPanel'in deploy mekanizmasını tetikler (`.cpanel.yml`
+çalışır: dosyaları kopyalar, `npm ci`, Passenger restart).
 
-### 9. Admin kullanıcısını sunucuda oluştur
+> Alternatif (script çalışmazsa): Terminal'de `cd ~/repositories/personal-site && git pull`,
+> sonra cPanel → Git Version Control → Manage → **Deploy HEAD Commit**.
 
-cPanel → **Terminal** (veya SSH):
+### 6. İçeriği bir kez yükle
+
+`content/` ve `images/` deploy'a dahil değil. İlk seferde File Manager ile yükle:
+ikisini zip'leyip `site` klasörüne çıkar.
+
+`data/` için `users.json` **yükleme** — admin'i sunucuda üreteceğiz. Diğer `data/*.json`
+dosyaları isteğe bağlı (yoksa sistem kendi üretir).
+
+### 7. Admin kullanıcısını oluştur
+
+cPanel → **Terminal**:
 
 ```bash
 cd ~/site
@@ -178,17 +156,18 @@ source ~/nodevenv/site/20/bin/activate
 npm run setup:users
 ```
 
-Bu, `.env`'deki `DEFAULT_ADMIN_PASSWORD` ile `data/users.json` üretir.
-Sonra `.env`'den `DEFAULT_ADMIN_PASSWORD` satırını silebilirsin.
+`.env`'deki `DEFAULT_ADMIN_PASSWORD` ile `data/users.json` üretir. Sonra `.env`'den o
+satırı silebilirsin.
 
-> ⚠️ Yerelindeki `data/users.json`'ı **sunucuya kopyalama**. O dosyanın şifresi
-> (`t0KmYrPH!C7fQmLH`) public GitHub repo'sunda yıllardır açıkta duruyordu.
+> ⚠️ Yerelindeki `data/users.json`'ı sunucuya **kopyalama**: şifresi public repo'da
+> uzun süre açıkta kaldı.
 
-### 10. Kontrol
+### 8. Kontrol
 
 - `https://cihanenesdurgun.com` → site açılıyor mu
-- `https://cihanenesdurgun.com/api/simple-test` → `{"success":true}` dönüyor mu
-- `https://cihanenesdurgun.com/admin` → yeni şifreyle giriş
+- `/api/simple-test` → `{"success":true}`
+- `/admin/login.html` → yeni şifreyle giriş
+- `/content/posts.json` → **taslak görünmemeli** (giriş yapmadan, tarayıcıda aç)
 - cPanel → Setup Node.js App → uygulama "Running" mi
 
 ---
@@ -198,30 +177,39 @@ Sonra `.env`'den `DEFAULT_ADMIN_PASSWORD` satırını silebilirsin.
 ### Kod değişikliği yayınlama
 
 ```bash
+# 1) bilgisayarinda
 git add . && git commit -m "..." && git push
+
+# 2) cPanel > Terminal
+bash ~/repositories/personal-site/scripts/server-deploy.sh
 ```
 
-Gerisi otomatik: cPanel `.cpanel.yml`'i çalıştırır, `npm ci` yapar, Passenger'ı yeniden başlatır.
+### İçerik
 
-### İçerik senkronizasyonu
-
-Yazıları hem panelden hem yerelden yazabilirsin, ama **yön önemli**:
-
-| Komut | Yön | Ne zaman |
-|---|---|---|
-| `npm run content:pull` | sunucu → yerel | Yerelde yazı düzenlemeye **başlamadan önce**. Ayrıca panelden yayınladıklarını git'e yedeklemek için. |
-| `npm run content:push` | yerel → sunucu | Yereldeki yazıyı canlıya almak için. |
-| `npm run backup:data` | sunucu → yerel | Yorum/istatistik yedeği. Ara sıra çalıştır. |
-
-**Altın kural:** yerelde yazmadan önce `content:pull`. Unutursan, panelden yayınladığın
-yeni yazı `content:push` ile ezilebilir.
-
-Panelden yazdıklarını git'e yedeklemek için ara sıra:
+Yazıları **sunucudaki admin panelinden** yaz — asıl araç o. Yereldeki repo'yu güncel
+tutmak ve git'e yedeklemek için:
 
 ```bash
-npm run content:pull
+npm run content:pull        # taslaklar icin admin sifresi sorar
 git add content images && git commit -m "content: sunucudan senkron" && git push
 ```
+
+`content:pull` sitenin HTTP arayüzünü kullanır (SSH gerekmez). Giriş yapmazsan yalnızca
+yayındaki içerik iner ve yereldeki taslakların **korunur** (üzerine yazılmaz).
+
+> **Yerelde yazıp sunucuya gönderme yolu yok** (SSH olmadığı için). Yerelde taslak
+> yazdıysan içeriğini admin panelindeki editöre yapıştır.
+
+### Veri yedeği (yorumlar, istatistikler)
+
+`data/` güvenlik gereği HTTP üzerinden sunulmuyor, dolayısıyla `content:pull` onu almaz.
+cPanel → **Terminal**:
+
+```bash
+cd ~/site && tar czf ~/data-yedek-$(date +%F).tar.gz data
+```
+
+Sonra File Manager'dan indir. `users.json` şifre hash'i içerir — yedeği paylaşma.
 
 ### Uygulamayı yeniden başlatma
 
@@ -237,14 +225,15 @@ touch ~/site/tmp/restart.txt
 
 | Belirti | Sebep |
 |---|---|
-| Uygulama açılmıyor, log'da `Missing required environment variables` | `.env` yok veya `JWT_SECRET`/`BCRYPT_SALT_ROUNDS` boş |
+| `Missing required environment variables` | `.env` yok veya `JWT_SECRET`/`BCRYPT_SALT_ROUNDS` boş |
 | `JWT_SECRET must be at least 32 characters` | Secret kısa; 64 karakterlik hex üret |
-| Admin'e giriş yapılamıyor, log'da `[AUTH-1010]` | `data/users.json` yok → `npm run setup:users` |
-| `npm ci` hatası, `Unsupported engine` | Node sürümü 20'nin altında; Setup Node.js App'ten 20/22 seç |
-| Panelden yayınlanan yazı kayboldu | Biri `content/`'i `.cpanel.yml` kopyalama listesine eklemiş — çıkar |
-| Değişiklik sitede görünmüyor | Dosya önbelleği 5 dakika; `touch tmp/restart.txt` ile anında yenilenir |
+| Admin'e giriş yok, log'da `[AUTH-1010]` | `data/users.json` yok → `npm run setup:users` |
+| `git pull` kullanıcı adı/şifre soruyor | Token kaydedilmemiş → adım 2 |
+| `Unsupported engine` / `npm ci` hatası | Node 20 altında; Setup Node.js App'ten 20 seç |
+| Panelden yayınlanan yazı kayboldu | `content/` `.cpanel.yml` kopyalama listesine eklenmiş — çıkar |
+| Değişiklik sitede görünmüyor | Dosya önbelleği 5 dk; `touch ~/site/tmp/restart.txt` |
 
 Log'lar: cPanel → Setup Node.js App → uygulamanın log dosyası, ve `~/site/logs/`.
 
-> Not: `repositories/personal-site` (git deposu) ile `~/site` (uygulamanın çalıştığı
-> klasör) farklı yerlerdir. Deploy, birinden diğerine kopyalar.
+> `repositories/personal-site` (git deposu) ile `~/site` (uygulamanın çalıştığı klasör)
+> farklı yerlerdir. Deploy, birinden diğerine kopyalar.

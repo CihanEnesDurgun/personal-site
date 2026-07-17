@@ -13,9 +13,7 @@
     "setup": "node scripts/setup-production.js",
     "setup:users": "node scripts/setup-users.js",
     "clean:logs": "node scripts/clean-logs.js",
-    "content:pull": "bash scripts/content-pull.sh",
-    "content:push": "bash scripts/content-push.sh",
-    "backup:data": "bash scripts/backup-data.sh"
+    "content:pull": "node scripts/content-pull.js"
   },
   "keywords": [
     "admin",

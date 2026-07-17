@@ -76,9 +76,6 @@ data/stats.json
 *.backup
 admin/**/*.backup
 
-# Sunucu baglanti bilgileri (deploy.config.example git'te durur, gerceği durmaz)
-deploy.config
-
 # `npm run backup:data` ciktilari — admin sifre hash'i icerir, git'e girmemeli
 backups/
 
