@@ -5,9 +5,12 @@
  * Bu script production ortamı için gerekli güvenlik kontrollerini yapar
  */
 
+require('dotenv').config();
+
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { execFileSync } = require('child_process');
 const ROOT_DIR = path.join(__dirname, '..');
 
 console.log('🚀 Production Setup Script Başlatılıyor...\n');
@@ -48,76 +51,58 @@ function checkEnvironmentFile() {
     return true;
 }
 
-// 2. Config dosyası kontrolü
-function checkConfigFile() {
-    console.log('📋 Config dosyası kontrol ediliyor...');
+// 2. Production ortam ayarları kontrolü
+function checkProductionEnv() {
+    console.log('📋 Production ortam ayarları kontrol ediliyor...');
 
-    if (!fs.existsSync(path.join(ROOT_DIR, 'config.json'))) {
-        console.log('❌ config.json dosyası bulunamadı!');
+    if (process.env.NODE_ENV !== 'production') {
+        console.log(`❌ NODE_ENV "${process.env.NODE_ENV || 'tanımsız'}" — production olmalı!`);
+        console.log('🔧 Sunucudaki .env dosyasında NODE_ENV=production yapın.');
+        console.log('   Aksi halde rate limiting kapalı ve CSP gevşek modda çalışır.');
         return false;
     }
 
-    const config = JSON.parse(fs.readFileSync(path.join(ROOT_DIR, 'config.json'), 'utf8'));
-
-    if (config.development_mode === 'on') {
-        console.log('❌ Development mode aktif!');
-        console.log('🔧 config.json dosyasında development_mode: "off" yapın');
-        return false;
-    }
-
-    if (config.production.domain.includes('yourdomain.com')) {
-        console.log('❌ Production domain değiştirilmemiş!');
-        console.log('🌐 config.json dosyasında production domain\'inizi güncelleyin');
-        return false;
-    }
-
-    console.log('✅ Config dosyası kontrol edildi');
+    console.log('✅ Production ortam ayarları kontrol edildi');
     return true;
 }
 
-// 3. Hassas dosyalar kontrolü
+// 3. Hassas dosyalar git'e sızmış mı?
+// Repo public; git'e giren her sır kalıcı olarak açığa çıkar. Asıl kontrol edilmesi
+// gereken şey dosyaların varlığı değil, git tarafından izlenip izlenmedikleridir.
 function checkSensitiveFiles() {
-    console.log('📋 Hassas dosyalar kontrol ediliyor...');
+    console.log('📋 Hassas dosyalar git\'e karşı kontrol ediliyor...');
 
-    const sensitiveFiles = [
-        path.join(ROOT_DIR, 'data', 'sessions.json'),
-        path.join(ROOT_DIR, 'data', 'users.json'),
-        path.join(ROOT_DIR, 'logs'),
-        path.join(ROOT_DIR, 'admin-backup-manuel')
+    const mustNotBeTracked = [
+        '.env',
+        'deploy.config',
+        'data/users.json',
+        'data/sessions.json'
     ];
 
-    let hasSensitiveData = false;
+    let leaked = [];
 
-    sensitiveFiles.forEach(file => {
-        if (fs.existsSync(file)) {
-            if (file === 'data/sessions.json') {
-                const sessions = JSON.parse(fs.readFileSync(file, 'utf8'));
-                if (sessions.activeSessions.length > 0) {
-                    console.log('❌ Aktif session\'lar bulundu!');
-                    hasSensitiveData = true;
-                }
-            }
-            if (file === 'data/users.json') {
-                const users = JSON.parse(fs.readFileSync(file, 'utf8'));
-                const userKeys = Object.keys(users);
-                if (userKeys.length > 0 && !userKeys.includes('admin')) {
-                    console.log('❌ Gerçek kullanıcı verileri bulundu!');
-                    hasSensitiveData = true;
-                }
-            }
-            if (file === 'logs/' || file === 'admin-backup-manuel/') {
-                console.log('❌ Hassas log/backup dosyaları bulundu!');
-                hasSensitiveData = true;
-            }
+    for (const file of mustNotBeTracked) {
+        try {
+            const out = execFileSync('git', ['ls-files', '--error-unmatch', file], {
+                cwd: ROOT_DIR,
+                stdio: ['ignore', 'pipe', 'ignore']
+            }).toString().trim();
+            if (out) leaked.push(file);
+        } catch (e) {
+            // git ls-files --error-unmatch, dosya izlenmiyorsa hata verir: istediğimiz durum.
         }
-    });
-
-    if (!hasSensitiveData) {
-        console.log('✅ Hassas dosyalar temizlendi');
-        return true;
     }
 
-    return false;
+    if (leaked.length > 0) {
+        console.log('❌ Bu dosyalar git tarafından İZLENİYOR (sır sızıntısı riski):');
+        leaked.forEach(f => console.log(`   - ${f}`));
+        console.log('🔧 Çözüm: git rm --cached <dosya> ve .gitignore\'a ekleyin.');
+        console.log('⚠️  Zaten push edildiyse değerleri ROTATE edin — geçmişten silmek yetmez.');
+        return false;
+    }
+
+    console.log('✅ Hassas dosyaların hiçbiri git\'te izlenmiyor');
+    return true;
 }
 
 // 4. Güvenli JWT Secret oluşturucu
@@ -141,7 +126,7 @@ function runSecurityChecks() {
 
     const checks = [
         { name: 'Environment File', fn: checkEnvironmentFile },
-        { name: 'Config File', fn: checkConfigFile },
+        { name: 'Production Env', fn: checkProductionEnv },
         { name: 'Sensitive Files', fn: checkSensitiveFiles }
     ];
 
@@ -180,7 +165,7 @@ if (require.main === module) {
 
 module.exports = {
     checkEnvironmentFile,
-    checkConfigFile,
+    checkProductionEnv,
     checkSensitiveFiles,
     generateSecureJWTSecret,
     generateSecurePassword,
