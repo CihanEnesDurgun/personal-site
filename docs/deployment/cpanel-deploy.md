@@ -54,28 +54,61 @@ Repo kökündeki `.cpanel.yml` dosyasında sadece iki satır:
 - export NODE_VER=22                     # seçtiğin Node sürümü
 ```
 
-### 3. cPanel'de git reposu oluştur
+### 3. SSH anahtarını yetkilendir
 
-cPanel → **Git Version Control** → Create:
-
-- Clone URL: `https://github.com/CihanEnesDurgun/personal-site.git`
-- Repository Path: `/home/KULLANICI/repositories/personal-site`
-
-### 4. Bilgisayarından cPanel'i remote olarak ekle
-
-cPanel → Git Version Control → repo'nun yanındaki **Manage** → "Clone URL (SSH)" değerini kopyala:
+Bilgisayarında anahtar yoksa üret:
 
 ```bash
+ssh-keygen -t ed25519 -C "cpanel-deploy"     # sorulara Enter yeterli
+cat ~/.ssh/id_ed25519.pub                     # ciktiyi kopyala
+```
+
+cPanel → **SSH Access** → Manage SSH Keys → **Import Key** → Public Key alanına yapıştır
+→ kaydet → listede anahtarın yanındaki **Manage** → **Authorize**.
+
+Test et:
+
+```bash
+ssh -p PORT KULLANICI@SUNUCU "echo baglanti-ok"
+```
+
+### 4. cPanel'de BOŞ git reposu oluştur
+
+cPanel → **Git Version Control** → **Create**:
+
+| Alan | Değer |
+|---|---|
+| Clone a Repository | **KAPALI** (toggle'ı açma) |
+| Repository Path | `repositories/personal-site` |
+| Repository Name | `personal-site` |
+
+> **Neden GitHub'dan klonlamıyoruz?** Böylece cPanel'in GitHub ile hiç işi olmaz.
+> Repo'yu private yapsan da deploy çalışmaya devam eder — deploy'u tetikleyen şey
+> GitHub değil, senin cPanel'e SSH ile yaptığın push.
+
+Oluşunca **Manage** ekranındaki **Clone URL (SSH)** değerini kopyala; şuna benzer:
+`ssh://KULLANICI@SUNUCU:PORT/home/KULLANICI/repositories/personal-site`
+
+### 5. Bilgisayarından cPanel'i remote olarak ekle
+
+```bash
+# cPanel'i ayri bir remote olarak ekle
 git remote add cpanel ssh://KULLANICI@SUNUCU/home/KULLANICI/repositories/personal-site
 
 # Tek `git push` ile hem GitHub'a hem cPanel'e gitsin:
 git remote set-url --add --push origin https://github.com/CihanEnesDurgun/personal-site.git
 git remote set-url --add --push origin ssh://KULLANICI@SUNUCU/home/KULLANICI/repositories/personal-site
+
+# Kontrol: `git remote -v` ciktisinda origin icin 2 adet (push) satiri gormelisin
 ```
 
-SSH anahtarını cPanel → **SSH Access** → Manage SSH Keys ekranından yetkilendir (Authorize).
+İlk gönderim:
 
-### 5. Sunucuda `.env` oluştur
+```bash
+git push cpanel main
+```
+
+### 6. Sunucuda `.env` oluştur
 
 `.env` git'te **yok** ve olmamalı. Sunucuda elle oluştur:
 
@@ -111,7 +144,7 @@ Sonra izinleri kıs: File Manager → `.env` → Permissions → **600**.
 > arayüzünden de bir değer girersen o kazanır. Karışıklık olmasın diye tek yerden,
 > `.env`'den yönet.)
 
-### 6. İlk deploy
+### 7. İlk deploy
 
 ```bash
 git push
@@ -120,7 +153,7 @@ git push
 cPanel → Git Version Control → **Manage** → Pull or Deploy → **Deploy HEAD Commit**
 (ilk seferde elle tetiklemek gerekebilir; sonrakiler otomatik).
 
-### 7. İçerik ve veriyi bir kez yükle
+### 8. İçerik ve veriyi bir kez yükle
 
 `content/`, `images/`, `data/` deploy'a dahil değil — ilk seferde elle yüklenmeli:
 
@@ -135,7 +168,7 @@ npm run content:push
 `data/` için: File Manager ile `data/` klasörünü yükle **ama `users.json`'ı değil**
 (admin'i sunucuda üreteceğiz).
 
-### 8. Admin kullanıcısını sunucuda oluştur
+### 9. Admin kullanıcısını sunucuda oluştur
 
 cPanel → **Terminal** (veya SSH):
 
@@ -151,7 +184,7 @@ Sonra `.env`'den `DEFAULT_ADMIN_PASSWORD` satırını silebilirsin.
 > ⚠️ Yerelindeki `data/users.json`'ı **sunucuya kopyalama**. O dosyanın şifresi
 > (`t0KmYrPH!C7fQmLH`) public GitHub repo'sunda yıllardır açıkta duruyordu.
 
-### 9. Kontrol
+### 10. Kontrol
 
 - `https://cihanenesdurgun.com` → site açılıyor mu
 - `https://cihanenesdurgun.com/api/simple-test` → `{"success":true}` dönüyor mu
