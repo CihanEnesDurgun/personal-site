@@ -300,7 +300,7 @@ const fileFilter = (req, file, cb) => {
   }
 
   // Check file extension
-  const fileExtension = path.extname(file.originalname).toLowerCase();
+  const fileExtension = path.extname(decodeUploadFilename(file.originalname)).toLowerCase();
   if (!ALLOWED_EXTENSIONS.includes(fileExtension)) {
     return cb(new Error(`Dosya uzantısı izin verilmiyor. İzin verilen uzantılar: ${ALLOWED_EXTENSIONS.join(', ')}`), false);
   }
@@ -315,6 +315,18 @@ const fileFilter = (req, file, cb) => {
 };
 
 // Multer configuration for secure file uploads
+
+// Multer/busboy, multipart basligindaki dosya adini latin1 olarak cozer. UTF-8 adlar bu
+// yuzden mojibake olur ("görsel.png" -> "gÃ¶rsel.png") ve sanitizeFilename aksanlari
+// temizlerken geriye "ga-rsel" gibi okunamaz bir ad kalir. Baytlari UTF-8'e geri cevirir.
+function decodeUploadFilename(originalName) {
+  if (!originalName) return originalName;
+
+  const decoded = Buffer.from(originalName, 'latin1').toString('utf8');
+
+  // Gecerli UTF-8 degilse cozumleme U+FFFD uretir; o durumda ad zaten dogruydu.
+  return decoded.includes('�') ? originalName : decoded;
+}
 
 // Sanitize filename for URL-safe usage
 function sanitizeFilename(originalName, postTitle) {
@@ -370,9 +382,10 @@ const storage = multer.diskStorage({
   filename: function (req, file, cb) {
     // Use post title from request body if available
     const postTitle = req.body.postTitle || null;
-    const safeFilename = sanitizeFilename(file.originalname, postTitle);
+    const originalName = decodeUploadFilename(file.originalname);
+    const safeFilename = sanitizeFilename(originalName, postTitle);
 
-    Logger.info(`[FILE-8002] Dosya adi duzenlendi: "${file.originalname}" -> "${safeFilename}"`);
+    Logger.info(`[FILE-8002] Dosya adi duzenlendi: "${originalName}" -> "${safeFilename}"`);
     cb(null, safeFilename);
   }
 });
