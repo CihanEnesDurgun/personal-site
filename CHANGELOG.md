@@ -8,15 +8,24 @@ Her sürümün ayrıntılı notları [`docs/release-notes/`](docs/release-notes/
 
 ## [Yayınlanmamış]
 
+## [0.2.0] - 2026-07-17 — *Yayına Hazırlık*
+
+cPanel'e ilk yayın öncesi kapsamlı güvenlik denetimi ve deploy altyapısı kurulumu.
+
 ### Güvenlik
-- Dokümantasyonda "örnek" olarak duran gerçek `JWT_SECRET` değeri kaldırıldı ve rotate
-  edildi. Repo public olduğu için bu anahtar açıktaydı; anahtarı bilen biri şifre bilmeden
+- **Kritik:** Dokümantasyonda "örnek" olarak duran gerçek `JWT_SECRET` değeri public
+  repo'da açıktaydı; kaldırıldı ve rotate edildi. Bu anahtarı bilen biri şifre bilmeden
   admin oturum token'ı üretebilirdi.
-- `scripts/setup-users.js` içindeki gömülü admin şifresi kaldırıldı; artık
-  `DEFAULT_ADMIN_PASSWORD` ortam değişkeninden okunuyor ve tanımlı değilse script duruyor.
+- **Kritik:** `content/posts.json` ve `content/*/*.md` statik olarak herkese açık
+  sunulduğu için yayınlanmamış (taslak) yazılar kimlik doğrulaması olmadan okunabiliyordu;
+  `?preview=true` bir URL parametresiydi, kimlik doğrulaması değildi. Artık bu rotalar
+  sunucu tarafında filtreleniyor: yetkisiz istekte taslaklar 404/gizli, admin token'ıyla
+  önizleme çalışmaya devam ediyor.
 - `/api/webhook/deploy` endpoint'i kaldırıldı. `GITHUB_WEBHOOK_SECRET` tanımlı değilken
   imza doğrulaması atlandığı için, internetteki herhangi biri sahte bir push isteğiyle
   sunucuda deploy script'i çalıştırabiliyordu. Uygulamada artık shell çalıştırma yeteneği yok.
+- `scripts/setup-users.js` içindeki gömülü admin şifresi kaldırıldı; artık
+  `DEFAULT_ADMIN_PASSWORD` ortam değişkeninden okunuyor ve tanımlı değilse script duruyor.
 - `users.json` okunamadığında production'da rastgele şifreli, diske yazılmayan bir "hayalet
   admin" üretiliyordu: kimse giriş yapamaz ama sistem çalışıyor görünürdü. Artık açıkça
   reddediyor ve çözümü logluyor.
@@ -24,27 +33,42 @@ Her sürümün ayrıntılı notları [`docs/release-notes/`](docs/release-notes/
   (önceki kontrol yol karşılaştırması hatası yüzünden hiç çalışmıyordu).
 
 ### Eklendi
-- cPanel push-to-deploy yapılandırması (`.cpanel.yml`): `git push` → otomatik `npm ci` →
-  Passenger restart. Dışarıya açık deploy tetikleyicisi yok.
-- İçerik senkronizasyon araçları: `npm run content:pull`, `content:push`, `backup:data`.
+- cPanel deploy altyapısı: `.cpanel.yml` (kod dosyalarını kopyalar, `npm ci`, Passenger
+  restart) ve `scripts/server-deploy.sh` (cPanel Terminal'den `git pull` + deploy tetikler).
+  Hosting SSH sağlamadığı için akış "sunucudan GitHub'dan pull" şeklindedir.
+- `scripts/content-pull.js`: sitenin HTTP arayüzü üzerinden içerik indirir (SSH gerekmez).
+  Admin girişi yapılırsa taslaklar da iner; anonim kullanımda yereldeki taslaklar korunur,
+  üzerine yazılmaz.
+- `src/js/meta-tags.js`: yazı/proje sayfalarına sekme başlığı ve paylaşım (og:/twitter:)
+  meta etiketleri. Önceden tüm yazılar aynı statik başlığı paylaşıyordu.
 - `CLAUDE.md`: proje kuralları ve mimari özet.
 - `docs/deployment/cpanel-deploy.md`, `docs/guides/release-process.md`.
 
 ### Değiştirildi
 - Sürüm numaralarından araç ekleri (`-cla`, `.anti`, `.crs`) kaldırıldı; sürüm artık düz
-  SemVer (`0.1.13`). Sürüm notları `docs/version-notes/` → `docs/release-notes/` taşındı.
+  SemVer. Sürüm notları `docs/version-notes/` → `docs/release-notes/` taşındı.
 - `package.json` `engines.node`: `>=14` → `>=20.19`. Önceki değer yanlıştı; `jsdom` en az
   20.19, `marked` en az 20 gerektiriyor.
 - `env.example` koddaki gerçek kullanımla eşitlendi.
 - `.cursorrules` → `CLAUDE.md`; sürüm süreci `docs/guides/release-process.md`'ye taşındı.
+- Türkçe karakterli dosya adlarıyla görsel yükleme artık bozulmuyor (`görsel.png` →
+  `gÃ¶rsel.png` mojibake'i sebebiyle `ga-rsel` gibi okunamaz adlar üretiliyordu).
+- Dosya adları tutarlı hale getirildi: `src/css/blogstyle.css` → `blog.css`,
+  `projectstyle.css` → `projects.css`, `markdown-editor/script.js` → `editor.js` vb.
+- `rss.xml`/`sitemap.xml` artık git'te tutulmuyor; ikisi de sunucu açılışında yeniden
+  üretiliyor (önceden yalnızca RSS açılışta üretiliyordu, sitemap için tutarsızdı).
+- Proje klasörü üç kat iç içe yoldan (`Desktop/personal-site-fix-april/...`) tek bir
+  konuma taşındı (`Projects/personal-site`).
 
 ### Kaldırıldı
+- `admin/js/` altında hiçbir HTML tarafından yüklenmeyen 7 ölü modül (`admin.js` aynı
+  sınıfları zaten kendi içinde tanımlıyordu — yarım kalmış bir refactor artığı).
 - `config.json`: server bu dosyayı hiç okumuyordu; içindeki domain/CORS ayarları `.env`
   ile çelişerek yanıltıyordu.
-- `scripts/deploy.sh`: hardcoded yol içeriyordu ve `pkill`/`nohup` ile Passenger'ın
-  yönettiği süreci bozuyordu.
-- `.github/workflows/deploy.yml`: devre dışı ama elle çalıştırılabilir haldeydi; aynı
-  Passenger sorununu ve Node 18'i taşıyordu.
+- `scripts/deploy.sh`, `.github/workflows/deploy.yml`: Passenger ile çakışan
+  `pkill`/`nohup` kullanıyorlardı; hardcoded/yanlış yollar içeriyorlardı.
+- SSH tabanlı `content-push.sh`/`backup-data.sh`/`sync-common.sh`: hosting SSH
+  sağlamadığı için çalışmıyorlardı.
 - Çöp dosyalar: `_diff.txt`, `walkthrough.md.resolved`, `test-marked.js`.
 
 ## [0.1.13] - 2026-07 — *Projeler Bölümü*
