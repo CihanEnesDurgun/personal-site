@@ -7,7 +7,7 @@
 #
 # UYARI: yereldeki content/ ve images/ dosyalarinin uzerine yazar.
 
-source "$(dirname "${BASH_SOURCE[0]}")/_sync-common.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/sync-common.sh"
 
 echo "Sunucudan icerik indirilecek:"
 echo "  Kaynak : $SSH_TARGET:$CPANEL_APP_DIR/{content,images}"

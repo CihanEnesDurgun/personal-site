@@ -1790,7 +1790,7 @@ class BlogManager {
     } catch (error) {
       const errorCode = typeof window !== 'undefined' && window.getErrorCode ? window.getErrorCode(error) : null;
       console.error('Error saving post:', error);
-      if (errorCode) console.error(`Hata Kodu: ${errorCode} - Detaylar için docs/ERROR_REGISTRY_TR.md dosyasına bakın`);
+      if (errorCode) console.error(`Hata Kodu: ${errorCode} - Detaylar için docs/error-handling/error-registry.tr.md dosyasına bakın`);
       this.showNotification(`Blog yazısı kaydedilirken hata oluştu: ${error.message}`, 'error', null, error);
     }
   }
@@ -5795,7 +5795,7 @@ async function handleAvatarUpload(files) {
     const errorCode = typeof window !== 'undefined' && window.getErrorCode ? window.getErrorCode(error) : null;
     console.error('Avatar upload error:', error);
     if (errorCode) {
-      console.error(`Hata Kodu: ${errorCode} - Detaylar için docs/ERROR_REGISTRY_TR.md dosyasına bakın`);
+      console.error(`Hata Kodu: ${errorCode} - Detaylar için docs/error-handling/error-registry.tr.md dosyasına bakın`);
     }
 
     const errorMessage = errorCode

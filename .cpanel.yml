@@ -25,7 +25,7 @@ deployment:
 
     # ==== 1) Kod dosyalarını uygulama klasörüne kopyala ====
     - /bin/mkdir -p $APP_DIR
-    - /bin/cp -f server.js package.json package-lock.json config.json nodemon.json $APP_DIR/
+    - /bin/cp -f server.js package.json package-lock.json nodemon.json $APP_DIR/
     - /bin/cp -f index.html blog.html post.html project.html projects.html $APP_DIR/
     - /bin/cp -Rf lib src admin markdown-editor scripts $APP_DIR/
 
@@ -34,7 +34,6 @@ deployment:
 
     # ==== 3) Hassas dosyaların izinlerini sıkılaştır ====
     - if [ -f $APP_DIR/.env ]; then /bin/chmod 600 $APP_DIR/.env; fi
-    - if [ -f $APP_DIR/config.json ]; then /bin/chmod 600 $APP_DIR/config.json; fi
     - if [ -d $APP_DIR/data ]; then /usr/bin/find $APP_DIR/data -name "*.json" -type f -exec /bin/chmod 600 {} + ; fi
 
     # ==== 4) Passenger'ı yeniden başlat ====

@@ -5,7 +5,7 @@
 # Bu veriler git'te DEGIL ve deploy sirasinda hic dokunulmuyor; tek kopyalari
 # sunucuda. Ara sira calistirmakta fayda var.
 
-source "$(dirname "${BASH_SOURCE[0]}")/_sync-common.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/sync-common.sh"
 
 STAMP="$(date +%Y%m%d-%H%M%S)"
 DEST="$ROOT_DIR/backups/$STAMP"

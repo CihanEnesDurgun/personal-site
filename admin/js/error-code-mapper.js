@@ -125,7 +125,7 @@ function logErrorWithCode(error, context = '') {
   if (errorCode) {
     console.error(`🚨 ${context ? context + ' - ' : ''}Sistem Hatası: ${errorCode}`);
     console.error(`📋 Detay: ${errorMessage}`);
-    console.error(`📖 Çözüm rehberi için: docs/ERROR_REGISTRY_TR.md dosyasında "${errorCode}" kodunu arayın`);
+    console.error(`📖 Çözüm rehberi için: docs/error-handling/error-registry.tr.md dosyasında "${errorCode}" kodunu arayın`);
   } else {
     console.error(`🚨 ${context ? context + ' - ' : ''}${errorMessage}`);
   }

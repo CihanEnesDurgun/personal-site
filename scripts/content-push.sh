@@ -11,7 +11,7 @@
 # Not: tar sadece gonderilen dosyalarin uzerine yazar; sunucuda olup yerelde
 # olmayan dosyalar SILINMEZ.
 
-source "$(dirname "${BASH_SOURCE[0]}")/_sync-common.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/sync-common.sh"
 
 echo "Yerel icerik sunucuya gonderilecek:"
 echo "  Kaynak : $ROOT_DIR/{content,images}"
