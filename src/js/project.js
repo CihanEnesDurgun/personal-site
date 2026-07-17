@@ -270,7 +270,8 @@ async function boot() {
 
     // Başlık ve tarih
     q('#projectTitle').textContent = project.title || '';
-    document.title = `${project.title} • Cihan Enes Durgun`;
+    // Sekme basligi + paylasim meta etiketleri (bkz. src/js/meta-tags.js)
+    applyPageMeta(project, 'article');
     if (project.date) q('#projectDate').textContent = formatTR(project.date);
 
     // Hero görsel

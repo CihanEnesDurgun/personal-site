@@ -10,6 +10,7 @@ function formatTR(d) {
   catch { return d || ''; }
 }
 
+
 function calculateReadingTime(content) {
   // Markdown işaretlerini temizle (ana sayfadaki gibi)
   const text = content
@@ -315,6 +316,9 @@ async function boot() {
 
     // Post Header
     q('#postTitle').textContent = post.title || '';
+
+    // Sekme basligi + paylasim meta etiketleri (bkz. src/js/meta-tags.js)
+    applyPageMeta(post, 'article');
 
     // Tarih
     if (post.date) {
