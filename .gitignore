@@ -82,3 +82,6 @@ deploy.config
 # `npm run backup:data` ciktilari — admin sifre hash'i icerir, git'e girmemeli
 backups/
 
+# Turetilmis dosyalar — sunucu acilista yeniden uretir (bkz. generateRSS/generateSitemap)
+rss.xml
+sitemap.xml

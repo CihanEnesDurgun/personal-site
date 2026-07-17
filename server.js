@@ -4550,6 +4550,14 @@ const server = app.listen(PORT, async () => {
     Logger.error('❌ Error generating RSS feed:', error.message);
   }
 
+  try {
+    // rss.xml ve sitemap.xml turetilmis dosyalardir, git'te tutulmazlar; ikisi de
+    // acilista uretilir ki temiz bir sunucuda ilk istekten once hazir olsunlar.
+    await generateSitemap();
+  } catch (error) {
+    Logger.error('❌ Error generating sitemap:', error.message);
+  }
+
   // Zamanlanmış yazıları periyodik kontrol et (her dakika)
   setInterval(async () => {
     try {
