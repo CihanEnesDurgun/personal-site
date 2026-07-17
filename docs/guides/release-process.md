@@ -41,11 +41,20 @@ git log --oneline $(git describe --tags --abbrev=0)..HEAD
 
 **2. Sürümü belirle.** Yukarıdaki tabloya göre artışa karar ver.
 
-**3. Sürüm numarasını iki dosyada güncelle** — ikisi de aynı olmalı, yoksa sitede
-görünen sürüm ile paketinki ayrışır:
+**3. Sürüm numarasını her yerde güncelle** — hepsi aynı olmalı, yoksa sitede görünen
+sürüm ile paketinki ayrışır. `README.md`'deki rozet unutulmaya en müsait olanı.
 
 - `package.json` → `"version": "0.1.14"`
 - `src/js/version.js` → `const APP_VERSION = 'v0.1.14'`
+- `README.md` → sürüm rozeti (`Version-v0.1.14-blue`)
+
+Kaçırılan yer kalmadığını doğrulamak için:
+
+```bash
+git grep -n "0\.1\.13" -- ':!docs/release-notes' ':!CHANGELOG.md'
+```
+
+(Eski sürümü örnek olarak anan `docs/` dosyaları hariç, hiçbir eşleşme çıkmamalı.)
 
 > Sürüm numarasına araç/asistan eki (`-cla`, `.anti` gibi) **eklenmez**. Sürüm, kodun
 > durumunu anlatır; hangi araçla yazıldığını değil.
