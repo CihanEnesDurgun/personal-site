@@ -151,6 +151,13 @@ async function boot() {
   const slug = urlParams.get('slug');
   const isPreview = urlParams.get('preview') === 'true';
 
+  // Taslak onizleme artik sunucuda kimlik dogrulamasi ister: ?preview=true tek basina
+  // yetmez (URL parametresi guvenlik sinirI degil). Admin oturumu varsa token'i gonder.
+  const previewHeaders = () => {
+    const token = isPreview && localStorage.getItem('admin_token');
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  };
+
   if (!slug) {
     q('#postContent').innerHTML = '<p class="muted">Yazı bulunamadı.</p>';
     return;
@@ -182,7 +189,7 @@ async function boot() {
 
   try {
     const [postsResponse, siteResponse] = await Promise.all([
-      fetch('content/posts.json'),
+      fetch('content/posts.json', { headers: previewHeaders() }),
       fetch('content/site.json')
     ]);
 
@@ -192,7 +199,7 @@ async function boot() {
     const post = posts.find(p => p.slug === slug);
 
     if (!post) {
-      q('#postContent').innerHTML = '<p class="muted">Yazı bulunamamadı.</p>';
+      q('#postContent').innerHTML = '<p class="muted">Yazı bulunamadı.</p>';
       return;
     }
 
@@ -206,7 +213,7 @@ async function boot() {
     }
 
     // Markdown dosyasını yükle
-    const mdResponse = await fetch(`content/posts/${post.slug}.md`);
+    const mdResponse = await fetch(`content/posts/${post.slug}.md`, { headers: previewHeaders() });
     const md = await mdResponse.text();
 
     // Markdown'ı HTML'e çevir (önce normal, sonra özel image işleme)

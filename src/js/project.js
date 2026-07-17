@@ -246,13 +246,19 @@ async function boot() {
   const slug = urlParams.get('slug');
   const isPreview = urlParams.get('preview') === 'true';
 
+  // Taslak onizleme sunucuda kimlik dogrulamasi ister (bkz. post.js'teki ayni desen).
+  const previewHeaders = () => {
+    const token = isPreview && localStorage.getItem('admin_token');
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  };
+
   if (!slug) {
     q('#projectContent').innerHTML = '<p class="muted">Proje bulunamadı.</p>';
     return;
   }
 
   try {
-    const projects = await fetch('content/projects.json').then(r => r.json());
+    const projects = await fetch('content/projects.json', { headers: previewHeaders() }).then(r => r.json());
     const project = projects.find(p => p.slug === slug);
 
     if (!project) {
@@ -287,7 +293,7 @@ async function boot() {
     renderLanguages(project.languages);
 
     // Markdown içerik
-    const mdResponse = await fetch(`content/projects/${project.slug}.md`);
+    const mdResponse = await fetch(`content/projects/${project.slug}.md`, { headers: previewHeaders() });
     const md = mdResponse.ok ? await mdResponse.text() : '';
     const rawHtml = marked.parse(md, { gfm: true, breaks: true });
     let html = DOMPurify.sanitize(rawHtml);

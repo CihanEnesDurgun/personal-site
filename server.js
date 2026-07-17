@@ -4475,6 +4475,76 @@ app.get('/sitemap.xml', async (req, res, next) => {
 });
 
 
+// ====== Taslak Korumasi (content/ statik sunumundan ONCE calismali) ======
+// GUVENLIK: content/posts.json ve content/posts/*.md statik sunuldugu icin
+// yayinlanmamis yazilar herkese acikti; blog.js'teki filtreleme yalnizca tarayicida
+// calisir ve guvenlik siniri DEGILDIR. Ayrica ?preview=true bir URL parametresidir,
+// kimlik dogrulamasi degil. Yayinlanmamis icerik artik burada, sunucuda ayiklanir.
+
+const icerikYayinda = (item) => {
+  const status = item.status || 'published'; // eski kayitlarda status yok
+  if (status === 'published') return true;
+  if (status === 'scheduled' && item.publishDate) {
+    return new Date(item.publishDate) <= new Date();
+  }
+  return false;
+};
+
+// Token varsa dogrular, yoksa anonim olarak devam eder (401 firlatmaz).
+const optionalAuth = async (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (!token) return next();
+
+  try {
+    jwt.verify(token, JWT_SECRET);
+    if (sessionManager) {
+      const session = await sessionManager.validateSession(
+        token, req.ip || req.connection.remoteAddress, req.headers['user-agent']
+      );
+      if (session) req.user = { username: session.username };
+    } else {
+      req.user = jwt.decode(token);
+    }
+  } catch (err) {
+    // Gecersiz token = anonim ziyaretci. Hata firlatma: bu uclar herkese acik.
+  }
+  next();
+};
+
+// posts.json / projects.json: yetkisiz istekte yayinlanmamis kayitlari cikar
+const filtreliIndeks = (dosyaAdi) => async (req, res, next) => {
+  try {
+    const tumu = await fs.readJson(path.join(__dirname, 'content', dosyaAdi));
+    if (!Array.isArray(tumu)) return next();
+    res.set('Cache-Control', 'no-cache');
+    res.json(req.user ? tumu : tumu.filter(icerikYayinda));
+  } catch (error) {
+    next(); // dosya yoksa statik katman 404 versin
+  }
+};
+
+// content/<tur>/<slug>.md: yayinlanmamissa yetkisiz istekte 404
+const markdownKorumasi = (indeksDosyasi) => async (req, res, next) => {
+  try {
+    if (req.user) return next();
+    const slug = path.basename(req.params.dosya, '.md');
+    const tumu = await fs.readJson(path.join(__dirname, 'content', indeksDosyasi));
+    const kayit = Array.isArray(tumu) ? tumu.find(x => x.slug === slug) : null;
+    if (kayit && !icerikYayinda(kayit)) {
+      return res.status(404).send('Not found');
+    }
+  } catch (error) {
+    // indeks okunamadi: statik katmana birak
+  }
+  next();
+};
+
+app.get('/content/posts.json', optionalAuth, filtreliIndeks('posts.json'));
+app.get('/content/projects.json', optionalAuth, filtreliIndeks('projects.json'));
+app.get('/content/posts/:dosya', optionalAuth, markdownKorumasi('posts.json'));
+app.get('/content/projects/:dosya', optionalAuth, markdownKorumasi('projects.json'));
+
 // ====== Static File Serving (Güvenlik: Allowlist) ======
 // GÜVENLİK: express.static('.') tüm proje kökünü (server.js, data/, lib/, logs/,
 // .git/, package.json vb.) herkese açardı. Sadece public varlıklar servis edilir.
