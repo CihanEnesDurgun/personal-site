@@ -1,0 +1,43 @@
+---
+# cPanel Git Version Control otomatik deploy yapılandırması.
+#
+# Bu dosya, cPanel'deki repoya her push yaptığında otomatik çalışır.
+#
+# TASARIM KURALI — SADECE KOD DEPLOY EDİLİR:
+#   Kopyalanacak dosyalar aşağıda TEK TEK listelenmiştir. content/, images/, data/,
+#   rss.xml, sitemap.xml ve .env bilerek listede YOKTUR; çünkü bunları admin paneli
+#   çalışma anında yazar. Listeye eklersen, panelden yayınladığın yazılar/görseller
+#   bir sonraki deploy'da repo'daki eski sürümle ezilir ve KAYBOLUR.
+#   İçerik alışverişi için: npm run content:pull / npm run content:push
+#
+# İLK KURULUMDAN ÖNCE AŞAĞIDAKİ 2 DEĞERİ KENDİ SUNUCUNA GÖRE AYARLA:
+#   APP_DIR  : cPanel > Setup Node.js App ekranındaki "Application root"
+#   NODE_VER : aynı ekranda seçtiğin Node sürümü (jsdom/marked için 20+ olmalı)
+
+deployment:
+  tasks:
+    # ==== AYARLAR ====
+    - export APP_DIR=$HOME/personal-site
+    - export APP_NAME=personal-site
+    - export NODE_VER=22
+
+    # ==== 1) Kod dosyalarını uygulama klasörüne kopyala ====
+    - /bin/mkdir -p $APP_DIR
+    - /bin/cp -f server.js package.json package-lock.json config.json nodemon.json $APP_DIR/
+    - /bin/cp -f index.html blog.html post.html project.html projects.html $APP_DIR/
+    - /bin/cp -Rf lib src admin markdown-editor scripts $APP_DIR/
+
+    # ==== 2) Bağımlılıkları kur (Node sanal ortamı içinde) ====
+    - source $HOME/nodevenv/$APP_NAME/$NODE_VER/bin/activate && cd $APP_DIR && npm ci --omit=dev
+
+    # ==== 3) Hassas dosyaların izinlerini sıkılaştır ====
+    - if [ -f $APP_DIR/.env ]; then /bin/chmod 600 $APP_DIR/.env; fi
+    - if [ -f $APP_DIR/config.json ]; then /bin/chmod 600 $APP_DIR/config.json; fi
+    - if [ -d $APP_DIR/data ]; then /usr/bin/find $APP_DIR/data -name "*.json" -type f -exec /bin/chmod 600 {} + ; fi
+
+    # ==== 4) Passenger'ı yeniden başlat ====
+    # cPanel'in Node.js uygulaması Passenger ile çalışır; restart için tmp/restart.txt
+    # dosyasına dokunmak yeterlidir. (pkill/nohup KULLANMA — Passenger ile çakışır.)
+    - /bin/mkdir -p $APP_DIR/tmp
+    - /bin/touch $APP_DIR/tmp/restart.txt
+    - echo "Deploy tamamlandi - $(date)"
