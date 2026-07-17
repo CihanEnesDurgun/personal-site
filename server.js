@@ -55,13 +55,9 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const rateLimit = require('express-rate-limit');
-const { exec } = require('child_process');
-const { promisify } = require('util');
 
 const SessionManager = require('./lib/sessionManager');
 const LogCleanupManager = require('./lib/logCleanupManager');
-
-const execAsync = promisify(exec);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -217,11 +213,7 @@ const corsOptions = {
 app.use('/api', cors(corsOptions));
 app.use(generalLimiter); // Rate limiting enabled for security
 
-// Webhook endpoint needs raw body for signature verification
-// Add raw body parser for webhook endpoint only
-app.use('/api/webhook/deploy', bodyParser.raw({ type: 'application/json', limit: '10mb' }));
-
-// Regular body parsers for other endpoints
+// Body parsers
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
 
@@ -562,7 +554,17 @@ const readUsersFile = async () => {
     return parsedData;
   } catch (error) {
     Logger.error('Error reading users file:', error);
-    // Create default admin user with secure random password
+
+    // Production'da hayali admin uretmek yerine acik sekilde basarisiz ol: uretilen
+    // rastgele sifre hicbir yere yazilmadigi icin kimse giris yapamaz, ama sistem
+    // calisiyormus gibi gorunurdu. Bos kullanici listesi = giris reddedilir.
+    if (isProduction) {
+      Logger.error('[AUTH-1010] data/users.json okunamadi. Admin girisi devre disi.');
+      Logger.error('💡 Cozum: sunucuda `npm run setup:users` calistirin (DEFAULT_ADMIN_PASSWORD tanimli olmali).');
+      return {};
+    }
+
+    // Development: yerelde hizli baslangic icin gecici admin
     const defaultPassword = process.env.DEFAULT_ADMIN_PASSWORD || crypto.randomBytes(16).toString('hex');
     const hashedPassword = await bcrypt.hash(defaultPassword, BCRYPT_SALT_ROUNDS);
     const defaultData = {
@@ -574,8 +576,11 @@ const readUsersFile = async () => {
       }
     };
 
-    Logger.info('🔐 Default admin user created with secure password');
-    Logger.info('⚠️  IMPORTANT: Change the default password immediately after first login!');
+    Logger.warn('🔐 [DEV] Gecici admin olusturuldu (diske yazilmadi, her restartta degisir)');
+    if (!process.env.DEFAULT_ADMIN_PASSWORD) {
+      Logger.warn('⚠️  DEFAULT_ADMIN_PASSWORD tanimli degil — sifre rastgele, giris yapilamaz.');
+      Logger.warn('💡 `npm run setup:users` ile kalici admin olusturun.');
+    }
 
     // Cache the default data
     fileCache.set(cacheKey, defaultData);
@@ -4456,111 +4461,6 @@ app.get('/sitemap.xml', async (req, res, next) => {
   }
 });
 
-// GitHub Webhook endpoint for automatic deployment
-app.post('/api/webhook/deploy', async (req, res, next) => {
-  try {
-    // Parse JSON from raw body
-    let payload;
-    try {
-      payload = JSON.parse(req.body.toString());
-    } catch (parseError) {
-      Logger.error('❌ Failed to parse webhook payload:', parseError);
-      return next(new AppError('VAL-2001', 400, 'Invalid JSON payload'));
-    }
-
-    // Verify webhook secret if configured
-    const webhookSecret = process.env.GITHUB_WEBHOOK_SECRET;
-    if (webhookSecret) {
-      const signature = req.headers['x-hub-signature-256'];
-      if (!signature) {
-        Logger.warn('⚠️  Webhook request missing signature');
-        return next(new AppError('AUTH-1001', 401, 'Unauthorized: Missing signature'));
-      }
-
-      // Verify signature using raw body
-      const hmac = crypto.createHmac('sha256', webhookSecret);
-      const digest = 'sha256=' + hmac.update(req.body).digest('hex');
-
-      if (signature !== digest) {
-        Logger.warn('⚠️  Webhook signature verification failed');
-        return next(new AppError('AUTH-1001', 401, 'Unauthorized: Invalid signature'));
-      }
-    }
-
-    // Check if this is a push event to main branch
-    const event = req.headers['x-github-event'];
-
-    if (event === 'push' && payload.ref === 'refs/heads/main') {
-      Logger.info('🚀 Deployment webhook triggered');
-      Logger.info(`📦 Commit: ${payload.head_commit?.id?.substring(0, 7)} - ${payload.head_commit?.message}`);
-      Logger.info(`👤 Author: ${payload.head_commit?.author?.name}`);
-
-      // Get the deployment script path
-      const deployScriptPath = path.join(__dirname, 'scripts', 'deploy.sh');
-      const projectPath = process.env.DEPLOY_PATH || __dirname;
-
-      // Check if deploy.sh exists
-      if (await fs.pathExists(deployScriptPath)) {
-        Logger.info('📜 Running deployment script...');
-
-        // Execute deployment script asynchronously
-        execAsync(`bash ${deployScriptPath}`, {
-          cwd: projectPath,
-          env: { ...process.env, PATH: process.env.PATH }
-        }).then(({ stdout, stderr }) => {
-          if (stdout) Logger.info('✅ Deployment output:', stdout);
-          if (stderr) Logger.warn('⚠️  Deployment warnings:', stderr);
-          Logger.info('✅ Deployment completed successfully');
-        }).catch((error) => {
-          Logger.error('❌ Deployment error:', error.message);
-        });
-
-        // Respond immediately (don't wait for deployment to finish)
-        res.status(200).json({
-          success: true,
-          message: 'Deployment started',
-          commit: payload.head_commit?.id?.substring(0, 7),
-          author: payload.head_commit?.author?.name,
-          timestamp: new Date().toISOString()
-        });
-      } else {
-        // If deploy.sh doesn't exist, try direct git pull
-        Logger.info('📜 deploy.sh not found, attempting direct git pull...');
-
-        execAsync('git pull origin main', {
-          cwd: projectPath,
-          env: { ...process.env, PATH: process.env.PATH }
-        }).then(({ stdout, stderr }) => {
-          if (stdout) Logger.info('✅ Git pull output:', stdout);
-          if (stderr) Logger.warn('⚠️  Git pull warnings:', stderr);
-          Logger.info('✅ Git pull completed successfully');
-        }).catch((error) => {
-          Logger.error('❌ Git pull error:', error.message);
-        });
-
-        res.status(200).json({
-          success: true,
-          message: 'Git pull started',
-          commit: payload.head_commit?.id?.substring(0, 7),
-          author: payload.head_commit?.author?.name,
-          timestamp: new Date().toISOString()
-        });
-      }
-    } else {
-      // Not a push to main branch, ignore
-      Logger.info(`ℹ️  Webhook event ignored: ${event} to ${payload.ref}`);
-      res.status(200).json({
-        success: true,
-        message: 'Event ignored (not a push to main branch)',
-        event: event,
-        ref: payload.ref
-      });
-    }
-  } catch (error) {
-    Logger.error('❌ Webhook error:', error);
-    next(new AppError('SYS-3001', error, 'Webhook processing failed. Hata: ' + error.message));
-  }
-});
 
 // ====== Static File Serving (Güvenlik: Allowlist) ======
 // GÜVENLİK: express.static('.') tüm proje kökünü (server.js, data/, lib/, logs/,

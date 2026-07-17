@@ -1,6 +1,26 @@
 # 🔧 Environment Variables (ENV) Açıklamaları
 
-Bu dosya, `.env` dosyasında kullanılan tüm değişkenlerin detaylı açıklamalarını içerir.
+Bu dosya, `.env` dosyasında kullanılan değişkenlerin detaylı açıklamalarını içerir.
+
+> ### ⚠️ Bu dosyaya asla gerçek değer yazmayın
+> Repo **public**. Buraya "örnek" diye yazılan bir `JWT_SECRET`, gerçek secret'ın
+> kendisiydi ve internete açık kaldı. Gerçek değerler yalnızca `.env` içinde yaşar;
+> `.env` gitignore'dadır. Dokümanda hep sahte/placeholder değer kullanın.
+
+> ### 📌 Kodla uyum durumu (son denetim: 2026-07-17)
+> Aşağıdaki bölümlerin bir kısmı **kodda karşılığı olmayan** değişkenleri anlatıyor.
+> Bunları `.env`'e yazmak hiçbir şey yapmaz:
+>
+> | Değişken | Durum |
+> |---|---|
+> | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` | ❌ Kodda kullanılmıyor (mail gönderimi yok) |
+> | `BACKUP_DIR`, `BACKUP_INTERVAL` | ❌ Kodda kullanılmıyor |
+> | `LOG_FILE` | ❌ Kodda kullanılmıyor (log yolu `lib/logger.js`'de sabit) |
+> | `DEBUG` | ❌ Kodda kullanılmıyor |
+> | `SITE_URL` | ✅ Kullanılıyor — bu dosyada belgelenmemiş. Boşsa `https://cihanenesdurgun.com` |
+> | `GITHUB_TOKEN` | ✅ Kullanılıyor (opsiyonel; GitHub API rate limiti için) |
+>
+> Güncel ve kodla birebir uyumlu liste için: **`env.example`**.
 
 ## 📋 Kullanım
 
@@ -13,8 +33,8 @@ Bu dosya, `.env` dosyasında kullanılan tüm değişkenlerin detaylı açıklam
 ### 1. JWT_SECRET
 - **Açıklama**: JWT token imzalama için kullanılan gizli anahtar
 - **Gereksinim**: En az 32 karakter olmalı
-- **Örnek**: `55012901512388322e884e83ea4c296ed727b98717f4e05f8800168985f6df38`
-- **⚠️ ÖNEMLİ**: Production'da MUTLAKA değiştirin!
+- **Örnek**: `<64 karakterlik rastgele hex — aşağıdaki komutla üretin>`
+- **⚠️ ÖNEMLİ**: Gerçek değeri ASLA bu dosyaya, `env.example`'a veya başka bir git dosyasına yazmayın. Sadece `.env` içinde durur (`.env` gitignore'dadır).
 - **Oluşturma**: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
 
 #### 🔍 Kullanım Yerleri:
