@@ -1,56 +1,53 @@
-# 📚 DurgunTech Geliştirici Dokümantasyonu
+# Geliştirici Dokümantasyonu
 
-Bu klasör, projenin kurumsal düzeydeki tüm dokümantasyon dosyalarını, analizlerini ve sistem mimarisi raporlarını içerir.
+Projenin mimari, güvenlik, sürüm ve dağıtım dokümanları.
 
----
+## İçindekiler
 
-## 📁 Klasör Hiyerarşisi (Index)
+### [project/](./project/)
+- [`project-brief.md`](./project/project-brief.md) — Teknik yığın ve mimari özet. **Buradan başlayın.**
 
-### 📋 [project/](./project/)
-Projenin temel vizyonu, kapsamı ve makro seviyede sistem analizleri:
-- `project-brief.md` - **[Önemli]** Projenin teknik yığını ve mimari özeti
+### [deployment/](./deployment/)
+- [`cpanel-deploy.md`](./deployment/cpanel-deploy.md) — cPanel kurulumu, push-to-deploy akışı,
+  içerik senkronizasyonu ve sorun giderme
 
-### 🛠️ [error-handling/](./error-handling/)
+### [guides/](./guides/)
+- [`release-process.md`](./guides/release-process.md) — Sürüm çıkarma adımları (SemVer + Conventional Commits)
+- [`terminal-guide.md`](./guides/terminal-guide.md) — Terminal kullanımı ve otomasyon script'leri
 
+### [security/](./security/)
+- [`security-setup.md`](./security/security-setup.md) — Güvenlik sıkılaştırma ve SSL rehberi
+- [`env-information.md`](./security/env-information.md) — Ortam değişkenlerinin işlevi ve yaşam döngüsü
 
-Hata yönetimi, registry ve mimari detaylar:
-- `ERROR_REGISTRY.md` - Sistem hatalarının merkezi kayıt defteri
-- `ERROR_REGISTRY_TR.md` - Merkezi kayıt defteri (Türkçe)
-- `ERROR_SYSTEM_ARCHITECTURE_TR.md` - Hata yakalama ve loglama mimarisi
+> Güncel ve kodla birebir uyumlu değişken listesi için [`env.example`](../env.example)'a bakın.
 
-### 📖 [guides/](./guides/)
-Kullanım kılavuzları ve teknik rehberler:
-- `TERMINAL_REHBERI.md` - Terminal kullanımı ve otomasyon scriptleri rehberi
+### [error-handling/](./error-handling/)
+- [`error-registry.md`](./error-handling/error-registry.md) — Hata kodları kayıt defteri (EN)
+- [`error-registry.tr.md`](./error-handling/error-registry.tr.md) — Hata kodları kayıt defteri (TR)
+- [`error-system-architecture.tr.md`](./error-handling/error-system-architecture.tr.md) — Hata yakalama ve loglama mimarisi
 
-### 🔒 [security/](./security/)
-Siber güvenlik ve ortam değişkenleri konfigürasyonları:
-- `security-setup.md` - Güvenlik kurulum, hardening (sıkılaştırma) ve SSL rehberi
-- `env-information.md` - `.env` dosyasındaki tüm degişkenlerin işlev ve yaşam döngüleri
+### [release-notes/](./release-notes/)
+Her sürümün ayrıntılı notları (`0.1.13.md` biçiminde). Özet ve sürüm listesi için kök
+dizindeki [`CHANGELOG.md`](../CHANGELOG.md).
 
-### 🛡️ [reports/](./reports/)
-- `GUVENLIK_DENETIM_RAPORU.md` - Sistemin *Defense in Depth* odaklı genel siber güvenlik denetim (audit) raporu
+### [reports/](./reports/)
+Belirli bir tarihte alınmış anlık görüntülerdir; güncel durumu değil, o günkü durumu yansıtır.
+- [`security-audit-2026-02.md`](./reports/security-audit-2026-02.md) — Defense in Depth güvenlik denetimi
+- [`system-analysis-2026-02.md`](./reports/system-analysis-2026-02.md) — Kapsamlı sistem analizi
 
----
+## Nereden başlamalı
 
-## 🚀 Hızlandırılmış Yönlendirmeler
+| Amacın | Oku |
+|---|---|
+| Projeyi anlamak | [project-brief.md](./project/project-brief.md) → kök [README.md](../README.md) |
+| Katkı/geliştirme kuralları | Kök [CLAUDE.md](../CLAUDE.md) |
+| Siteyi yayına almak | [cpanel-deploy.md](./deployment/cpanel-deploy.md) |
+| Yeni sürüm çıkarmak | [release-process.md](./guides/release-process.md) |
+| Bir hata kodunun anlamı | [error-registry.tr.md](./error-handling/error-registry.tr.md) |
 
-**1. Projeyi Yeni Kuruyorsanız:**
-İlk olarak [Project Brief](./project/project-brief.md) dosyasını okuyun. Teknoloji bağımlılıklarını anladıktan sonra doğrudan kök dizindeki README dosyasını inceleyin.
+## Kök dizin bağlantıları
 
-**2. Güvenlik Denetimi veya Zafiyet Testi Yapıyorsanız:**
-Lütfen kodları incelemeden önce doğrudan [Güvenlik Denetim Raporu](./reports/GUVENLIK_DENETIM_RAPORU.md) dokümanını referans alın.
-
----
-
-## 📝 Versiyon Geçmişi (Changelog)
-
-Projenin semantik versiyonlama sürecindeki her patch/minor/major güncellemesi bu klasör altındaki [`./version-notes/`](./version-notes/) dizininde tasnif edilmiştir.
-
----
-
-## 🔗 Hızlı Linkler (Kök Dizin)
-
-- [Ana Proje (Root) README](../README.md)
-- [Node.js Package Registry](../package.json)
-- [Admin CMS](../admin/README.md)
-
+- [README.md](../README.md) — Proje tanıtımı
+- [CLAUDE.md](../CLAUDE.md) — Proje kuralları ve mimari özet
+- [CHANGELOG.md](../CHANGELOG.md) — Sürüm geçmişi
+- [admin/README.md](../admin/README.md) — Admin paneli

@@ -5,8 +5,8 @@
 **Bağımsız Arayüz Mimarisi • Derinlemesine Güvenlik • Taşınabilir JSON Altyapısı**
 
 [![Status](https://img.shields.io/badge/Status-Active%20Development-success?style=for-the-badge)]()
-[![Version](https://img.shields.io/badge/Version-v0.1.13.cla-blue?style=for-the-badge)]()
-[![Node.js](https://img.shields.io/badge/Node.js-v14%2B-green?style=for-the-badge)]()
+[![Version](https://img.shields.io/badge/Version-v0.1.13-blue?style=for-the-badge)]()
+[![Node.js](https://img.shields.io/badge/Node.js-v20%2B-green?style=for-the-badge)]()
 [![License](https://img.shields.io/badge/License-MIT-purple?style=for-the-badge)]()
 
 *Modern, ultra-hızlı ve bütünüyle bağımsız bir kişisel blog yönetim sistemi.*  
@@ -64,7 +64,7 @@ Bu proje sıradan bir web sitesi değil, aynı zamanda siber güvenliğe (SecOps
 3. **Session Revocation System:** Token (JWT) tabanlı sistemlerdeki "kapatılamayan oturum (stateless)" zaafiyetini gidermek adına, server-side memory tabanlı bir Session Guardian devrededir.
 4. **Stack Trace Masking:** Sistem hataları (HTTP 500) patladığında, üretim modunda (Production) saldırganlara sistem mimarisini belli edebilecek "Hata Yolu (Stack Trace)" sızdırılmaz.
 
->> *Detaylı Security Audit raporunu okumak için [docs/reports/GUVENLIK_DENETIM_RAPORU.md](./docs/reports/GUVENLIK_DENETIM_RAPORU.md) dosyasına bakabilirsiniz.*
+>> *Detaylı Security Audit raporunu okumak için [docs/reports/security-audit-2026-02.md](./docs/reports/security-audit-2026-02.md) dosyasına bakabilirsiniz.*
 
 ---
 
@@ -84,13 +84,30 @@ npm install
 ```
 
 **3. Çevresel (Environment) Kurulumu:**
-Proje kök dizininde bir `.env` dosyası yaratın (veya varolan `env.example` dosyasının ismini değiştirin) ve secret anahtarlarınızı girin:
+`env.example` dosyasını `.env` olarak kopyalayın ve zorunlu değerleri doldurun:
+```bash
+cp env.example .env
+```
 ```env
-JWT_SECRET=süper_gizli_random_uzun_şifre_buraya
+JWT_SECRET=          # 32+ karakter, aşağıdaki komutla üretin
+BCRYPT_SALT_ROUNDS=12
 NODE_ENV=development
+DEFAULT_ADMIN_PASSWORD=   # 12+ karakter, admin oluşturmak için
+```
+Güvenli değerler üretmek için:
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"   # JWT_SECRET
+node -e "console.log(require('crypto').randomBytes(18).toString('base64url'))"  # şifre
+```
+> `.env` gitignore'dadır ve öyle kalmalıdır. Repo public; buraya yazılan gerçek değerler
+> asla commit'lenmemelidir. Ayrıntı: [`docs/security/env-information.md`](./docs/security/env-information.md)
+
+**4. Admin kullanıcısını oluşturun:**
+```bash
+npm run setup:users
 ```
 
-**4. Sunucuyu Ateşleyin:**
+**5. Sunucuyu Ateşleyin:**
 ```bash
 npm run dev
 ```
