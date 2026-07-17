@@ -1348,6 +1348,14 @@ async function submitPost() {
             return;
         }
 
+        // getPostData() drops a data: preview, so an unfinished/failed cover upload would
+        // otherwise save silently without a cover.
+        const heroImg = document.getElementById('heroImg');
+        if (!postData.cover && heroImg && heroImg.src.startsWith('data:')) {
+            alert('⏳ Kapak fotoğrafı henüz sunucuya yüklenmedi.\n\nYükleme tamamlanana kadar bekleyin, sonra tekrar kaydedin.');
+            return;
+        }
+
         // Validate minimum lengths
         if (postData.title.length < 3) {
             alert('❌ Başlık çok kısa!\n\nBaşlık en az 3 karakter olmalıdır.\n\nŞu anki uzunluk: ' + postData.title.length + ' karakter');
@@ -1531,11 +1539,15 @@ function getPostData() {
             // heroImg.src returns full URL (e.g. http://localhost:3000/images/blog-covers/photo.jpg)
             // We need only the relative path: images/blog-covers/photo.jpg
             const url = new URL(heroImg.src);
-            coverUrl = url.pathname.replace(/^\//, ''); // Remove leading slash
+            // A data: URI means the preview is still the local FileReader result and the
+            // upload never landed. Its pathname is the raw "image/png;base64,..." payload,
+            // which would get stored and then requested as a relative URL.
+            coverUrl = url.protocol === 'data:' ? '' : url.pathname.replace(/^\//, '');
         } catch (e) {
             // If URL parsing fails, try getAttribute which returns the raw value
             coverUrl = heroImg.getAttribute('src') || '';
-            if (coverUrl.startsWith('/')) coverUrl = coverUrl.substring(1);
+            if (coverUrl.startsWith('data:')) coverUrl = '';
+            else if (coverUrl.startsWith('/')) coverUrl = coverUrl.substring(1);
         }
     }
 
@@ -1885,6 +1897,23 @@ function openCoverUpload() {
     }
 }
 
+// Server rejects anything larger (MAX_FILE_SIZE in server.js)
+const MAX_COVER_SIZE = 5 * 1024 * 1024;
+
+// Reset the hero preview back to the "add a cover" placeholder
+function resetCoverPhoto() {
+    const heroImg = document.getElementById('heroImg');
+    const container = document.getElementById('coverPhotoContainer');
+
+    if (heroImg) {
+        heroImg.src = 'https://placehold.co/1200x600/84CC16/FFFFFF?text=Kapak+Fotoğrafı+Ekle';
+        heroImg.alt = 'Kapak fotoğrafı ekle';
+    }
+    if (container) {
+        container.classList.remove('has-image');
+    }
+}
+
 // Handle cover photo upload
 function handleCoverUpload(files) {
     if (files.length === 0) return;
@@ -1892,6 +1921,12 @@ function handleCoverUpload(files) {
     const file = files[0];
     if (!file.type.startsWith('image/')) {
         alert('Lütfen sadece resim dosyası seçin.');
+        return;
+    }
+
+    if (file.size > MAX_COVER_SIZE) {
+        const mb = (file.size / (1024 * 1024)).toFixed(1);
+        alert(`❌ Kapak fotoğrafı çok büyük (${mb} MB).\n\nMaksimum boyut: ${MAX_COVER_SIZE / (1024 * 1024)} MB.\nLütfen görseli küçültüp tekrar deneyin.`);
         return;
     }
 
@@ -1991,9 +2026,20 @@ async function uploadCoverPhotoToServer(file) {
 
         } else {
             console.error('Failed to upload cover photo:', response.status);
+            let detail = `Sunucu hatası (${response.status})`;
+            try {
+                const err = await response.json();
+                detail = err.message || err.error || err.detail || detail;
+            } catch (_) { /* response body was not JSON */ }
+            // The preview is still the local data: URI — drop it so it can't be saved
+            // as a cover path and so the failure is actually visible.
+            resetCoverPhoto();
+            alert(`❌ Kapak fotoğrafı yüklenemedi.\n\n${detail}`);
         }
     } catch (error) {
         console.error('Error uploading cover photo:', error);
+        resetCoverPhoto();
+        alert(`❌ Kapak fotoğrafı yüklenemedi: sunucuya ulaşılamadı.\n\n${error.message}`);
     }
 }
 

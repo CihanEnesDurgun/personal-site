@@ -77,7 +77,7 @@ function initGallery(images) {
   function startAuto() {
     if (total <= 1) return;
     stopAuto();
-    autoTimer = setInterval(next, 3500);
+    autoTimer = setInterval(next, 2500);
   }
   function stopAuto() { if (autoTimer) { clearInterval(autoTimer); autoTimer = null; } }
 

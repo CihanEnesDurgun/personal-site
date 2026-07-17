@@ -303,12 +303,11 @@ class AuthManager {
 
   // Check authentication and redirect
   checkAuth() {
-    // Check local session first
-    if (this.sessionManager.isAuthenticated()) {
-      window.location.href = 'index.html';
-      return;
-    }
-    // Also check JWT token (admin_token) — if valid, skip login page
+    // Deprecated local session (admin_session) is no longer created by login() —
+    // clear any stale copy so it can't force a redirect loop with the JWT check below.
+    this.sessionManager.clearSession();
+
+    // Check JWT token (admin_token) — if valid, skip login page
     const token = localStorage.getItem('admin_token');
     if (token) {
       try {
