@@ -8,6 +8,25 @@ Her sürümün ayrıntılı notları [`docs/release-notes/`](docs/release-notes/
 
 ## [Yayınlanmamış]
 
+## [0.2.3] - 2026-08-02 — *Deploy Sonrası Düzeltme*
+
+v0.2.2 canlıya alındıktan sonra admin panelinde ortaya çıkan bir 500 hatası düzeltildi.
+
+### Düzeltildi
+- **`/api/security/data` 500 hatası.** `SessionManager`, `data/sessions.json` dosyasını
+  `failedLogins` anahtarı olmadan oluşturuyor (o anahtar ancak ilk başarısız girişte
+  ekleniyor). Güvenlik verisi ucu ise diziyi koşulsuz `.forEach` ile geziyordu; anahtar
+  yokken `TypeError` fırlatıp 500 dönüyordu. Aynı varsayım `logSuccessfulLogin` ve
+  `logFailedLogin` içinde de vardı. Artık `readSessionsFile` okuduğu nesnede
+  `activeSessions`, `loginHistory`, `failedLogins` dizilerini garanti ediyor (diğer
+  anahtarlar korunuyor), böylece tüm tüketiciler güvende.
+
+> **Not:** Konsolda görülen `/api/admin/logs` 403'ü bir kod hatası değildir — süresi
+> dolmuş/boşta kalmış oturumun (15 dk idle) bfcache üzerinden yeniden istek atmasıdır;
+> ön yüz bu durumda giriş sayfasına yönlendirir. Ayrıca CSP'nin engellediği `.map`
+> (kaynak harita) istekleri işlevi etkilemez.
+→ [Ayrıntılar](docs/release-notes/0.2.3.md)
+
 ## [0.2.2] - 2026-08-02 — *Güvenlik Turu*
 
 v0.2.1 sonrası kod ve canlı site üzerinde kapsamlı bir güvenlik denetimi yapıldı

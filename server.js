@@ -752,7 +752,15 @@ const removePostFromImageTags = async (postSlug) => {
 const readSessionsFile = async () => {
   try {
     const data = await fs.readFile(SESSIONS_FILE, 'utf8');
-    return JSON.parse(data);
+    const parsed = JSON.parse(data);
+    // SessionManager dosyayi failedLogins anahtari olmadan olusturabiliyor
+    // (o anahtar ancak ilk basarisiz giriste ekleniyor). Bu tuketiciler
+    // dizileri kosulsuz kullaniyor; eksikse .forEach/.unshift TypeError verir.
+    // Diger anahtarlar (inactiveSessions, lastUpdated) korunur.
+    parsed.activeSessions = parsed.activeSessions || [];
+    parsed.loginHistory = parsed.loginHistory || [];
+    parsed.failedLogins = parsed.failedLogins || [];
+    return parsed;
   } catch (error) {
     Logger.error('Error reading sessions file:', { error });
     return { activeSessions: [], loginHistory: [], failedLogins: [] };
