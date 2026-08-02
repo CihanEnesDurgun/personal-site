@@ -8,6 +8,54 @@ Her sürümün ayrıntılı notları [`docs/release-notes/`](docs/release-notes/
 
 ## [Yayınlanmamış]
 
+## [0.2.2] - 2026-08-02 — *Güvenlik Turu*
+
+v0.2.1 sonrası kod ve canlı site üzerinde kapsamlı bir güvenlik denetimi yapıldı
+(17 bulgu: 4 yüksek, 8 orta, 5 düşük). Bu sürüm, yüksek ve orta öncelikli bulguların
+**tamamını** kapatır; düşük öncelikli bulgular sonraki tura bırakıldı.
+
+### Güvenlik
+- **Bağımlılıklar:** `npm audit fix` ile 12 açık kapatıldı — `jws` (JWT imza doğrulama,
+  GHSA-869p-cjfg-cm3x) dahil. Kullanılmayan `file-type` bağımlılığı kaldırılınca
+  `npm audit` sıfır açık raporluyor.
+- **Hız sınırı:** `trust proxy 'loopback'` eklendi; IP başına limitler artık gerçekten
+  IP başına çalışıyor (önceden tüm ziyaretçiler tek kovayı paylaşıyordu). Giriş limiti
+  50'den 15 dakikada 10 **başarısız** denemeye indirildi (başarılı girişler sayılmaz).
+- **Kişisel veri:** Herkese açık yorum uçları artık `email` ve `ip` alanlarını
+  yanıtlardan ayıklıyor; admin paneli etkilenmedi.
+- **XSS:** Dört ayrı `escapeHtml` kopyası tırnak karakterlerini kaçırmıyordu; HTML
+  öznitelikleri içine basılan değerlerle (`data-reply-name` vb.) öznitelikten kaçış
+  mümkündü. Hepsi tırnakları da kaçıran sürümle değiştirildi.
+- **Yol geçişi (path traversal):** Galeri silme/geri yükleme/kalıcı silme ve `set-icon`
+  uçlarında `filename` doğrulanmadan `path.join`'e giriyordu; kodlanmış `../` dizileriyle
+  `images/` dışına çıkılabiliyordu. Merkezi `isSafeFilename` doğrulaması eklendi.
+- **Kimlik doğrulama fail-closed:** Oturum doğrulaması hata fırlatırsa kod salt JWT'ye
+  düşüyordu — iptal edilmiş oturumlar yeniden geçerli oluyordu. Artık hata durumunda
+  istek reddediliyor.
+- **Zamanlama sızıntısı:** Kullanıcı adı yokken bcrypt hiç çalışmıyor, yanıt süresi farkı
+  hangi kullanıcı adının var olduğunu ele veriyordu. Artık sahte bir hash ile aynı
+  maliyette karşılaştırma yapılıyor.
+- **Sahte IP kaydı:** `getClientIP` istemcinin uydurabileceği `x-forwarded-for`
+  başlığını koşulsuz kabul ediyordu; artık trust proxy üzerinden doğrulanan `req.ip`
+  kullanılıyor.
+- **Kimliksiz yazma uçları:** Yorum ucuna hız sınırı (15 dk'da 10), slug format
+  doğrulaması ve "yalnızca var olan yayınlanmış yazıya yorum" kuralı; analitik uçlarına
+  hız sınırı (15 dk'da 120), sayfa beyaz listesi ve var olan içerik doğrulaması eklendi.
+  `stats.json` ve `comments.json` artık keyfî anahtarlarla şişirilemiyor.
+- **Bellek:** `githubPreviewCache` istemcinin belirlediği anahtarlarla sınırsız
+  büyüyebiliyordu; 50 girdilik üst sınır ve eskiyen girdi tahliyesi eklendi.
+- **Yükleme doğrulaması:** MIME tipi ve uzantı istemci beyanıdır; artık dosyanın ilk
+  baytları (magic bytes) gerçek bir JPEG/PNG/GIF/WebP olduğunu doğrulamadan dosya hedef
+  klasöre taşınmıyor.
+- **Debug uçları:** `/api/test-error`, `/api/debug/csp` ve `/api/simple-test` yalnızca
+  geliştirme ortamında kayıtlanıyor; production'da 404.
+
+### Kaldırıldı
+- Girişteki düz metin şifre karşılaştırma/göç yolu. Hash'lenmemiş eski kayıtlar artık
+  reddedilir; böyle bir kayıt `npm run setup:users` ile yeniden oluşturulmalıdır.
+- Kullanılmayan `file-type` bağımlılığı.
+→ [Ayrıntılar](docs/release-notes/0.2.2.md)
+
 ## [0.2.1] - 2026-08-02 — *İlk Canlı Deploy*
 
 Proje ilk kez git tabanlı deploy hattıyla yayına alındı. Sunucuda o güne kadar zip ile

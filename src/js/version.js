@@ -3,7 +3,7 @@
  * Versiyonu değiştirmek için sadece aşağıdaki satırı düzenleyin.
  * Bu dosya hem server.js (Node.js) hem de tarayıcı tarafından kullanılır.
  */
-const APP_VERSION = 'v0.2.1';
+const APP_VERSION = 'v0.2.2';
 
 // ====== Node.js Export ======
 if (typeof module !== 'undefined' && module.exports) {
