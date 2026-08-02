@@ -8,7 +8,16 @@ Her sürümün ayrıntılı notları [`docs/release-notes/`](docs/release-notes/
 
 ## [Yayınlanmamış]
 
-## [0.2.1] - 2026-08-02
+## [0.2.1] - 2026-08-02 — *İlk Canlı Deploy*
+
+Proje ilk kez git tabanlı deploy hattıyla yayına alındı. Sunucuda o güne kadar zip ile
+elle yüklenmiş, aylar öncesine ait bir sürüm çalışıyordu. cPanel'de Git Version Control
+deposu oluşturuldu, `scripts/server-deploy.sh` ile ilk deploy yapıldı ve deploy'un
+`content/`, `images/`, `data/` klasörlerine dokunmadığı canlı ortamda doğrulandı.
+
+Kurulum sırasında iki durum ortaya çıktı: sunucuda `.env` dosyası yok — zorunlu ortam
+değişkenleri cPanel'in Setup Node.js App ekranında tutuluyor; ve `content/projects.json`
+sunucuda hiç oluşmamıştı (projeler özelliği eski sürümde yoktu), elle oluşturuldu.
 
 ### Düzeltildi
 - Sayfalar açılırken bir an açık temada parlayıp sonra koyuya dönüyordu. Koyu tema
@@ -20,6 +29,7 @@ Her sürümün ayrıntılı notları [`docs/release-notes/`](docs/release-notes/
   değişkenlere koşulsuz olarak **açık** renkleri yazıyordu. Bunlar satır içi stil olduğu
   için CSS'teki `:root.dark` kuralını da eziyor ve koyu tema seçiliyken bile araya bir
   açık kare sokuyordu. Artık aktif temanın renkleri yazılıyor.
+→ [Ayrıntılar](docs/release-notes/0.2.1.md)
 
 ## [0.2.0] - 2026-07-17 — *Yayına Hazırlık*
 
@@ -83,6 +93,7 @@ cPanel'e ilk yayın öncesi kapsamlı güvenlik denetimi ve deploy altyapısı k
 - SSH tabanlı `content-push.sh`/`backup-data.sh`/`sync-common.sh`: hosting SSH
   sağlamadığı için çalışmıyorlardı.
 - Çöp dosyalar: `_diff.txt`, `walkthrough.md.resolved`, `test-marked.js`.
+→ [Ayrıntılar](docs/release-notes/0.2.0.md)
 
 ## [0.1.13] - 2026-07 — *Projeler Bölümü*
 
