@@ -872,6 +872,16 @@ main {
   .blog-content table {
     font-size: 0.8em;
     margin: 1em 0;
+    /* Geniş tablolar sayfayı taşırmasın, kendi içinde kaysın */
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Yorum yanıtlama düğmesi: dokunma hedefi en az 44px */
+  .reply-btn {
+    min-height: 44px;
+    padding: 10px 14px;
   }
   
   .blog-content th,

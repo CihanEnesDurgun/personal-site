@@ -8,6 +8,39 @@ Her sürümün ayrıntılı notları [`docs/release-notes/`](docs/release-notes/
 
 ## [Yayınlanmamış]
 
+## [0.3.0] - 2026-08-02 — *Mobil Duyarlı Tasarım*
+
+Okuyucu tarafındaki (blog, projeler, yazı/proje detay sayfaları) mobil deneyim baştan
+gözden geçirildi. Admin paneli kapsam dışı bırakıldı — masaüstünden yönetildiği için
+mobil optimizasyon gerektirmiyor.
+
+### Eklendi
+- **Mobil hamburger menü.** 680px altında dört menü linki (`Ana Sayfa`, `Blogum`,
+  `Projelerim`, `İletişim`) artık kırpılıp tema düğmesinin üstüne binmek yerine,
+  dokunmayla açılan bir menü düğmesinin arkasında toplanıyor. Yeni
+  [`src/js/mobile-nav.js`](src/js/mobile-nav.js) dosyası; JS yüklenmezse eski görünüm
+  korunur (aşamalı iyileştirme). Menü; bir linke dokununca, dışarı tıklayınca veya
+  `Esc` ile kapanıyor; `aria-expanded`/`aria-controls` ile erişilebilir. 5 herkese açık
+  sayfaya eklendi.
+
+### Düzeltildi
+- **Proje kartlarında metin binmesi.** Ana sayfada mobil kompakt kart tasarımı karta
+  sabit `max-height` (120–140px) veriyordu. Blog kartları bu yüksekliğe sığıyor, ama
+  proje kartlarındaki ekstra dil çubuğu + lejant (~47px) sığmayıp başlığı 12px'e
+  ezip metinleri üst üste bindiriyordu. Sabit yükseklik sınırları kaldırıldı, kartlar
+  artık içeriğe göre uzuyor.
+- **Sessizce devre dışı kalmış mobil CTA stilleri.** `.btn` kuralının kapanış parantezi
+  eksikti; `.cta` ve `.blog-actions` için yazılmış tüm mobil optimizasyonlar yanlışlıkla
+  `.btn` bloğunun içine gömülü kalıp hiç uygulanmıyordu ([`src/css/styles.css`](src/css/styles.css)).
+  Blok düzeltildi, CTA buton dokunma hedefi 40px'ten 44px'e çıkarıldı.
+- **Yazı sayfasında taşan tablolar.** Geniş Markdown tabloları artık sayfayı yatay
+  taşırmak yerine kendi içinde kayıyor (`overflow-x: auto`).
+- **Küçük dokunma hedefleri.** Yorumlardaki "Yanıtla" düğmesi 29px'ten 44px'e çıkarıldı.
+- **Sıkışık hero metni.** Mobilde tanıtım paragrafının satır aralığı 1.3'ten 1.55'e
+  çıkarıldı; okunabilirlik arttı.
+
+→ [Ayrıntılar](docs/release-notes/0.3.0.md)
+
 ## [0.2.3] - 2026-08-02 — *Deploy Sonrası Düzeltme*
 
 v0.2.2 canlıya alındıktan sonra admin panelinde ortaya çıkan bir 500 hatası düzeltildi.
