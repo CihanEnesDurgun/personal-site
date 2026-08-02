@@ -63,18 +63,33 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const SITE_URL = process.env.SITE_URL || 'https://cihanenesdurgun.com';
 
-// ULTRA SIMPLE TEST ENDPOINT - Before ANY middleware
-app.get('/api/simple-test', (req, res, next) => {
-  res.json({
-    success: true,
-    message: 'Server is running - no middleware',
-    timestamp: new Date().toISOString()
-  });
-});
+// GUVENLIK: Uygulama Passenger'in arkasinda calisir; baglanti her zaman localhost'tan
+// gelir. Bu ayar olmadan req.ip herkes icin ayni (proxy'nin adresi) olur ve IP basina
+// hiz siniri fiilen SITE GENELINDE TEK BIR KOVAYA doner: tek bir istemci limiti
+// tuketip herkesi disarida birakabilir, giris limitini tuketip admini kilitleyebilir.
+//
+// 'loopback' degeri, X-Forwarded-For'u YALNIZCA baglanti loopback'ten geldiginde dikkate
+// alir ve listenin sagdan ilk guvenilmeyen girdisini secer. Uzaktaki bir istemci kendi
+// XFF basligini uydursa bile on sunucu gercek adresi sona ekledigi icin sahtecilik ise
+// yaramaz. 'true' KULLANMA: o durumda XFF tamamen istemciye emanet edilir.
+app.set('trust proxy', 'loopback');
 
-app.get('/api/test-error', (req, res, next) => {
-  next(new AppError('SYS-3001', null, 'This is a deliberate test error to verify the RFC 7807 problem details handler pipeline.'));
-});
+// ULTRA SIMPLE TEST ENDPOINT - Before ANY middleware
+// Test/debug uçları yalnızca geliştirme ortamında kayıtlanır;
+// production'da ortam ve hata-işleme iç bilgisi sızdırmamaları için kapalıdır
+if (process.env.NODE_ENV !== 'production') {
+  app.get('/api/simple-test', (req, res, next) => {
+    res.json({
+      success: true,
+      message: 'Server is running - no middleware',
+      timestamp: new Date().toISOString()
+    });
+  });
+
+  app.get('/api/test-error', (req, res, next) => {
+    next(new AppError('SYS-3001', null, 'This is a deliberate test error to verify the RFC 7807 problem details handler pipeline.'));
+  });
+}
 
 // Initialize Session Manager with error handling
 let sessionManager;
@@ -124,7 +139,11 @@ const generalLimiter = process.env.NODE_ENV === 'production' ? rateLimit({
 // Stricter rate limiting for login attempts
 const loginLimiter = process.env.NODE_ENV === 'production' ? rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 50, // 50 login attempts per 15 minutes
+  // 15 dakikada 10 BASARISIZ deneme. Basarili girisler sayilmaz (skipSuccessfulRequests),
+  // boylece normal kullanim limiti tuketmez. Onceki deger 50'ydi; kaba kuvvet icin
+  // gunde ~4800 deneme demekti.
+  max: 10,
+  skipSuccessfulRequests: true,
   message: {
     error: 'Çok fazla giriş denemesi yapıldı. Lütfen daha sonra tekrar deneyin.',
     retryAfter: 900 // 15 minutes in seconds
@@ -375,6 +394,15 @@ function sanitizeFilename(originalName, postTitle) {
   return originalName;
 }
 
+// Yol geçişine (path traversal) karşı dosya adı doğrulaması: yalnızca güvenli
+// karakterlere izin verilir; dizin ayırıcılar regex dışında kaldığı için,
+// yalnızca noktadan oluşan adların (".", "..") reddedilmesi yeterlidir.
+function isSafeFilename(name) {
+  return typeof name === 'string'
+    && /^[a-zA-Z0-9._-]{1,255}$/.test(name)
+    && !/^\.+$/.test(name);
+}
+
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, 'images/')
@@ -437,9 +465,10 @@ const authenticateToken = async (req, res, next) => {
           return next(new AppError('AUTH-1005', 403, 'Oturum süresi dolmuş veya geçersiz'));
         }
       } catch (sessionError) {
-        Logger.warn('[AUTH-8005] Oturum dogrulama basarisiz, JWT ile devam ediliyor:', sessionError.message);
-        // Fallback to basic JWT validation
-        req.user = decoded;
+        // Fail-closed: oturum katmanı hata verirse iptal edilmiş oturumlar
+        // JWT üzerinden geri geçerli olmasın diye istek reddedilir
+        Logger.error('[AUTH-8005] Oturum dogrulamasi hata verdi, istek reddedildi:', sessionError.message);
+        return next(new AppError('AUTH-1005', 403, 'Oturum doğrulanamadı'));
       }
     } else {
       // Basic JWT validation only
@@ -862,12 +891,12 @@ const writeThemeFile = async (theme) => {
   }
 };
 
+// GUVENLIK: x-forwarded-for basligini DOGRUDAN OKUMA. O baslik istemci tarafindan
+// serbestce uydurulabilir; dogrudan okunursa saldirgan giris denemelerini baskasinin
+// IP'siymis gibi kaydettirip guvenlik panelindeki izi kirletebilir.
+// req.ip, yukaridaki 'trust proxy' ayarina gore XFF'i dogrulayarak cozer.
 const getClientIP = (req) => {
-  return req.headers['x-forwarded-for'] ||
-    req.connection.remoteAddress ||
-    req.socket.remoteAddress ||
-    (req.connection.socket ? req.connection.socket.remoteAddress : null) ||
-    req.ip;
+  return req.ip || req.socket?.remoteAddress || 'unknown';
 };
 
 const getUserAgent = (req) => {
@@ -2602,6 +2631,9 @@ app.get('/api/gallery/:folder', authenticateToken, async (req, res, next) => {
 app.post('/api/gallery/deleted/:filename/restore', authenticateToken, async (req, res, next) => {
   try {
     const { filename } = req.params;
+    if (!isSafeFilename(filename)) {
+      return next(new AppError('VAL-2001', 400, 'Geçersiz dosya adı'));
+    }
     const deletedPath = path.join(__dirname, 'images', 'deleted', filename);
     const deletedImagesPath = path.join(__dirname, 'data', 'deleted-images.json');
 
@@ -2621,7 +2653,7 @@ app.post('/api/gallery/deleted/:filename/restore', authenticateToken, async (req
     }
 
     const meta = deletedImages.find(m => m.filename === filename);
-    if (!meta) {
+    if (!meta || !isSafeFilename(meta.originalFolder)) {
       return next(new AppError('VAL-2001', 400, 'Silinen görsel için metadata bulunamadı'));
     }
 
@@ -2656,6 +2688,9 @@ app.post('/api/gallery/deleted/:filename/restore', authenticateToken, async (req
 app.delete('/api/gallery/deleted/:filename', authenticateToken, async (req, res, next) => {
   try {
     const { filename } = req.params;
+    if (!isSafeFilename(filename)) {
+      return next(new AppError('VAL-2001', 400, 'Geçersiz dosya adı'));
+    }
     const deletedPath = path.join(__dirname, 'images', 'deleted', filename);
     const deletedImagesPath = path.join(__dirname, 'data', 'deleted-images.json');
 
@@ -2701,6 +2736,10 @@ app.delete('/api/gallery/:folder/:filename', authenticateToken, async (req, res,
 
     if (!validFolders.includes(folder)) {
       return next(new AppError('VAL-2001', 400, 'Invalid folder', `Geçerli klasörler: ${validFolders.join(', ')}`));
+    }
+
+    if (!isSafeFilename(filename)) {
+      return next(new AppError('VAL-2001', 400, 'Geçersiz dosya adı'));
     }
 
     const sourcePath = path.join(__dirname, 'images', folder, filename);
@@ -2882,19 +2921,19 @@ app.get('/api/version', (req, res, next) => {
   res.json({ version: APP_VERSION });
 });
 
-// Debug endpoint to check CSP settings
-app.get('/api/debug/csp', (req, res, next) => {
-  const cspHeader = process.env.NODE_ENV === 'production'
-    ? "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self'; frame-ancestors 'none'"
-    : "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:*; frame-ancestors 'none'";
+// Debug endpoint to check CSP settings (yalnızca geliştirme ortamında)
+if (process.env.NODE_ENV !== 'production') {
+  app.get('/api/debug/csp', (req, res, next) => {
+    const cspHeader = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:*; frame-ancestors 'none'";
 
-  res.json({
-    nodeEnv: process.env.NODE_ENV,
-    expectedCSP: cspHeader,
-    actualCSP: req.headers['content-security-policy'] || 'Not set in request',
-    note: 'Check browser DevTools Network tab to see actual CSP header sent'
+    res.json({
+      nodeEnv: process.env.NODE_ENV,
+      expectedCSP: cspHeader,
+      actualCSP: req.headers['content-security-policy'] || 'Not set in request',
+      note: 'Check browser DevTools Network tab to see actual CSP header sent'
+    });
   });
-});
+}
 
 // ====== Statistics API Routes ======
 
@@ -3164,15 +3203,37 @@ app.get('/api/comments/:slug', async (req, res, next) => {
     // Organize comments hierarchically
     const organizedComments = organizeCommentsHierarchically(allComments);
 
+    // GUVENLIK: bu uc herkese acik. Yorum nesnesi email ve ip alanlarini da tasir;
+    // oldugu gibi donulurse siteye yorum yazan herkesin e-postasi ve IP adresi
+    // internete acilir. Yalnizca gorunmesi gereken alanlar disari verilir.
     res.json({
       success: true,
-      comments: organizedComments
+      comments: herkeseAcikYorumlar(organizedComments)
     });
   } catch (error) {
     Logger.error('Error getting comments:', error);
     next(new AppError('SYS-3001', 500, 'Yorumlar alınamadı'));
   }
 });
+
+// Yorumlari herkese acik uclarda guvenli alanlara indirger (email, ip disarida kalir).
+// Beyaz liste yaklasimi: yorum nesnesine ileride yeni bir alan eklenirse otomatik olarak
+// disari SIZMAZ, bilerek buraya eklenmesi gerekir.
+const YORUM_ACIK_ALANLAR = [
+  'id', 'name', 'content', 'date', 'approved',
+  'parent_id', 'thread_id', 'depth', 'reply_to_name'
+];
+
+function herkeseAcikYorumlar(yorumlar) {
+  return (yorumlar || []).map(yorum => {
+    const temiz = {};
+    for (const alan of YORUM_ACIK_ALANLAR) {
+      if (yorum[alan] !== undefined) temiz[alan] = yorum[alan];
+    }
+    if (yorum.replies) temiz.replies = herkeseAcikYorumlar(yorum.replies);
+    return temiz;
+  });
+}
 
 // Helper function to organize comments hierarchically
 function organizeCommentsHierarchically(comments) {
@@ -3291,10 +3352,11 @@ app.post('/api/comments/:slug', async (req, res, next) => {
     // Save to file
     await writeCommentsFile(commentsData);
 
+    // Kaydedilen nesne email ve ip tasir; yanitta da bunlari geri yansitma.
     res.json({
       success: true,
       message: 'Comment submitted successfully. It will be visible after approval.',
-      comment: newComment
+      comment: herkeseAcikYorumlar([newComment])[0]
     });
   } catch (error) {
     Logger.error('Error adding comment:', error);
@@ -3994,6 +4056,11 @@ app.post('/api/admin/set-icon', authenticateToken, async (req, res, next) => {
 
     if (!filename) {
       return next(new AppError('VAL-2001', 400, 'Dosya adı gereklidir'));
+    }
+
+    // filename hem dosya yoluna hem HTML dosyalarına yazılır; sıkı doğrulama şart
+    if (!isSafeFilename(filename)) {
+      return next(new AppError('VAL-2001', 400, 'Geçersiz dosya adı'));
     }
 
     // Check if file exists in system folder

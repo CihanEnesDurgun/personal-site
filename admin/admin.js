@@ -2523,9 +2523,13 @@ class BlogManager {
   }
 
   escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+    // Öznitelik içinde de güvenli olması için tırnaklar dahil tüm özel karakterler kaçırılır
+    return String(text == null ? '' : text)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   // ====== Security & Sessions Management ======
@@ -3485,9 +3489,13 @@ class HomepageEditor {
   }
 
   escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+    // Öznitelik içinde de güvenli olması için tırnaklar dahil tüm özel karakterler kaçırılır
+    return String(text == null ? '' : text)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   // Account Settings Methods
