@@ -61,13 +61,17 @@ async function loadCustomTheme() {
 function applyThemeVariables(themeData) {
   const root = document.documentElement;
 
-  // Apply light theme variables
-  root.style.setProperty('--bg', themeData.light.bg);
-  root.style.setProperty('--panel', themeData.light.panel);
-  root.style.setProperty('--ink', themeData.light.ink);
-  root.style.setProperty('--muted', themeData.light.muted);
-  root.style.setProperty('--line', themeData.light.line);
-  root.style.setProperty('--accent', themeData.light.accent);
+  // Apply the ACTIVE palette. These are inline styles, so they outrank the
+  // :root.dark stylesheet rule — writing light colors unconditionally would
+  // flash the page light until setTheme() corrects it.
+  const activeTheme = root.classList.contains('dark') ? themeData.dark : themeData.light;
+
+  root.style.setProperty('--bg', activeTheme.bg);
+  root.style.setProperty('--panel', activeTheme.panel);
+  root.style.setProperty('--ink', activeTheme.ink);
+  root.style.setProperty('--muted', activeTheme.muted);
+  root.style.setProperty('--line', activeTheme.line);
+  root.style.setProperty('--accent', activeTheme.accent);
 
   // Apply dark theme variables
   root.style.setProperty('--dark-bg', themeData.dark.bg);
