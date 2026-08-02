@@ -159,6 +159,35 @@ const loginLimiter = process.env.NODE_ENV === 'production' ? rateLimit({
   }
 }) : (req, res, next) => next(); // No rate limiting in development
 
+// Kimliksiz yazma uclari (yorum) icin hiz siniri: spam ve dosya sisirme onlemi
+const commentLimiter = process.env.NODE_ENV === 'production' ? rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    Logger.warn(`🚨 Comment rate limit exceeded for IP: ${req.ip}`);
+    res.status(429).json({
+      error: 'Çok fazla yorum gönderildi. Lütfen daha sonra tekrar deneyin.',
+      retryAfter: 900
+    });
+  }
+}) : (req, res, next) => next();
+
+// Analitik uclari her sayfa goruntulemede tetiklenir; limit genis ama sinirli
+const analyticsLimiter = process.env.NODE_ENV === 'production' ? rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json({
+      error: 'Bu IP adresinden çok fazla istek gönderildi.',
+      retryAfter: 900
+    });
+  }
+}) : (req, res, next) => next();
+
 // CORS Configuration - Enhanced Security
 const allowedOrigins = process.env.CORS_ORIGIN ?
   process.env.CORS_ORIGIN.split(',').map(origin => origin.trim()) :
@@ -394,6 +423,11 @@ function sanitizeFilename(originalName, postTitle) {
   return originalName;
 }
 
+// Kimliksiz uçlardan gelen slug/page değerleri doğrudan JSON anahtarı olur;
+// serbest bırakılırsa stats/comments dosyaları sınırsız anahtarla şişirilebilir.
+const isValidSlug = (slug) => typeof slug === 'string' && /^[a-z0-9-]{1,120}$/.test(slug);
+const VALID_ANALYTICS_PAGES = new Set(['home', 'blog', 'projects']);
+
 // Yol geçişine (path traversal) karşı dosya adı doğrulaması: yalnızca güvenli
 // karakterlere izin verilir; dizin ayırıcılar regex dışında kaldığı için,
 // yalnızca noktadan oluşan adların (".", "..") reddedilmesi yeterlidir.
@@ -426,6 +460,19 @@ const upload = multer({
     files: 1 // Only one file at a time
   }
 });
+
+// Icerik dogrulamasi: MIME tipi ve uzanti istemci beyanidir, guvenilmez.
+// Dosyanin gercekten izin verilen bir gorsel formati oldugu ilk baytlardan
+// (magic bytes) dogrulanir: JPEG, PNG, GIF, WebP.
+const isRealImageFile = async (filePath) => {
+  const buf = await fs.readFile(filePath);
+  if (buf.length < 12) return false;
+  if (buf[0] === 0xFF && buf[1] === 0xD8 && buf[2] === 0xFF) return true; // JPEG
+  if (buf.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]))) return true; // PNG
+  if (buf.subarray(0, 4).toString('ascii') === 'GIF8') return true; // GIF87a/89a
+  if (buf.subarray(0, 4).toString('ascii') === 'RIFF' && buf.subarray(8, 12).toString('ascii') === 'WEBP') return true; // WebP
+  return false;
+};
 
 // ====== Hybrid Authentication Middleware ======
 const authenticateToken = async (req, res, next) => {
@@ -890,6 +937,10 @@ const writeThemeFile = async (theme) => {
     return false;
   }
 };
+
+// Zamanlama sizintisina karsi: kullanici bulunamadiginda da bcrypt.compare
+// calistirilir ki yanit suresi kullanici adinin varligini ele vermesin.
+const DUMMY_PASSWORD_HASH = bcrypt.hashSync(crypto.randomBytes(32).toString('hex'), BCRYPT_SALT_ROUNDS);
 
 // GUVENLIK: x-forwarded-for basligini DOGRUDAN OKUMA. O baslik istemci tarafindan
 // serbestce uydurulabilir; dogrudan okunursa saldirgan giris denemelerini baskasinin
@@ -1655,29 +1706,22 @@ app.post('/api/login', loginLimiter, async (req, res, next) => {
     const user = users[username];
 
     if (!user) {
+      // Zamanlama sizintisini onle: kullanici yokken de ayni maliyette bcrypt calisir
+      await bcrypt.compare(password, DUMMY_PASSWORD_HASH);
       await logFailedLogin(username, req, 'User not found');
       return next(new AppError('AUTH-1001', 401, 'Kullanıcı adı veya şifre hatalı.'));
     }
 
-    // Check if password is hashed or plain text (for migration)
-    let isPasswordValid = false;
-
-    if (user.isHashed) {
-      // Password is already hashed, compare with bcrypt
-      isPasswordValid = await bcrypt.compare(password, user.password);
-    } else {
-      // Password is plain text (old format), migrate to hashed
-      if (user.password === password) {
-        isPasswordValid = true;
-        // Migrate password to hashed format
-        const hashedPassword = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
-        users[username].password = hashedPassword;
-        users[username].isHashed = true;
-        users[username].lastUpdated = new Date().toISOString();
-        await writeUsersFile(users);
-        Logger.info(`Password migrated to hashed format for user: ${username}`);
-      }
+    // Duz metin sifre yolu kaldirildi: hash'lenmemis eski kayitlar reddedilir.
+    // Boyle bir kayit varsa `npm run setup:users` ile yeniden olusturulmali.
+    if (!user.isHashed) {
+      Logger.error(`[AUTH-8008] Hash'lenmemis eski kullanici kaydi reddedildi: ${username}. 'npm run setup:users' ile yeniden olusturun.`);
+      await bcrypt.compare(password, DUMMY_PASSWORD_HASH);
+      await logFailedLogin(username, req, 'Legacy plaintext record rejected');
+      return next(new AppError('AUTH-1001', 401, 'Kullanıcı adı veya şifre hatalı.'));
     }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (isPasswordValid) {
       const ip = req.ip || req.connection.remoteAddress;
@@ -2468,6 +2512,14 @@ app.post('/api/upload', authenticateToken, (req, res, next) => {
         return next(new AppError('VAL-2001', null, 'Dosya yüklenmedi. Lütfen yüklenecek bir görsel dosyası seçin'));
       }
 
+      // Magic-byte dogrulamasi: iceriği görsel olmayan dosyalar diske kalıcı
+      // yazılmadan reddedilir (MIME/uzantı istemci beyanıdır, yeterli değil)
+      if (!await isRealImageFile(req.file.path)) {
+        await fs.remove(req.file.path).catch(() => {});
+        Logger.warn(`[FILE-8013] Icerigi gecerli bir gorsel olmayan yukleme reddedildi: ${req.file.originalname}`);
+        return next(new AppError('VAL-2001', null, 'Dosya içeriği geçerli bir görsel değil'));
+      }
+
       // Get target folder from request
       const targetFolder = req.body.folder || 'blog-content';
       const validFolders = ['system', 'profile', 'blog-covers', 'blog-content', 'project-covers', 'project-gallery', 'project-content'];
@@ -2938,11 +2990,16 @@ if (process.env.NODE_ENV !== 'production') {
 // ====== Statistics API Routes ======
 
 // Track page view
-app.post('/api/analytics/track-page', async (req, res, next) => {
+app.post('/api/analytics/track-page', analyticsLimiter, async (req, res, next) => {
   try {
     const { page, source } = req.body;
     if (!page) {
       return next(new AppError('VAL-2001', 400, 'Sayfa parametresi gereklidir'));
+    }
+
+    // Bilinmeyen sayfa adlari stats.json'da sinirsiz anahtar olusturur
+    if (!VALID_ANALYTICS_PAGES.has(page)) {
+      return next(new AppError('VAL-2001', 400, 'Geçersiz sayfa parametresi'));
     }
 
     const stats = await incrementPageView(page, source);
@@ -2954,11 +3011,17 @@ app.post('/api/analytics/track-page', async (req, res, next) => {
 });
 
 // Track post view
-app.post('/api/analytics/track-post', async (req, res, next) => {
+app.post('/api/analytics/track-post', analyticsLimiter, async (req, res, next) => {
   try {
     const { slug, source } = req.body;
-    if (!slug) {
-      return next(new AppError('VAL-2001', 400, 'Slug parametresi gereklidir'));
+    if (!slug || !isValidSlug(slug)) {
+      return next(new AppError('VAL-2001', 400, 'Geçersiz slug parametresi'));
+    }
+
+    // Yalnizca gercekten var olan yayinlanmis yazilar sayilir
+    const posts = await readPostsFile();
+    if (!posts.some(p => p.slug === slug && p.published !== false)) {
+      return next(new AppError('RES-6001', 404, 'Yazı bulunamadı'));
     }
 
     const stats = await incrementPostView(slug, source);
@@ -3273,7 +3336,7 @@ function organizeCommentsHierarchically(comments) {
 }
 
 // Add a new comment
-app.post('/api/comments/:slug', async (req, res, next) => {
+app.post('/api/comments/:slug', commentLimiter, async (req, res, next) => {
   try {
     const { slug } = req.params;
     const { name, email, content, parent_id, reply_to_name } = req.body;
@@ -3281,6 +3344,18 @@ app.post('/api/comments/:slug', async (req, res, next) => {
     // Basic validation
     if (!name || !email || !content) {
       return next(new AppError('VAL-2001', 400, 'İsim, e-posta ve içerik gereklidir'));
+    }
+
+    if (typeof name !== 'string' || typeof email !== 'string' || typeof content !== 'string') {
+      return next(new AppError('VAL-2001', 400, 'Geçersiz alan tipi'));
+    }
+
+    if (name.trim().length < 2 || name.length > 100) {
+      return next(new AppError('VAL-2001', 400, 'İsim 2-100 karakter arasında olmalıdır'));
+    }
+
+    if (email.length > 200) {
+      return next(new AppError('VAL-2001', 400, 'E-posta 200 karakterden az olmalıdır'));
     }
 
     if (content.length < 3) {
@@ -3295,6 +3370,16 @@ app.post('/api/comments/:slug', async (req, res, next) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return next(new AppError('VAL-2001', 400, 'Geçersiz e-posta formatı'));
+    }
+
+    // Yalnizca var olan yayinlanmis yazilara yorum acilabilir; aksi halde
+    // comments.json olmayan slug anahtarlariyla sinirsiz sisirilebilir
+    if (!isValidSlug(slug)) {
+      return next(new AppError('VAL-2001', 400, 'Geçersiz yazı adresi'));
+    }
+    const posts = await readPostsFile();
+    if (!posts.some(p => p.slug === slug && p.published !== false)) {
+      return next(new AppError('RES-6001', 404, 'Yazı bulunamadı'));
     }
 
     const commentsData = await readCommentsFile();
@@ -3824,12 +3909,19 @@ app.delete('/api/projects/:slug/permanent', authenticateToken, async (req, res, 
 });
 
 // Proje görüntüleme takibi (public)
-app.post('/api/analytics/track-project', async (req, res, next) => {
+app.post('/api/analytics/track-project', analyticsLimiter, async (req, res, next) => {
   try {
     const { slug, source } = req.body;
-    if (!slug) {
-      return next(new AppError('VAL-2001', 400, 'Slug parametresi gereklidir'));
+    if (!slug || !isValidSlug(slug)) {
+      return next(new AppError('VAL-2001', 400, 'Geçersiz slug parametresi'));
     }
+
+    // Yalnizca gercekten var olan yayinlanmis projeler sayilir
+    const projects = await readProjectsFile();
+    if (!projects.some(p => p.slug === slug && p.published !== false)) {
+      return next(new AppError('RES-6001', 404, 'Proje bulunamadı'));
+    }
+
     const stats = await incrementProjectView(slug, source);
     res.json({ success: true, stats });
   } catch (error) {
@@ -3843,6 +3935,21 @@ app.post('/api/analytics/track-project', async (req, res, next) => {
 // Sunucu proxy'si GitHub API'yi çağırır (rate limit sunucu IP'sinde), 10dk cache'ler.
 const githubPreviewCache = new Map(); // key: owner/repo -> { data, timestamp }
 const GITHUB_CACHE_TTL = 10 * 60 * 1000;
+// Anahtar (owner/repo) istemciden geldigi icin cache sinirsiz buyutulebilir;
+// ust sinira ulasilinca once suresi dolmus, yoksa en eski girdi atilir.
+const GITHUB_CACHE_MAX = 50;
+
+function githubCachePut(key, value) {
+  if (githubPreviewCache.size >= GITHUB_CACHE_MAX && !githubPreviewCache.has(key)) {
+    let evictKey = null;
+    for (const [k, v] of githubPreviewCache) {
+      if (Date.now() - v.timestamp >= GITHUB_CACHE_TTL) { evictKey = k; break; }
+      if (evictKey === null) evictKey = k; // Map ekleme sirasini korur: ilk anahtar en eskisidir
+    }
+    if (evictKey !== null) githubPreviewCache.delete(evictKey);
+  }
+  githubPreviewCache.set(key, value);
+}
 
 const httpsGetJson = (url) => new Promise((resolve, reject) => {
   const https = require('https');
@@ -3922,7 +4029,7 @@ app.get('/api/github/repo-preview', async (req, res, next) => {
       readme: readmeContent
     };
 
-    githubPreviewCache.set(cacheKey, { data, timestamp: Date.now() });
+    githubCachePut(cacheKey, { data, timestamp: Date.now() });
     res.json({ success: true, cached: false, ...data });
   } catch (error) {
     Logger.error('Error fetching GitHub preview:', error);
