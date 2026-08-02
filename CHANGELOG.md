@@ -8,6 +8,19 @@ Her sürümün ayrıntılı notları [`docs/release-notes/`](docs/release-notes/
 
 ## [Yayınlanmamış]
 
+## [0.2.1] - 2026-08-02
+
+### Düzeltildi
+- Sayfalar açılırken bir an açık temada parlayıp sonra koyuya dönüyordu. Koyu tema
+  yalnızca `<html>` etiketine `dark` sınıfı eklenince devreye giriyordu, o sınıfı ekleyen
+  JavaScript ise sayfa çizildikten ve `/api/theme` isteği tamamlandıktan sonra
+  çalışıyordu. Artık her sayfanın `<head>` bölümünde, ilk boyamadan önce çalışan küçük
+  bir betik sınıfı yerleştiriyor. Ziyaretçinin açık tema tercihi korunur.
+- `applyThemeVariables()` sunucudan gelen temayı uygularken `--bg`, `--ink` gibi
+  değişkenlere koşulsuz olarak **açık** renkleri yazıyordu. Bunlar satır içi stil olduğu
+  için CSS'teki `:root.dark` kuralını da eziyor ve koyu tema seçiliyken bile araya bir
+  açık kare sokuyordu. Artık aktif temanın renkleri yazılıyor.
+
 ## [0.2.0] - 2026-07-17 — *Yayına Hazırlık*
 
 cPanel'e ilk yayın öncesi kapsamlı güvenlik denetimi ve deploy altyapısı kurulumu.
